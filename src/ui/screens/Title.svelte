@@ -71,7 +71,7 @@
     <span class="shade">Stín</span>
   </h1>
   <p class="tagline carved">
-    Lumenité znali jen dva stavy: světlo a stín. Postavili z nich celou svou vědu. Pak zmizeli.
+    Lumenité znali jen dva stavy: světlo a stín. Postavili z nich celou svou vědu. Pak záhadně zmizeli.
   </p>
 
   <div class="cta">
