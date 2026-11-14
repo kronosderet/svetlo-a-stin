@@ -293,7 +293,7 @@ const levels: LevelDef[] = [
     },
     hints: [
       'Začni vpravo. Jde v tomhle sloupci odečítat? Když ne, kdo ti může půjčit?',
-      'Půjčené světlo má ve sloupci váhu dvou: 0 − 1 s výpůjčkou je 10 − 1 = 1. Výpůjčku zapiš krystalem pod spodní řadu ve sloupci vlevo, odečte se spolu s ní.',
+      'Půjčené světlo má ve sloupci váhu dvou: 0 − 1 s výpůjčkou je 10 − 1 = 1. Výpůjčku zapiš krystalem pod spodní řadu ve sloupci vlevo, odečte se spolu s ní. Nad sloupcem vpravo se objeví dva krystaly.',
       CELL_HINT,
     ],
     echo: {

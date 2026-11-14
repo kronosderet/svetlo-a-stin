@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { fly } from 'svelte/transition';
+  import { fade, fly } from 'svelte/transition';
   import Crystal from '../Crystal.svelte';
   import Gem from '../Gem.svelte';
   import MiniPattern from '../MiniPattern.svelte';
@@ -47,7 +47,9 @@
   const valueCol = $derived(cellStart + width);
   const carryTop = $derived(carryCols.length > 0 && !sub);
   const carryBelow = $derived(carryCols.length > 0 && sub);
-  const firstLine = $derived(carryTop ? 2 : 1);
+  /** Odčítání: nad horní řadou přistane půjčené světlo jako dva krystaly. */
+  const rLoan = $derived(carryBelow ? 1 : 0);
+  const firstLine = $derived(carryTop || carryBelow ? 2 : 1);
   const rCarry = $derived(carryTop ? 1 : carryBelow ? firstLine + lines.length : 0);
   const afterLines = $derived(firstLine + lines.length + (carryBelow ? 1 : 0));
   const rCounts = $derived(counts ? afterLines : 0);
@@ -69,6 +71,9 @@
     if (task.op !== 'mul') return String(lines[j]);
     return `${task.operands[0]} × ${2 ** shifts[j]}`;
   }
+
+  /** Sloupce, které dostaly půjčené světlo (jejich soused vlevo má krystal výpůjčky). */
+  const loaned = $derived(carryBelow ? columns.filter((j) => isBitSet(view.carries, j + 1)) : []);
 
   function sparkLabel(i: number): string {
     if (i === width) return 'Přepad: světlo, které vyteklo z nádoby';
@@ -156,6 +161,21 @@
         {/if}
 
         {#if carryBelow}
+          <!-- Půjčené světlo: sloupec vlevo půjčil jedno světlo a vpravo z něj jsou dvě. -->
+          <div class="loan-slot" style:grid-column="{cellStart} / span {width}" style:grid-row={rLoan}></div>
+          {#each loaned as j (j)}
+            <div
+              class="cell loan"
+              style:grid-column={colOf(j)}
+              style:grid-row={rLoan}
+              title="půjčené světlo: tady váží dvě"
+              out:fade={{ duration: 200 * m }}
+            >
+              {#each [0, 1] as k (k)}
+                <span in:fly={{ x: -42, y: 6, duration: 460 * m, delay: k * 90 * m }}><Gem on={true} /></span>
+              {/each}
+            </div>
+          {/each}
           <!-- Výpůjčky se odečítají spolu se spodní řadou. -->
           <span class="sign carved" style:grid-column="1" style:grid-row={rCarry}>−</span>
         {/if}
@@ -245,7 +265,7 @@
             <polygon points="10,1.5 18.5,9 18.5,23 10,30.5 1.5,23 1.5,9" />
           </svg>
           {#if sub}
-            Krystal pod spodní řadou: výpůjčka. Sloupec vpravo si půjčil, a tak se tu odečítá spolu se spodní řadou.
+            Krystal pod spodní řadou: výpůjčka. Tady se odečte a sousedovi vpravo přidá dva krystaly.
           {:else}
             Krystal nad sloupcem: světlo, které do něj přeteklo ze sloupce vpravo.
           {/if}
@@ -339,6 +359,17 @@
     z-index: 1;
     display: grid;
     place-items: center;
+  }
+  /* Řádek pro půjčené světlo drží místo, i když je prázdný (deska neposkakuje). */
+  .loan-slot {
+    min-height: calc(var(--gem-w) * 1.1 + 4px);
+  }
+  .cell.loan {
+    --gem-w: calc(var(--cell) * 0.24);
+    display: flex;
+    justify-content: center;
+    gap: 3px;
+    filter: drop-shadow(0 0 6px rgba(255, 210, 130, 0.55));
   }
   .cell.pad {
     opacity: 0.6;
