@@ -4,8 +4,10 @@ import {
   hint,
   initGate,
   nextRune,
+  nextSource,
   par as computePar,
   setRune,
+  setWire,
   shownTask,
   test as runTest,
   toggleInput as flipInput,
@@ -20,6 +22,7 @@ export interface GateView {
   task: GateTask;
   inputs: number;
   runes: Record<string, Rune>;
+  wires: Record<string, string>;
   tried: number[];
   failed: number[] | null;
 }
@@ -46,8 +49,8 @@ export class GateGame extends BaseGame<GateLevel> {
 
   get view(): GateView {
     if (this.holding && this.held) return this.held;
-    const { inputs, runes, tried, failed } = this.state;
-    return { task: shownTask(this.level.config, this.state), inputs, runes, tried, failed };
+    const { inputs, runes, wires, tried, failed } = this.state;
+    return { task: shownTask(this.level.config, this.state), inputs, runes, wires, tried, failed };
   }
 
   /** Nápověda 3. stupně: vstup k přepnutí, nebo kámen a runa, která do něj patří. */
@@ -75,6 +78,13 @@ export class GateGame extends BaseGame<GateLevel> {
     if (rune) this.#apply(setRune(this.level.config, $state.snapshot(this.state) as GateState, node, rune));
   }
 
+  /** Kliknutí na točitý kámen: pootočí ho k dalšímu zdroji světla. */
+  cycleWire(key: string): void {
+    if (!this.playing) return;
+    const source = nextSource(this.level.config, this.state, key);
+    if (source) this.#apply(setWire(this.level.config, $state.snapshot(this.state) as GateState, key, source));
+  }
+
   test(): void {
     if (!this.playing) return;
     this.#apply(runTest(this.level.config, $state.snapshot(this.state) as GateState));
@@ -91,6 +101,7 @@ export class GateGame extends BaseGame<GateLevel> {
         task: shownTask(this.level.config, before),
         inputs: tried ? tried.row : before.inputs,
         runes: before.runes,
+        wires: before.wires,
         tried: tried ? [...before.tried, tried.row] : before.tried,
         failed: null,
       };

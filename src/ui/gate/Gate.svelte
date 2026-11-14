@@ -1,5 +1,6 @@
 <script lang="ts">
   import { fly } from 'svelte/transition';
+  import Arrow from '../Arrow.svelte';
   import Board from './Board.svelte';
   import MiniPattern from '../MiniPattern.svelte';
   import Pips from '../Pips.svelte';
@@ -24,9 +25,10 @@
   const hl = $derived.by(() => {
     const h = game.hintTarget;
     if (!h) return null;
-    return 'input' in h ? { input: h.input } : { node: h.node };
+    if ('input' in h) return { input: h.input };
+    return 'node' in h ? { node: h.node } : { socket: h.socket };
   });
-  const lampAt = (r: number) => evaluate(circuit, view.runes, r)[circuit.output] ?? 0;
+  const lampAt = (r: number) => evaluate(circuit, view.runes, r, view.wires)[circuit.output] ?? 0;
   const label = (r: number) => circuit.inputs.map((name, i) => `${name} ${inputBit(r, i, n) ? 'světlo' : 'stín'}`).join(', ');
 </script>
 
@@ -44,11 +46,20 @@
 
   <div class="work">
     {#key task}
-      <div class="board-wrap" in:fly={{ y: -12, duration: 360 * m }}>
+      <div class="board-wrap" class:with-ref={!!task.reference} in:fly={{ y: -12, duration: 360 * m }}>
+        {#if task.reference}
+          <!-- Starý obvod Lumenitů: hráč ho nahradí kratším se stejnou deskou. -->
+          <div class="reference">
+            <p class="side-title carved">Obvod Lumenitů · {task.reference.nodes.length} runy</p>
+            <Board circuit={task.reference} inputs={0} runes={{}} canToggle={false} canPlace={false} {modern} staticInputs={true} />
+          </div>
+          <span class="arrow"><Arrow label="nahraď obvodem" /></span>
+        {/if}
         <Board
           {circuit}
           inputs={view.inputs}
           runes={view.runes}
+          wires={view.wires}
           canToggle={game.playing}
           canPlace={game.playing && !explore}
           {modern}
@@ -56,6 +67,7 @@
           celebrate={game.phase === 'solved'}
           onInput={(i) => game.toggleInput(i)}
           onSlot={(id) => game.cycleRune(id)}
+          onSocket={(key) => game.cycleWire(key)}
         />
       </div>
     {/key}
@@ -156,6 +168,26 @@
     display: flex;
     justify-content: center;
     padding: 14px 0 24px;
+  }
+  /* Méně je víc: starý obvod a tvůj obvod vedle sebe (na úzké obrazovce pod sebou). */
+  .board-wrap.with-ref {
+    flex: 0 1 940px;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 22px;
+  }
+  .arrow {
+    font-family: var(--font-display);
+    font-size: var(--fs-2xl);
+    color: var(--text-muted);
+  }
+  .reference {
+    width: min(100%, 380px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    opacity: 0.85;
   }
   .side {
     display: flex;

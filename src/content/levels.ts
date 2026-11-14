@@ -78,6 +78,8 @@ function instantiatePuzzle(level: PuzzleLevel, rng: Rng): PuzzleLevel {
       return level.generate ? { ...level, config: level.generate(rng) } : level;
     case 'table':
       return level.generate ? { ...level, config: level.generate(rng) } : level;
+    case 'mask':
+      return level.generate ? { ...level, config: level.generate(rng) } : level;
   }
 }
 

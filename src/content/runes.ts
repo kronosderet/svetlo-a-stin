@@ -9,6 +9,8 @@ export const RUNE_NAME: Record<Rune, string> = {
   xor: 'Výluka',
   nand: 'Zlomené pouto',
   nor: 'Zavřené rozcestí',
+  xnor: 'Rovnost',
+  imp: 'Důsledek',
 };
 
 /** Moderní značka (ukáže se, až Kodex runy přeloží). */
@@ -20,6 +22,8 @@ export const RUNE_MODERN: Record<Rune, string> = {
   xor: 'XOR',
   nand: 'NAND',
   nor: 'NOR',
+  xnor: 'XNOR',
+  imp: 'IMPL',
 };
 
 /** Tahy runy na mřížce 24 × 24: znaky výrokové logiky ¬ ∧ ∨ ⊻, jak je Lumenité tesali. */
@@ -31,6 +35,8 @@ export const RUNE_PATH: Record<Rune, string> = {
   xor: 'M5 4L12 15L19 4 M6 20H18',
   nand: 'M5 20L12 9L19 20 M6 4H18',
   nor: 'M5 8L12 19L19 8 M6 4H18',
+  xnor: 'M7 9H17 M7 15H17 M8 6L3 12L8 18 M16 6L21 12L16 18',
+  imp: 'M3 9H16 M3 15H16 M14 6L20 12L14 18',
 };
 
 /** Záznam Kodexu, který runu „přeloží“ (pak se pod ní ukáže i moderní značka). */
@@ -42,4 +48,6 @@ export const RUNE_KODEX: Record<Rune, string | null> = {
   xor: 'vyluka',
   nand: 'retezy',
   nor: 'retezy',
+  xnor: 'spojky',
+  imp: 'spojky',
 };

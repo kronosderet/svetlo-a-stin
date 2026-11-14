@@ -399,6 +399,94 @@ export const KODEX: KodexEntry[] = [
     formula: '¬ · ∧ · ∨ · ⊻',
     today: 'Z těchto hradel jsou složené všechny počítače. V Hlubině Strojů z nich poskládáš sčítačku a paměť.',
   },
+  {
+    id: 'zrcadla',
+    glyph: 0b101000,
+    ancientName: 'Zrcadla',
+    modernName: 'De Morganovy zákony',
+    ancient: 'Obrácené Pouto je Rozcestí obrácených cest. A naopak.',
+    modern:
+      'Negace prohodí AND a OR, když obrátíš i oba vstupy: ¬(A ∧ B) = ¬A ∨ ¬B a ¬(A ∨ B) = ¬A ∧ ¬B. Dva obvody se stejnou pravdivostní tabulkou jsou zaměnitelné.',
+    formula: '¬(A ∧ B) = ¬A ∨ ¬B · ¬(A ∨ B) = ¬A ∧ ¬B',
+    today: '„Není pravda, že prší nebo fouká“ znamená „neprší a nefouká“. Stejná pravidla platí ve výrokové logice i v programech.',
+  },
+  {
+    id: 'spojky',
+    glyph: 0b101001,
+    ancientName: 'Rovnost a Důsledek',
+    modernName: 'Ekvivalence a implikace',
+    ancient: 'Rovnost svítí, když se cesty shodnou. Důsledek zhasne, jen když slib neplatí.',
+    modern:
+      'Ekvivalence A ⇔ B (XNOR) platí, když mají oba vstupy stejnou hodnotu. Implikace A ⇒ B neplatí jen tehdy, když A platí a B ne; v ostatních případech platí.',
+    formula: 'A ⇔ B = ¬(A ⊻ B) · A ⇒ B = ¬A ∨ B',
+    today: '„Když prší, je mokro“ je implikace. Když neprší, nic neporušila, ať je mokro, nebo ne.',
+  },
+  {
+    id: 'vetsina',
+    glyph: 0b101010,
+    ancientName: 'Hlas většiny',
+    modernName: 'Funkce většiny',
+    ancient: 'Tři strážci hlasují, brána poslechne většinu.',
+    modern:
+      'Funkce většiny dá 1, když jsou aspoň dva ze tří vstupů 1: (A ∧ B) ∨ (A ∧ C) ∨ (B ∧ C). Pravdivostní tabulka pro tři vstupy má osm řádků.',
+    formula: 'M(A, B, C) = AB ∨ AC ∨ BC',
+    today: 'Přenos z úplné sčítačky je právě hlas většiny ze tří bitů. Letadla a vesmírné lodě hlasováním tří počítačů opravují chyby.',
+  },
+  {
+    id: 'prapecet',
+    glyph: 0b101011,
+    ancientName: 'Prapečeť',
+    modernName: 'Univerzální hradlo NAND',
+    ancient: 'Z jediné runy postavíš všechny ostatní.',
+    modern:
+      'Z hradel NAND jde postavit NOT (oba vstupy spojené), AND (NAND a za ním NOT) i OR (NAND obrácených vstupů). Proto je NAND univerzální: stačí na libovolný obvod.',
+    formula: 'NOT A = NAND(A, A) · OR = NAND(¬A, ¬B)',
+    today: 'Paměti flash ve flashkách a telefonech se jmenují NAND flash a čipy se často skládají hlavně z hradel NAND.',
+  },
+  {
+    id: 'masky',
+    glyph: 0b101100,
+    ancientName: 'Masky',
+    modernName: 'Bitové operace',
+    ancient: 'Maska řekne runě, kde má zasáhnout.',
+    modern:
+      'AND, OR a XOR jde pustit na celý bajt naráz, bit po bitu. AND s maskou vybírá (kde je v masce 0, výsledek zhasne), OR nastavuje (kde je 1, rozsvítí), XOR přepíná.',
+    formula: '1011 0110 AND 0000 1111 = 0000 0110',
+    today: 'Programy tak čtou jednotlivé bity, nastavují práva k souborům nebo oddělují barevné kanály pixelu.',
+  },
+  {
+    id: 'sifra',
+    glyph: 0b101101,
+    ancientName: 'Tajná řeč',
+    modernName: 'Šifra XOR',
+    ancient: 'Stejný klíč šifru zamkne i odemkne.',
+    modern:
+      'Zpráva XOR klíč dá šifru, šifra XOR stejný klíč dá zase zprávu, protože každý bit přepnutý dvakrát je zpátky. Písmena jsou v počítači jen čísla (ASCII: E = 69 = 0100 0101).',
+    formula: '(Z ⊻ K) ⊻ K = Z',
+    today: 'XOR je součástí skoro všech moderních šifer. Kdo použije náhodný klíč jen jednou, má šifru, kterou nejde prolomit.',
+  },
+  {
+    id: 'zjednoduseni',
+    glyph: 0b101110,
+    ancientName: 'Méně je víc',
+    modernName: 'Zjednodušení obvodu',
+    ancient: 'Kde stačí jedna runa, nestav čtyři.',
+    modern:
+      'Dva obvody se stejnou pravdivostní tabulkou dělají totéž. Obvod jde zkrátit pomocí pravidel jako ¬¬A = A nebo De Morganových zákonů.',
+    formula: '(A ∨ B) ∧ ¬(A ∧ B) = A ⊻ B',
+    today: 'Návrhové programy čipů automaticky hledají kratší obvody: méně hradel znamená menší, rychlejší a úspornější čip.',
+  },
+  {
+    id: 'zahrada-hloub',
+    glyph: 0b101111,
+    ancientName: 'Hlubší zákony Zahrady',
+    modernName: 'Shrnutí Hlubších síní III',
+    ancient: 'Kdo prošel velkou bránou Zahrady, umí runy zrcadlit, stavět z jediné a pouštět na celou oktávu.',
+    modern:
+      'De Morganovy zákony, ekvivalence a implikace, funkce většiny, univerzalita NAND, bitové masky, šifra XOR a zjednodušování obvodů podle pravdivostní tabulky.',
+    formula: '¬(A ∧ B) = ¬A ∨ ¬B · NAND je univerzální · (Z ⊻ K) ⊻ K = Z',
+    today: 'S tímhle už jde navrhnout skutečnou součástku počítače. V Hlubině Strojů z run postavíš sčítačku a paměť.',
+  },
 ];
 
 export function kodexById(id: string): KodexEntry | undefined {

@@ -9,7 +9,8 @@ import { seeded } from './random';
 import { ARITY } from '../core/logic';
 import * as gate from '../core/puzzles/gate';
 import * as table from '../core/puzzles/table';
-import type { AltarLevel, CascadeLevel, GateLevel, InscriptionLevel, PuzzleLevel, TableLevel, TideLevel } from './types';
+import * as mask from '../core/puzzles/mask';
+import type { AltarLevel, CascadeLevel, GateLevel, InscriptionLevel, MaskLevel, PuzzleLevel, TableLevel, TideLevel } from './types';
 
 /** Kolik vylosovaných variant projde každá kontrola u komnat na procvičování. */
 const SEEDS = 150;
@@ -214,6 +215,7 @@ function circuitChecks(c: gate.Circuit) {
   for (const g of c.nodes) {
     // Runa bere jen ze vstupů a z run před sebou, a buď pevná runa, nebo prázdný kámen.
     g.from.forEach((f) => expect(known.has(f)).toBe(true));
+    g.free?.forEach((f) => expect(known.has(f)).toBe(true));
     expect(!!g.rune !== !!g.choices).toBe(true);
     if (g.choices) expect(new Set(g.choices.map((r) => ARITY[r])).size).toBe(1);
     known.add(g.id);
@@ -227,7 +229,7 @@ function gateChecks(level: GateLevel) {
       circuitChecks(t.circuit);
       if (t.mode === 'slots') {
         expect(t.target).toHaveLength(2 ** t.circuit.inputs.length);
-        expect(gate.slotNodes(t.circuit).length).toBeGreaterThan(0);
+        expect(gate.slotNodes(t.circuit).length + gate.sockets(t.circuit).length).toBeGreaterThan(0);
         expect(gate.solutions(t).length).toBeGreaterThan(0);
       } else {
         expect(gate.slotNodes(t.circuit)).toHaveLength(0);
@@ -243,6 +245,7 @@ function gateChecks(level: GateLevel) {
     while (!st.complete && guard++ < 300) {
       const h = gate.hint(cfg, st);
       if (h && 'input' in h) st = gate.toggleInput(cfg, st, h.input).state;
+      else if (h && 'socket' in h) st = gate.setWire(cfg, st, h.socket, h.source).state;
       else if (h) st = gate.setRune(cfg, st, h.node, h.rune).state;
       else st = gate.test(cfg, st).state;
     }
@@ -286,12 +289,36 @@ function tableChecks(level: TableLevel) {
   });
 }
 
+function maskChecks(level: MaskLevel) {
+  check(level, 'má platná data', (level) => {
+    const { bits, tasks } = level.config;
+    tasks.forEach((t) => {
+      expect(t.value).toBeLessThan(2 ** bits);
+      // Buď cíl, nebo klíč; úloha má řešení a není splněná hned na začátku.
+      expect((t.target === undefined) !== (t.key === undefined)).toBe(true);
+      expect(mask.closestMask(t, bits, 0)).not.toBeNull();
+      expect(mask.solved(t, 0)).toBe(false);
+    });
+    commonChecks(level);
+  });
+
+  check(level, 'jde vyřešit podle nápověd v ideálním počtu doteků', (level) => {
+    const cfg = level.config;
+    let st = mask.initMask();
+    let guard = 0;
+    while (!st.complete && guard++ < 300) st = mask.toggle(cfg, st, mask.hintBit(cfg, st)!).state;
+    expect(st.complete).toBe(true);
+    expect(st.moves).toBe(mask.par(cfg));
+  });
+}
+
 function puzzleChecks(level: PuzzleLevel) {
   if (level.kind === 'altar') altarChecks(level);
   else if (level.kind === 'inscription') inscriptionChecks(level);
   else if (level.kind === 'cascade') cascadeChecks(level);
   else if (level.kind === 'tide') tideChecks(level);
   else if (level.kind === 'gate') gateChecks(level);
+  else if (level.kind === 'mask') maskChecks(level);
   else tableChecks(level);
 }
 
@@ -319,7 +346,7 @@ for (const act of ACTS) {
       it(`${level.id}: losování dává pokaždé jiné úlohy`, () => {
         const variants = new Set(Array.from({ length: 40 }, (_, s) => configs(instantiate(level, seeded(1000 + s)))));
         // Obvodů ze dvou tří run je málo, proto u Zahrady Bran stačí menší pestrost.
-        const logic = partsOf(level).every((p) => p.kind === 'gate' || p.kind === 'table');
+        const logic = partsOf(level).every((p) => p.kind === 'gate' || p.kind === 'table' || p.kind === 'mask');
         expect(variants.size).toBeGreaterThanOrEqual(logic ? 10 : 25);
       });
     }
@@ -329,7 +356,7 @@ for (const act of ACTS) {
       expect(basic.map((l) => l.id)).toEqual(Array.from({ length: GATE }, (_, k) => `${act.numeral}-${k + 1}`));
       const deep = act.levels.filter((l) => isAdvanced(l.id)).map((l) => roomNumber(l.id));
       // Patra I a II mají Hlubší síně celé, další se doplňují.
-      if (act.numeral === 'I' || act.numeral === 'II') expect(deep).toEqual([8, 9, 10, 11, 12, 13, 14, 15]);
+      expect(deep).toEqual([8, 9, 10, 11, 12, 13, 14, 15]);
       deep.forEach((n, k) => {
         expect(n).toBeGreaterThan(GATE);
         expect(n).toBeLessThanOrEqual(15);
@@ -368,6 +395,8 @@ describe('celá observatoř', () => {
     expect(nextLevelId('I-7')).toBe('II-1');
     expect(nextLevelId('II-7')).toBe('III-1');
     expect(nextLevelId('III-7')).toBeNull();
+    expect(nextLevelId('III-14')).toBe('III-15');
+    expect(nextLevelId('III-15')).toBeNull();
     expect(nextLevelId('I-8')).toBe('I-9');
     expect(nextLevelId('I-10')).toBe('I-11');
     expect(nextLevelId('I-15')).toBeNull();

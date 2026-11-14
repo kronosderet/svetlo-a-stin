@@ -5,9 +5,10 @@ import type { InscriptionGame } from '../../../game/inscriptionGame.svelte.ts';
 import type { TideGame } from '../../../game/tideGame.svelte.ts';
 import type { GateGame } from '../../../game/gateGame.svelte.ts';
 import type { TableGame } from '../../../game/tableGame.svelte.ts';
+import type { MaskGame } from '../../../game/maskGame.svelte.ts';
 import * as sound from '../../../audio/sound';
 
-export type AnyGame = AltarGame | InscriptionGame | CascadeGame | TideGame | GateGame | TableGame;
+export type AnyGame = AltarGame | InscriptionGame | CascadeGame | TideGame | GateGame | TableGame | MaskGame;
 
 const TIDE_KEYS: Record<string, TideOp> = {
   ArrowLeft: 'shl',

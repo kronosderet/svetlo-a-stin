@@ -94,12 +94,17 @@
         {/each}
       </div>
 
-      {#if game.phase === 'play'}
-        {#if fill}
-          <button type="button" class="btn btn-primary btn-lg" onclick={() => game.confirm()} disabled={!game.playing}>Potvrdit</button>
-        {:else if task.mode === 'identify'}
+      {#if game.phase === 'play' && fill}
+        <button type="button" class="btn btn-primary btn-lg" onclick={() => game.confirm()} disabled={!game.playing}>Potvrdit</button>
+      {/if}
+    </div>
+  </div>
+
+  {#if game.phase === 'play' && task.mode === 'identify'}
+    <!-- Runy k výběru pod celou deskou: celá Zahrada jich má sedm. -->
+    <div class="pick">
           <p class="side-title carved">Která runa je pod závojem?</p>
-          <div class="choices" role="group" aria-label="Runy">
+          <div class="choices" class:many={task.choices.length > 5} role="group" aria-label="Runy">
             {#each task.choices as rune (rune)}
               <button
                 type="button"
@@ -114,10 +119,8 @@
               </button>
             {/each}
           </div>
-        {/if}
-      {/if}
     </div>
-  </div>
+  {/if}
 
   {#if game.phase === 'quiz' && game.question}
     {#key game.quizIndex}
@@ -247,6 +250,12 @@
     background: radial-gradient(circle at 40% 35%, #fff6d8, #ffd27a 45%, #c98a2a 80%);
     box-shadow: 0 0 10px rgba(255, 210, 130, 0.8);
   }
+  .pick {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
   .choices {
     display: flex;
     flex-wrap: wrap;
@@ -267,6 +276,16 @@
     font-weight: 700;
     color: var(--text);
     cursor: pointer;
+  }
+  /* Celá Zahrada (sedm run): menší kameny, ať se vejdou do dvou řad. */
+  .choices.many {
+    max-width: 620px;
+    gap: 6px;
+  }
+  .many .choice {
+    min-height: 36px;
+    padding: 2px 10px 2px 6px;
+    font-size: var(--fs-sm);
   }
   .choice:hover:not(:disabled) {
     border-color: var(--lumen);
@@ -289,6 +308,12 @@
       padding: 6px 0 18px;
     }
     .drow {
+      min-height: 32px;
+    }
+    .pick {
+      gap: 4px;
+    }
+    .many .choice {
       min-height: 34px;
     }
     .cell {

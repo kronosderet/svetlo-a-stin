@@ -272,7 +272,7 @@ Díky tomu je přidávání levelů rychlé a datově řízené.
 | **Brána** | kamenná deska s obvodem: vlevo krystaly vstupů, uprostřed kameny s runami, vpravo lampa, mezi nimi světlovody, které svítí, když nesou světlo. Zkoumání (runy pevné, hráč zkouší všechny kombinace vstupů) a vkládání run do prázdných kamenů (kliknutí runy střídá, Zkouška projde všechny řádky a nesedící rozsvítí okrově) | hradla, skládání | III |
 | **Deska zákona** | pravdivostní tabulka: hráč rozsvítí, ve kterých řádcích lampa svítí, nebo podle hotové desky pozná runu pod závojem | tabulky, identifikace | III |
 | **Dílna** | volná stavba obvodu (umísti hradla, propoj vodiče, spusť zkoušku) | návrh obvodů | III–IV |
-| **Maska** | bitové operace nad celými oktávami (bajty) | AND/OR/XOR masky | III |
+| **Maska** | ve stěně svítí oktáva, hráč pod ní rozsvěcí masku a runa AND, OR nebo XOR z nich živě skládá výsledek; oltář žádá cílový výsledek, u šifry má maska odpovídat klíči a výsledkem je rozšifrované písmeno | bitové operace, šifra XOR | III |
 | **Šifra** | kódování/dekódování zpráv | XOR šifra, ASCII, hex | III, V |
 | **Léčitel** | najdi a oprav poškozený bit | parita, Hamming | V |
 | **Mozaika** | mřížka 8×8, každý řádek je bajt | bitmapy | V |
@@ -349,18 +349,18 @@ tesali těmi samými znaky. Moderní značka (NOT, AND…) se pod runou objeví,
 | III-5 | Které pravidlo? | Deska zákona | identifikace | Losované desky: tři poznat (runa pod závojem), dvě vyplnit. Špatná volba řekne, ve kterém řádku by zvolená runa svítila jinak. |
 | III-6 | Řetězy | Brána | skládání | Dvě runy za sebou: hráč objeví Zlomené pouto (NAND) a Zavřené rozcestí (NOR), pak větvení s Obracečem na jednom vstupu. |
 | III-7 | **Brána Zahrady** | smíšená | syntéza | Deska zákona dvou obvodů, osazení kamenů ke třem deskám a dvě runy pod závojem z pěti. |
-| | *Hlubší síně* | | | *Nepovinné, otevřou se po bráně patra. Fáze B.* |
-| III-8 | *Zrcadla* (plán) | Brána s točitými kameny | De Morgan | NOT(A AND B) a (NOT A) OR (NOT B) dají stejnou desku. |
-| III-9 | *Rovnost a důsledek* (plán) | Deska | ekvivalence, implikace | Zbylé spojky výrokové logiky. |
-| III-10 | *Hlas většiny* (plán) | Brána | 3 vstupy | Lampa svítí, když svítí aspoň dva ze tří vstupů. |
-| III-11 | *Prapečeť* (plán) | Brána s točitými kameny | univerzalita NAND | Jen runy NAND: postav z nich NOT, AND a OR. |
-| III-12 | *Masky* (plán) | Maska | bitové operace | AND vybírá, OR rozsvěcí, XOR přepíná celou oktávu. |
-| III-13 | *Tajná řeč* (plán) | Maska | XOR šifra | Zašifruj zprávu klíčem a znovu ji rozšifruj. |
-| III-14 | *Méně je víc* (plán) | Brána | zjednodušení | Nahraď obvod ze tří run kratším se stejnou deskou. |
-| III-15 | ***Velká brána Zahrady*** (plán) | smíšená | syntéza | Obvod podle desky s omezeným počtem run a maska. |
+| | *Hlubší síně* | | | *Nepovinné, otevřou se po bráně patra.* |
+| III-8 | Zrcadla | smíšená (Deska + Brána) | De Morgan | Desky pro Zlomené pouto a pro Rozcestí obrácených vstupů vyjdou stejně. Pak hráč postaví Zavřené rozcestí jako Pouto obrácených vstupů. |
+| III-9 | Rovnost a důsledek | smíšená (Brána + Deska) | ekvivalence, implikace | Nové runy Rovnost ⇔ (XNOR) a Důsledek ⇒ (implikace): zkoumání, desky a poznání pod závojem. Kvíz: „Když prší, je mokro.“ |
+| III-10 | Hlas většiny | smíšená (Brána) | 3 vstupy | Tři vstupy, osm kombinací (tichým krokem), pak osazení pěti kamenů Pouty a Rozcestími. Platí obě řešení: Pouta a Rozcestí i Rozcestí a Pouta. |
+| III-11 | Prapečeť | Brána s točitými kameny | univerzalita NAND | Jen Zlomená pouta. Točité kameny u jejich vstupů vybírají zdroj světla: z NAND vznikne NOT, AND i OR. |
+| III-12 | Masky | Maska | bitové operace | Šest úloh na oktávě: dvakrát vybrat (AND), dvakrát rozsvítit (OR), dvakrát přepnout (XOR). |
+| III-13 | Tajná řeč | Maska s klíčem | XOR šifra | Zašifrovat písmeno klíčem a pak stejným klíčem rozšifrovat zprávu E, C, H, O (ASCII). Echo: „To jsem já.“ |
+| III-14 | Méně je víc | Brána se vzorem | zjednodušení | Starý obvod Lumenitů o dvou až čtyřech runách se nahradí jedinou runou se stejnou deskou. |
+| III-15 | **Velká brána Zahrady** | smíšená | syntéza | Dvě runy pod závojem ze sedmi, Pouto nebo Rozcestí jen ze Zlomených pout a dvě masky. |
 
 Volná stavba obvodů (Dílna) se přesouvá do Hlubiny Strojů. V Zahradě místo vodičů slouží točité kameny
-u vstupů run, které vybírají, odkud světlo přitéká.
+u vstupů run, které vybírají, odkud světlo přitéká (runy mají na desce čísla, kámen ukazuje A, B nebo číslo runy).
 
 ### Akt IV — Hlubina Strojů (obvody a paměť)
 
@@ -881,4 +881,6 @@ osnovy nejde naučit těmi stávajícími.
     Zbývá vyzkoušet na skutečném školním počítači.
 12. **Akt III, Zahrada Bran, fáze A ✓:** základ III-1 až III-7, archetypy Brána a Deska zákona,
     runy NOT, AND, OR, XOR (NAND a NOR skládáním), glyfy patra s kosočtvercem uprostřed, sedm
-    záznamů Kodexu. Fáze B: Hlubší síně III-8 až III-15 (točité kameny vstupů, tři vstupy, Maska).
+    záznamů Kodexu. Fáze B ✓: Hlubší síně III-8 až III-15, točité kameny vstupů run, runy Rovnost a Důsledek,
+    tři vstupy, starý obvod jako vzor, archetyp Maska se šifrou XOR, osm záznamů Kodexu.
+13. Akt IV, Hlubina Strojů: poloviční a úplná sčítačka, Dílna (volná stavba obvodů), paměť.

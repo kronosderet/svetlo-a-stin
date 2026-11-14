@@ -1,7 +1,7 @@
 <script lang="ts">
   import RuneIcon from './RuneIcon.svelte';
   import { ARITY, type Rune } from '../../core/logic';
-  import { evaluate, type Circuit, type GateNode } from '../../core/puzzles/gate';
+  import { evaluate, socketKey, sourcesOf, type Circuit, type GateNode } from '../../core/puzzles/gate';
   import { RUNE_KODEX, RUNE_MODERN, RUNE_NAME } from '../../content/runes';
   import { progress } from '../../game/progress.svelte.ts';
   import { settings } from '../../game/settings.svelte.ts';
@@ -11,6 +11,8 @@
     /** Vstupy jako řádek tabulky (A nejvyšší bit). */
     inputs: number;
     runes: Record<string, Rune>;
+    /** Natočení točitých kamenů (klíč „runa:vstup“ → zdroj). */
+    wires?: Record<string, string>;
     /** Krystaly vstupů jde přepínat. */
     canToggle: boolean;
     /** Prázdné kameny jde osazovat runami. */
@@ -21,16 +23,18 @@
     veiled?: boolean;
     /** Bez krystalů vstupů, jen jejich jména (obvod na Desce zákona). */
     staticInputs?: boolean;
-    highlight?: { input: number } | { node: string } | null;
+    highlight?: { input: number } | { node: string } | { socket: string } | null;
     celebrate?: boolean;
     onInput?: (index: number) => void;
     onSlot?: (node: string) => void;
+    onSocket?: (key: string) => void;
   }
 
   let {
     circuit,
     inputs,
     runes,
+    wires = {},
     canToggle,
     canPlace,
     modern,
@@ -40,6 +44,7 @@
     celebrate = false,
     onInput,
     onSlot,
+    onSocket,
   }: Props = $props();
 
   const CW = 150;
@@ -48,7 +53,11 @@
   const PY = 56;
 
   const n = $derived(circuit.inputs.length);
-  const values = $derived(staticInputs ? null : evaluate(circuit, runes, inputs));
+  const values = $derived(staticInputs ? null : evaluate(circuit, runes, inputs, wires));
+  /** Obvod s točitými kameny: runy mají čísla, ať jde na kameni poznat, odkud světlo bere. */
+  const numbered = $derived(circuit.nodes.some((g) => g.free));
+  const nodeNo = (id: string) => circuit.nodes.findIndex((g) => g.id === id) + 1;
+  const sourceName = (src: string) => (circuit.inputs.includes(src) ? src : String(nodeNo(src)));
   const lampCol = $derived(Math.max(...circuit.nodes.map((g) => g.col)) + 1);
   const outNode = $derived(circuit.nodes.find((g) => g.id === circuit.output)!);
   const maxRow = $derived(Math.max(n - 1, ...circuit.nodes.map((g) => g.row)));
@@ -72,7 +81,7 @@
     return { x: p.x + 34, y: p.y };
   }
 
-  const wires = $derived.by(() => {
+  const paths = $derived.by(() => {
     const out: { d: string; on: boolean; dead: boolean }[] = [];
     const path = (a: { x: number; y: number }, b: { x: number; y: number }) => {
       const m = (a.x + b.x) / 2;
@@ -81,10 +90,15 @@
     for (const g of circuit.nodes) {
       const p = nodePos(g);
       const k = arity(g);
-      g.from.slice(0, k).forEach((src, j) => {
-        const v = values ? values[src] : null;
-        out.push({ d: path(outAnchor(src), { x: p.x - 34, y: p.y + (k === 2 ? (j === 0 ? -16 : 16) : 0) }), on: v === 1, dead: !staticInputs && v === null });
-      });
+      // U točitých kamenů vede vodič jen tam, kam je kámen natočený, a končí u kamene.
+      const endX = g.free ? p.x - 62 : p.x - 34;
+      sourcesOf(g, wires)
+        .slice(0, k)
+        .forEach((src, j) => {
+          if (src === null) return;
+          const v = values ? values[src] : null;
+          out.push({ d: path(outAnchor(src), { x: endX, y: p.y + (k === 2 ? (j === 0 ? -16 : 16) : 0) }), on: v === 1, dead: !staticInputs && v === null });
+        });
     }
     const v = values ? values[circuit.output] : null;
     out.push({ d: path(outAnchor(circuit.output), { x: lampPos.x - 26, y: lampPos.y }), on: v === 1, dead: !staticInputs && v === null });
@@ -111,7 +125,7 @@
 
 <div class="circuit stone" class:celebrate style:width="min(100%, {W}px)" style:aspect-ratio="{W} / {H}" style:--k={k} bind:clientWidth={boxW}>
   <svg class="wires" viewBox="0 0 {W} {H}" aria-hidden="true">
-    {#each wires as w, k (k)}
+    {#each paths as w, k (k)}
       <path class="groove" d={w.d} />
       <path class="flow" class:on={w.on} class:dead={w.dead} d={w.d} />
     {/each}
@@ -145,6 +159,28 @@
 
   {#each circuit.nodes as g (g.id)}
     {@const p = nodePos(g)}
+    {#if g.free}
+      <!-- Točité kameny: každý vstup runy ukazuje, odkud bere světlo. -->
+      {#each Array.from({ length: arity(g) }, (_, j) => j) as j (j)}
+        {@const key = socketKey(g.id, j)}
+        {@const src = wires[key]}
+        <div class="slot-pos" style:left={pct(p.x - 48, W)} style:top={pct(p.y + (arity(g) === 2 ? (j === 0 ? -16 : 16) : 0), H)}>
+          <button
+            type="button"
+            class="socket"
+            class:set={!!src}
+            class:hl={highlight && 'socket' in highlight && highlight.socket === key}
+            disabled={!canPlace}
+            aria-label="Točitý kámen {j + 1}. vstupu runy {nodeNo(g.id)}: {src ? `bere světlo z ${sourceName(src)}` : 'nenastavený'}. Kliknutím pootočíš."
+            onclick={() => onSocket?.(key)}
+          >{src ? sourceName(src) : '·'}</button>
+        </div>
+      {/each}
+    {/if}
+  {/each}
+
+  {#each circuit.nodes as g (g.id)}
+    {@const p = nodePos(g)}
     {@const r = runeOf(g)}
     <div class="slot-pos" style:left={pct(p.x, W)} style:top={pct(p.y, H)}>
       <button
@@ -164,6 +200,7 @@
         {:else}
           <RuneIcon rune={r} />
         {/if}
+        {#if numbered}<span class="no" aria-hidden="true">{nodeNo(g.id)}</span>{/if}
       </button>
       {#if r && !veiled}
         <span class="rune-name">{RUNE_NAME[r]}{#if translated(r)}<span class="modern"> · {RUNE_MODERN[r]}</span>{/if}</span>
@@ -328,6 +365,42 @@
     font-size: var(--fs-2xl);
     font-weight: 700;
     color: var(--text-muted);
+  }
+  .stone-rune {
+    position: relative;
+  }
+  .no {
+    position: absolute;
+    top: 3px;
+    left: 6px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-muted);
+  }
+  /* Točitý kámen: malé kolečko, kliknutím se pootočí k dalšímu zdroji světla */
+  .socket {
+    display: grid;
+    place-items: center;
+    width: 26px;
+    height: 26px;
+    padding: 0;
+    border: 2px dashed rgba(255, 217, 138, 0.5);
+    border-radius: 50%;
+    background: radial-gradient(circle at 50% 40%, #2a221a, #15100b);
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-muted);
+    cursor: pointer;
+  }
+  .socket.set {
+    border-style: solid;
+    border-color: #8a6a2a;
+    color: var(--lumen);
+  }
+  .socket:disabled {
+    cursor: default;
   }
   .rune-name {
     position: absolute;

@@ -7,6 +7,7 @@
   import Tide from '../tide/Tide.svelte';
   import Gate from '../gate/Gate.svelte';
   import Desk from '../gate/Desk.svelte';
+  import Mask from '../gate/Mask.svelte';
   import EchoBubble from '../EchoBubble.svelte';
   import FxLayer, { type Area, type Point } from '../FxLayer.svelte';
   import Icon from '../Icon.svelte';
@@ -21,6 +22,7 @@
   import { TideGame } from '../../game/tideGame.svelte.ts';
   import { GateGame } from '../../game/gateGame.svelte.ts';
   import { TableGame } from '../../game/tableGame.svelte.ts';
+  import { MaskGame } from '../../game/maskGame.svelte.ts';
   import { Echo } from '../../game/echo.svelte.ts';
   import { FX, fxState } from '../../game/fx.svelte.ts';
   import { go, openKodex, ui } from '../../game/nav.svelte.ts';
@@ -34,6 +36,7 @@
   import { onCascade } from './level/cascadeEvents';
   import { onTide } from './level/tideEvents';
   import { onGate, onTable } from './level/gateEvents';
+  import { onMask } from './level/maskEvents';
   import { puzzleKey } from './level/keys';
 
   let { id }: { id: string } = $props();
@@ -51,6 +54,7 @@
   const bitsOf = (l: PuzzleLevel): number => {
     if (l.kind === 'cascade') return l.config.width;
     if (l.kind === 'gate' || l.kind === 'table') return l.config.tasks[0].circuit.inputs.length;
+    if (l.kind === 'mask') return l.config.bits;
     return l.config.bits;
   };
   /** Aktuální část komnaty (u obyčejné komnaty celá komnata). */
@@ -107,6 +111,8 @@
         return new GateGame(level, handle);
       case 'table':
         return new TableGame(level, handle);
+      case 'mask':
+        return new MaskGame(level, handle);
     }
   }
 
@@ -221,6 +227,9 @@
         break;
       case 'table':
         onTable(ctx, e.event, e.state);
+        break;
+      case 'mask':
+        onMask(ctx, e.event, e.state);
         break;
       case 'hint': {
         const text = level.hints[e.level - 1];
@@ -362,8 +371,10 @@
         <Tide {game} {pulse} />
       {:else if game.kind === 'gate'}
         <Gate {game} {pulse} />
-      {:else}
+      {:else if game.kind === 'table'}
         <Desk {game} {pulse} />
+      {:else}
+        <Mask {game} {pulse} />
       {/if}
     {/key}
   </div>

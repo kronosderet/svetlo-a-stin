@@ -4,10 +4,10 @@
  * první vstup (A) je nejvyšší bit: pro dva vstupy 00, 01, 10, 11.
  */
 
-export type Rune = 'id' | 'not' | 'and' | 'or' | 'xor' | 'nand' | 'nor';
+export type Rune = 'id' | 'not' | 'and' | 'or' | 'xor' | 'nand' | 'nor' | 'xnor' | 'imp';
 
 /** Kolik světel runa bere. */
-export const ARITY: Record<Rune, 1 | 2> = { id: 1, not: 1, and: 2, or: 2, xor: 2, nand: 2, nor: 2 };
+export const ARITY: Record<Rune, 1 | 2> = { id: 1, not: 1, and: 2, or: 2, xor: 2, nand: 2, nor: 2, xnor: 2, imp: 2 };
 
 export function applyRune(rune: Rune, a: number, b = 0): number {
   switch (rune) {
@@ -25,6 +25,11 @@ export function applyRune(rune: Rune, a: number, b = 0): number {
       return a & b ? 0 : 1;
     case 'nor':
       return a | b ? 0 : 1;
+    case 'xnor':
+      return a === b ? 1 : 0;
+    case 'imp':
+      // Důsledek A ⇒ B: neplatí jen tehdy, když A platí a B ne.
+      return a && !b ? 0 : 1;
   }
 }
 

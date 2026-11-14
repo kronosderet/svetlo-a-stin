@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { applyRune, runeTable } from '../logic';
-import { evaluate, hint, initGate, lampTable, par, setRune, solutions, test, toggleInput, type Circuit, type GateConfig } from './gate';
+import { evaluate, hint, initGate, lampTable, par, setRune, setWire, solutions, test, toggleInput, type Circuit, type GateConfig } from './gate';
 import { confirm, hint as tableHint, initTable, pick, tableOf, toggleCell, type TableConfig } from './table';
 
 describe('runy', () => {
@@ -67,7 +67,7 @@ describe('Brána: vkládání run', () => {
   });
 
   it('řešení a nápověda', () => {
-    expect(solutions(cfg.tasks[0])).toEqual([{ g1: 'and', g2: 'not' }]);
+    expect(solutions(cfg.tasks[0])).toEqual([{ runes: { g1: 'and', g2: 'not' }, wires: {} }]);
     let st = initGate();
     let guard = 0;
     for (let h = hint(cfg, st); h && guard++ < 10; h = hint(cfg, st)) st = setRune(cfg, st, (h as { node: string }).node, (h as { rune: 'and' }).rune).state;
@@ -103,5 +103,39 @@ describe('Deska zákona', () => {
     expect(r.state.complete).toBe(true);
     st = r.state;
     expect(st.moves).toBe(2);
+  });
+});
+
+describe('Brána: točité kameny (Prapečeť)', () => {
+  const orFromNand: Circuit = {
+    inputs: ['A', 'B'],
+    nodes: [
+      { id: 'n1', rune: 'nand', from: [], free: ['A', 'B'], col: 1, row: 0 },
+      { id: 'n2', rune: 'nand', from: [], free: ['A', 'B'], col: 1, row: 1 },
+      { id: 'n3', rune: 'nand', from: [], free: ['n1', 'n2'], col: 2, row: 0.5 },
+    ],
+    output: 'n3',
+  };
+  const cfg: GateConfig = { tasks: [{ circuit: orFromNand, mode: 'slots', target: runeTable('or') }] };
+
+  it('nenastavený kámen nepustí světlo, nastavené kameny ano', () => {
+    expect(lampTable(orFromNand)).toEqual([null, null, null, null]);
+    const wires = { 'n1:0': 'A', 'n1:1': 'A', 'n2:0': 'B', 'n2:1': 'B', 'n3:0': 'n1', 'n3:1': 'n2' };
+    expect(lampTable(orFromNand, {}, wires)).toEqual([0, 1, 1, 1]);
+  });
+
+  it('nápověda natočí kameny k řešení', () => {
+    let st = initGate();
+    let guard = 0;
+    for (let h = hint(cfg, st); h && guard++ < 20; h = hint(cfg, st)) {
+      expect('socket' in h).toBe(true);
+      st = setWire(cfg, st, (h as { socket: string }).socket, (h as { source: string }).source).state;
+    }
+    expect(test(cfg, st).state.complete).toBe(true);
+  });
+
+  it('Rovnost a Důsledek', () => {
+    expect(runeTable('xnor')).toEqual([1, 0, 0, 1]);
+    expect(runeTable('imp')).toEqual([1, 1, 0, 1]);
   });
 });

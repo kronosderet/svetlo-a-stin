@@ -39,6 +39,12 @@ export function onGate(ctx: LevelCtx, ev: GateEvent, state: GateState): void {
       sound.playSpark(true);
       ctx.announce(`Do kamene vložena runa ${RUNE_NAME[ev.rune]}.`);
       break;
+    case 'wire': {
+      sound.playTick();
+      const src = circuit.inputs.includes(ev.source) ? `vstupu ${ev.source}` : `runy ${circuit.nodes.findIndex((g) => g.id === ev.source) + 1}`;
+      ctx.announce(`Točitý kámen natočen: světlo teče z ${src}.`);
+      break;
+    }
     case 'wrong': {
       ctx.failFx('.trow.failed', '.circuit');
       const k = ev.failed.length;
