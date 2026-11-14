@@ -76,6 +76,7 @@
   onclick={onToggle}
 >
   <span class="gem-wrap" bind:this={wrap}>
+    {#if celebrate && on}<span class="beam" aria-hidden="true"></span>{/if}
     <span class="halo" aria-hidden="true"></span>
     {#if highlight}<span class="ring" aria-hidden="true"></span>{/if}
     <svg class="gem" viewBox="0 0 100 160" aria-hidden="true" focusable="false">
@@ -260,6 +261,22 @@
   .celebrate .gem-wrap {
     animation: rise 900ms ease-out var(--d) both;
   }
+  /* Komnata otevřena: z rozsvíceného krystalu vyšlehne slabý sloup světla ke stropu. */
+  .beam {
+    position: absolute;
+    left: 50%;
+    bottom: 40%;
+    z-index: -1;
+    width: 70%;
+    height: 340%;
+    transform-origin: 50% 100%;
+    transform: translateX(-50%) scaleY(0);
+    background: linear-gradient(0deg, rgba(255, 226, 160, 0.85), rgba(255, 200, 110, 0.35) 45%, transparent);
+    filter: blur(3px);
+    mix-blend-mode: screen;
+    pointer-events: none;
+    animation: beam 1500ms ease-out var(--d) both;
+  }
 
   /* Kamenný podstavec s bronzovými drápky. */
   .plinth {
@@ -366,6 +383,20 @@
     color: var(--lumen-glow);
   }
 
+  @keyframes beam {
+    0% {
+      transform: translateX(-50%) scaleY(0);
+      opacity: 0;
+    }
+    25% {
+      transform: translateX(-50%) scaleY(1);
+      opacity: 0.35;
+    }
+    100% {
+      transform: translateX(-50%) scaleY(1.1);
+      opacity: 0;
+    }
+  }
   @keyframes breathe {
     50% {
       opacity: 0.55;

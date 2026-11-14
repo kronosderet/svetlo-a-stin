@@ -185,8 +185,8 @@ export function playDoor(): void {
 
 /** Cvaknutí kamenného kotouče. */
 export function playTick(): void {
-  noiseBurst({ dur: 0.035, gain: 0.32, freq: 2600, q: 2, type: 'bandpass', wet: false });
-  tone(190, { dur: 0.05, gain: 0.04, type: 'triangle' });
+  noiseBurst({ dur: 0.035, gain: 0.1, freq: 2600, q: 2, type: 'bandpass', wet: false });
+  tone(190, { dur: 0.05, gain: 0.012, type: 'triangle' });
 }
 
 /** Dláto vyryje čárku: dva ťuky a škrábnutí. */
@@ -277,4 +277,20 @@ export function playSpill(): void {
   osc.start(t0);
   osc.stop(t0 + 0.55);
   noiseBurst({ at: 0.48, dur: 0.12, gain: 0.18, freq: 400, q: 0.8, type: 'lowpass' });
+}
+
+/** Mechanismus nepovolil: tupý úder kamene, zachrastění štěrku a nízký nesouzvuk. */
+export function playFail(): void {
+  noiseBurst({ dur: 0.22, gain: 0.17, freq: 180, q: 0.8, type: 'lowpass' });
+  tone(73.4, { dur: 0.5, gain: 0.05 });
+  tone(77.8, { at: 0.02, dur: 0.45, gain: 0.03, type: 'triangle' });
+  for (let k = 0; k < 6; k++) {
+    noiseBurst({ at: 0.12 + k * 0.05 + Math.random() * 0.03, dur: 0.05, gain: 0.04, freq: 1800 + Math.random() * 1500, q: 2 });
+  }
+}
+
+/** Dunění kamene při otevření komnaty. */
+export function playRumble(dur = 1.4): void {
+  noiseBurst({ dur, gain: 0.1, freq: 110, q: 0.7, type: 'lowpass', attack: 0.25 });
+  tone(41, { dur: dur * 0.9, gain: 0.04, attack: 0.3 });
 }

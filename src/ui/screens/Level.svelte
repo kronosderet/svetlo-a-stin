@@ -1,11 +1,12 @@
 <script lang="ts">
-  import { untrack } from 'svelte';
+  import { tick, untrack } from 'svelte';
   import Altar from '../altar/Altar.svelte';
   import LevelComplete from '../altar/LevelComplete.svelte';
   import Inscription from '../inscription/Inscription.svelte';
   import Cascade from '../cascade/Cascade.svelte';
   import Tide from '../tide/Tide.svelte';
   import EchoBubble from '../EchoBubble.svelte';
+  import FxLayer, { type Area, type Point } from '../FxLayer.svelte';
   import Icon from '../Icon.svelte';
   import { actOf, getLevel, nextLevelId } from '../../content/levels';
   import { kodexById } from '../../content/kodex';
@@ -20,6 +21,7 @@
   import { InscriptionGame } from '../../game/inscriptionGame.svelte.ts';
   import { TideGame } from '../../game/tideGame.svelte.ts';
   import { Echo } from '../../game/echo.svelte.ts';
+  import { FX, fxState } from '../../game/fx.svelte.ts';
   import { go, openKodex, ui } from '../../game/nav.svelte.ts';
   import { recordResult, unseenKodex } from '../../game/progress.svelte.ts';
   import { saveSettings, settings } from '../../game/settings.svelte.ts';
@@ -72,6 +74,8 @@
   let firstRevealSaid = false;
   let repeatSaid = false;
   let wrongCount = 0;
+  let fx: FxLayer | undefined = $state();
+  let stageEl: HTMLElement | undefined = $state();
   let spillSaid = false;
   /** Roste s každým chybným potvrzením Kaskády (otřese sloupcem). */
   let wobble = $state(0);
@@ -87,6 +91,60 @@
 
   function words(mask: number): string {
     return level.presentation.showDigits || settings.alwaysDigits ? toBinaryString(mask, bits) : patternWords(mask, bits);
+  }
+
+  /** Střed prvního nalezeného prvku scény (odkud efekt vychází). */
+  function centerOf(...selectors: string[]): Point {
+    for (const sel of selectors) {
+      const el = stageEl?.querySelector(sel);
+      if (el) {
+        const r = el.getBoundingClientRect();
+        return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+      }
+    }
+    const r = stageEl?.getBoundingClientRect();
+    return r ? { x: r.left + r.width / 2, y: r.top + r.height / 2 } : { x: innerWidth / 2, y: innerHeight / 2 };
+  }
+
+  function stageArea(): Area {
+    const r = stageEl?.getBoundingClientRect();
+    return r ? { left: r.left, right: r.right, top: Math.max(0, r.top) } : { left: 0, right: innerWidth, top: 0 };
+  }
+
+  /** Otřes scény: při chybě prudký ráz, při otevření komnaty dlouhé dunění. */
+  function shake(kind: 'fail' | 'win') {
+    if (settings.reducedMotion || !stageEl) return;
+    const s = kind === 'fail' ? FX.fail : FX.win;
+    // [x px, y px, otočení °] pro ráz při chybě; dunění při otevření komnaty je drobné chvění.
+    const hits = [
+      [0, 0, 0],
+      [-9, 2, -0.4],
+      [8, -2, 0.35],
+      [-5, 1, -0.2],
+      [3, 0, 0.1],
+      [0, 0, 0],
+    ];
+    const frames =
+      kind === 'fail'
+        ? hits.map(([x, y, r]) => ({ transform: `translate(${x * s}px, ${y * s}px) rotate(${r * s}deg)` }))
+        : Array.from({ length: 14 }, (_, k) => ({
+            transform: k === 13 ? 'none' : `translate(${(Math.random() * 2 - 1) * 3 * s}px, ${(Math.random() * 2 - 1) * 2 * s}px)`,
+          }));
+    stageEl.animate(frames, { duration: kind === 'fail' ? 520 : 1100, easing: 'ease-out' });
+  }
+
+  /** Chyba: mechanismus nepovolí (zvuk, otřes, prach ze stropu). */
+  function failFx(...selectors: string[]) {
+    sound.playFail();
+    tick().then(() => {
+      fx?.fail(centerOf(...selectors), stageArea());
+      shake('fail');
+    });
+  }
+
+  /** Splněný krok: vlna světla a jiskry z místa, kde se to stalo. */
+  function stepFx(...selectors: string[]) {
+    tick().then(() => fx?.step(centerOf(...selectors)));
   }
 
   function handle(e: GameEvent) {
@@ -110,8 +168,16 @@
         break;
       }
       case 'quiz': {
-        if (e.correct) sound.playChime();
-        else sound.playSoft();
+        const btn = document.activeElement instanceof HTMLElement ? document.activeElement.getBoundingClientRect() : null;
+        const at = btn ? { x: btn.left + btn.width / 2, y: btn.top + btn.height / 2 } : centerOf('.quiz');
+        if (e.correct) {
+          sound.playChime();
+          fx?.step(at);
+        } else {
+          sound.playFail();
+          fx?.puff(at, 22 * FX.fail);
+          shake('fail');
+        }
         break;
       }
       case 'solved': {
@@ -119,6 +185,12 @@
         recordResult(level.id, e.result, level.kodex);
         solvedLines = [...level.echo.solved, ...(e.result.seals.skill && level.echo.skill ? [level.echo.skill] : [])];
         pulse += 1;
+        fxState.wins += 1;
+        sound.playRumble();
+        tick().then(() => {
+          fx?.win(centerOf('.row', '.board', '.register', '.wall'), stageArea());
+          shake('win');
+        });
         announce(`Komnata otevřena. ${solvedLines.map(plainText).join(' ')}`);
         completeTimer = setTimeout(() => {
           showComplete = true;
@@ -147,11 +219,13 @@
       }
     } else if (ev.type === 'found') {
       sound.playChord(ev.pattern, bits, 0.08);
+      stepFx('.niche.current', '.row');
       const line = level.echo.found?.[ev.count];
       if (line) echo.say([line]);
       announce(`Nový obrazec. Nalezeno ${ev.count} z ${2 ** bits}.`);
     } else if (ev.type === 'repeat') {
       sound.playSoft();
+      fx?.puff(centerOf('.niche.current', '.row'), 10);
       if (!repeatSaid && level.echo.repeat) {
         echo.say([level.echo.repeat]);
         repeatSaid = true;
@@ -161,6 +235,7 @@
       if (counter) sound.playCarve();
       else if (cfg.goal.kind === 'value') sound.playGrind();
       pulse += 1;
+      stepFx('.row');
       const line = level.echo.step?.[ev.index];
       if (line) echo.say([line]);
       const targets = cfg.goal.kind === 'all' ? [] : cfg.goal.targets;
@@ -180,7 +255,7 @@
       sound.playBit(ev.bit, ev.on);
       announce(`Krystal ${bits - ev.bit} zleva ${ev.on ? 'rozsvícen' : 'zhasnut'}.`);
     } else if (ev.type === 'wrong') {
-      sound.playSoft();
+      failFx('.dial', '.wall');
       wrongCount++;
       if (ev.guess > maxValue(bits)) echo.say([`Tolik se do ${bits} krystalů nevejde. Nejvíc je ${maxValue(bits)}.`]);
       else if (wrongCount === 1 && level.echo.wrong) echo.say([level.echo.wrong]);
@@ -190,6 +265,7 @@
       sound.playChord(ev.task.value, bits, 0.1);
       sound.playGrind(ev.task.dir === 'read' ? 0.6 : 0.9);
       pulse += 1;
+      stepFx('.wall');
       const line = level.echo.step?.[ev.index];
       if (line) echo.say([line]);
       const upcoming = cfg.tasks[state.step];
@@ -256,7 +332,7 @@
               : `Krystal přenosu nad sloupcem ${column + 1} zprava`;
       announce(`${what}: ${ev.on ? 'světlo' : 'stín'}.`);
     } else if (ev.type === 'wrong') {
-      sound.playSoft();
+      failFx('.strip.wrong', '.chute.wrong', '.board');
       wobble += 1;
       const why = cascadeWhy(ev, state);
       echo.say([why]);
@@ -265,6 +341,7 @@
       sound.playCascade(cfg.width);
       sound.playGrind(0.7);
       pulse += 1;
+      stepFx('.board');
       const line = level.echo.step?.[ev.index];
       if (line) echo.say([line]);
       announce(state.complete ? 'Správně.' : 'Správně. Ve stěně je další úloha.');
@@ -281,13 +358,19 @@
       sound.playChord(ev.to, bits, 0.06);
       const lost = ev.spill === 'left' || ev.spill === 'right';
       if (ev.spill) sound.playSpill();
+      // Kamenná řada se posune a na okraji se zvíří prach.
+      const reg = stageEl?.querySelector('.register .crystals')?.getBoundingClientRect();
+      if (reg && (ev.op === 'shl' || ev.op === 'shr' || lost)) {
+        const leftEdge = ev.op === 'shl' || ev.spill === 'left';
+        fx?.puff({ x: leftEdge ? reg.left + 10 : reg.right - 10, y: reg.bottom - 30 }, lost ? 18 : 8);
+      }
       if (lost && !spillSaid && level.echo.spill) {
         echo.say([level.echo.spill]);
         spillSaid = true;
       }
       announce(`${LEVER_NAME[ev.op]}. Světlo váží ${ev.to}.${lost ? ' Jedno světlo spadlo přes okraj.' : ''}`);
     } else if (ev.type === 'reset') {
-      sound.playSoft();
+      failFx('.register');
       sound.playGrind(0.6);
       if (level.echo.reset) echo.say([level.echo.reset]);
       announce(`Tahy došly. Světlo se vrátilo na ${ev.to}.`);
@@ -295,6 +378,7 @@
       sound.playChord(ev.target, bits, 0.1);
       sound.playGrind(0.8);
       pulse += 1;
+      stepFx('.register');
       const line = level.echo.step?.[ev.index];
       if (line) echo.say([line]);
       const upcoming = cfg.tasks[state.step];
@@ -414,7 +498,7 @@
     </div>
   </header>
 
-  <div class="stage">
+  <div class="stage" bind:this={stageEl}>
     {#if game.kind === 'altar'}
       <Altar {game} {pulse} />
     {:else if game.kind === 'inscription'}
@@ -450,6 +534,7 @@
   </footer>
 
   <div class="visually-hidden" aria-live="polite">{announcement}</div>
+  <FxLayer bind:this={fx} />
 </div>
 
 {#if showComplete && game.result}

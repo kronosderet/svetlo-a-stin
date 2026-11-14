@@ -14,13 +14,40 @@
 
   const m = $derived(settings.reducedMotion ? 0 : 1);
   const ticks = Array.from({ length: 24 }, (_, k) => k * 15);
+
+  /** Obrys ozubeného kola (lichoběžníkové zuby). */
+  function gear(teeth: number, inner: number, outer: number): string {
+    const pts: string[] = [];
+    const step = Math.PI / teeth;
+    for (let k = 0; k < teeth * 2; k++) {
+      const r = k % 2 ? inner : outer;
+      const a = k * step;
+      for (const da of [-0.3, 0.3]) {
+        const b = a + da * step;
+        pts.push(`${(r * Math.cos(b)).toFixed(1)},${(r * Math.sin(b)).toFixed(1)}`);
+      }
+    }
+    return `M${pts.join('L')}Z`;
+  }
+  const RIM = gear(30, 74, 79);
+  const COG = gear(10, 13, 18);
 </script>
 
 <!-- Kamenné kolo s bronzovými hřeby a vykládaným číslem. -->
 <div class="demand">
   <span class="demand-label carved">{label}</span>
   <span class="disc stone">
+    <!-- Dvě bronzová kolečka zapadají do ozubení a točí se proti kolu. -->
+    <svg class="cog left" viewBox="-20 -20 40 40" style:transform="rotate({-turn * 4.1}deg)" aria-hidden="true">
+      <path d={COG} />
+      <circle r="5" />
+    </svg>
+    <svg class="cog right" viewBox="-20 -20 40 40" style:transform="rotate({-turn * 4.1 + 9}deg)" aria-hidden="true">
+      <path d={COG} />
+      <circle r="5" />
+    </svg>
     <svg class="disc-ring" viewBox="-80 -80 160 160" style:transform="rotate({turn}deg)" aria-hidden="true">
+      <path d={RIM} class="rim" />
       <circle r="74" class="groove" />
       {#each ticks as deg (deg)}
         <line x1="0" y1="-74" x2="0" y2={deg % 45 === 0 ? -62 : -67} transform="rotate({deg})" />
@@ -69,6 +96,39 @@
     width: 100%;
     height: 100%;
     transition: transform 1100ms var(--heavy);
+  }
+  .disc-ring {
+    overflow: visible;
+  }
+  .disc-ring .rim {
+    fill: rgba(30, 22, 14, 0.55);
+    stroke: rgba(0, 0, 0, 0.6);
+    stroke-width: 1.2;
+  }
+  .cog {
+    position: absolute;
+    top: 50%;
+    width: 26%;
+    aspect-ratio: 1;
+    margin-top: -13%;
+    overflow: visible;
+    transition: transform 1100ms var(--heavy);
+  }
+  .cog.left {
+    left: -19%;
+  }
+  .cog.right {
+    right: -19%;
+  }
+  .cog path {
+    fill: url(#bronze);
+    stroke: #3d2c0c;
+    stroke-width: 1;
+  }
+  .cog circle {
+    fill: #2a1d0c;
+    stroke: #c9a24a;
+    stroke-width: 1.5;
   }
   .disc-ring .groove {
     fill: none;

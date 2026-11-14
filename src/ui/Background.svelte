@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { fxState } from '../game/fx.svelte.ts';
   import { settings } from '../game/settings.svelte.ts';
 
   let canvas: HTMLCanvasElement | undefined = $state();
@@ -75,6 +76,8 @@
   <div class="wall"></div>
 
   <svg class="wheel" viewBox="-500 -500 1000 1000">
+    <!-- Po každé otevřené komnatě se kolo o jeden glyf pootočí a glyfy se rozzáří. -->
+    <g class="spin" style:transform="rotate({fxState.wins * 22.5}deg)">
     <!-- Každá linka dvakrát: stín a o pixel posunuté světlo = vytesaný reliéf. -->
     {#each ['shade', 'light'] as layer (layer)}
       <g class={layer}>
@@ -97,6 +100,23 @@
         <path d="M0 -120 L104 60 L-104 60 Z" />
       </g>
     {/each}
+    {#key fxState.wins}
+      {#if fxState.wins > 0 && !settings.reducedMotion}
+        <g class="glow">
+          {#each glyphs as g (g.v)}
+            <g transform="rotate({g.deg}) translate(0 -362)">
+              <rect x="-22" y="-22" width="44" height="44" rx="4" />
+              {#each SIDES as s (s.bit)}
+                {#if (g.v >> s.bit) & 1}<path d={s.d} class="stroke" />{/if}
+              {/each}
+            </g>
+          {/each}
+          <circle r="300" />
+          <circle r="120" />
+        </g>
+      {/if}
+    {/key}
+    </g>
   </svg>
 
   <div class="torch left"></div>
@@ -152,6 +172,25 @@
   }
   .wheel :global(.stroke) {
     stroke-width: 5;
+  }
+  .spin {
+    transition: transform 2.6s var(--heavy);
+  }
+  .wheel :global(.glow) {
+    stroke: rgba(255, 196, 110, 0.75);
+    opacity: 0;
+    animation: wheel-glow 3s ease-out forwards;
+  }
+  @keyframes wheel-glow {
+    0% {
+      opacity: 0;
+    }
+    20% {
+      opacity: 0.3;
+    }
+    100% {
+      opacity: 0;
+    }
   }
   .torch {
     position: absolute;

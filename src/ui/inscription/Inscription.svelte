@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { untrack } from 'svelte';
   import { fly } from 'svelte/transition';
   import CrystalRow, { type WeightState } from '../CrystalRow.svelte';
   import Disc from '../Disc.svelte';
@@ -8,6 +9,7 @@
   import Quiz from '../altar/Quiz.svelte';
   import Dial from './Dial.svelte';
   import { isBitSet, maxValue, patternWords, toBinaryString } from '../../core/bits';
+  import { FX } from '../../game/fx.svelte.ts';
   import { settings } from '../../game/settings.svelte.ts';
   import type { InscriptionGame } from '../../game/inscriptionGame.svelte.ts';
 
@@ -26,6 +28,28 @@
   const solvedValues = $derived(cfg.tasks.slice(0, st.step).map((t) => t.value));
   const taskText = $derived(reading ? level.presentation.task : (level.presentation.writeTask ?? level.presentation.task));
   const m = $derived(settings.reducedMotion ? 0 : 1);
+
+  let readerEl: HTMLElement | undefined = $state();
+
+  // Chybné čtení: kotouče se zaseknou a zarachotí, zámek nepovolil.
+  $effect(() => {
+    const n = st.mistakes;
+    untrack(() => {
+      if (!n || settings.reducedMotion || !readerEl) return;
+      const s = FX.dialRattle;
+      readerEl.animate(
+        [
+          [0, 0],
+          [-10, -1],
+          [9, 0.8],
+          [-6, 0],
+          [3, 0],
+          [0, 0],
+        ].map(([x, r]) => ({ transform: `translateX(${x * s}px) rotate(${r * s}deg)` })),
+        { duration: 480, easing: 'ease-out' },
+      );
+    });
+  });
 
   function weightState(i: number): WeightState {
     if (settings.alwaysWeights) return 'known';
@@ -84,7 +108,7 @@
         <Quiz {game} />
       {/key}
     {:else if game.reading}
-      <div class="reader side">
+      <div class="reader side" bind:this={readerEl}>
         <Dial value={st.dial} wheels={game.wheels} {onNudge} />
         <button type="button" class="btn btn-primary btn-lg" onclick={() => game.confirm()}>Potvrdit</button>
       </div>

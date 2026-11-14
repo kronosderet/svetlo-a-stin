@@ -130,7 +130,15 @@
               style:grid-column={colOf(i)}
               style:grid-row="1 / {rResult + 1}"
               style:--d="{i * 110}ms"
-            ></div>
+            >
+              {#if wrong?.column === i}
+                <!-- Kámen žlabu praskne, mechanismus nepovolil. -->
+                <svg class="crack" viewBox="0 0 20 100" preserveAspectRatio="none" aria-hidden="true">
+                  <path d="M11 0 L8 14 L13 26 L7 41 L12 55 L9 68 L14 80" />
+                  <path d="M13 26 L18 32 M7 41 L2 47 M12 55 L17 60" />
+                </svg>
+              {/if}
+            </div>
           {/each}
         {/key}
 
@@ -356,6 +364,41 @@
       inset 0 0 0 2px rgba(240, 149, 122, 0.75),
       0 0 18px rgba(240, 149, 122, 0.3);
     animation: shake 0.5s ease-out;
+  }
+  .strip {
+    position: relative;
+  }
+  .crack {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+    pointer-events: none;
+  }
+  .crack path {
+    fill: none;
+    stroke: rgba(10, 6, 3, 0.45);
+    stroke-width: 1.4;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    vector-effect: non-scaling-stroke;
+    stroke-dasharray: 200;
+    stroke-dashoffset: 200;
+    animation:
+      crack 380ms ease-out forwards,
+      crack-fade 2.4s ease-in 1s forwards;
+    filter: drop-shadow(0 1px 0 rgba(255, 226, 180, 0.18));
+  }
+  @keyframes crack {
+    to {
+      stroke-dashoffset: 0;
+    }
+  }
+  @keyframes crack-fade {
+    to {
+      opacity: 0;
+    }
   }
   .strip.flow {
     animation: flow 1s ease-out var(--d) both;

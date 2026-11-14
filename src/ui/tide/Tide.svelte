@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { untrack } from 'svelte';
   import CrystalRow, { type WeightState } from '../CrystalRow.svelte';
   import Disc from '../Disc.svelte';
   import Pips from '../Pips.svelte';
@@ -26,6 +27,29 @@
     inc: { math: '+1', shift: '+1', caption: 'přidej jednu', key: '+', name: 'Přidej jednu' },
     dec: { math: '−1', shift: '−1', caption: 'uber jednu', key: '−', name: 'Uber jednu' },
   };
+
+  let registerEl: HTMLElement | undefined = $state();
+
+  // Posun: nové rozsvícení se objeví o lůžko vedle a dojede na místo, jako by se posunul
+  // celý kamenný pás s krystaly.
+  $effect(() => {
+    const p = game.lastPull;
+    if (!p || settings.reducedMotion) return;
+    untrack(() => {
+      if ((p.op !== 'shl' && p.op !== 'shr') || !registerEl) return;
+      const cells = registerEl.querySelectorAll('.crystal');
+      if (cells.length < 2) return;
+      const pitch = cells[1].getBoundingClientRect().left - cells[0].getBoundingClientRect().left;
+      registerEl.querySelector('.crystals')?.animate(
+        [
+          { transform: `translateX(${p.op === 'shl' ? pitch : -pitch}px)` },
+          { transform: `translateX(${p.op === 'shl' ? -6 : 6}px)`, offset: 0.75 },
+          { transform: 'translateX(0)' },
+        ],
+        { duration: 460, easing: 'cubic-bezier(.25,.8,.35,1)' },
+      );
+    });
+  });
 
   function weightState(): WeightState {
     return settings.alwaysWeights ? 'known' : 'hidden';
@@ -62,7 +86,7 @@
     </header>
 
     <!-- Řada světel: páky ji posouvají celou najednou. -->
-    <div class="register">
+    <div class="register" bind:this={registerEl}>
       <CrystalRow
         bits={cfg.bits}
         mask={value}
