@@ -93,13 +93,9 @@ export class InscriptionGame extends BaseGame<InscriptionLevel> {
 
   undo(): void {
     if (!this.canUndo) return;
-    this.state = this.history[this.history.length - 1];
+    // Vrací se jen rozsvícení; vrácený dotek se do tahů počítá dál.
+    this.state = { ...this.history[this.history.length - 1], moves: this.state.moves };
     this.history = this.history.slice(0, -1);
-  }
-
-  protected resetPuzzle(): void {
-    this.state = initInscription();
-    this.history = [];
   }
 
   #setDial(value: number): void {

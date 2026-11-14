@@ -17,10 +17,10 @@ export function popcount(n: number): number {
   return count;
 }
 
-/** Počet pozic, ve kterých se dva obrazce liší. */
+/** Počet pozic, ve kterých se dvě kombinace liší. */
 export const hamming = (a: number, b: number): number => popcount(a ^ b);
 
-/** Počet různých obrazců n krystalů: 2ⁿ. */
+/** Počet různých kombinací n krystalů: 2ⁿ. */
 export const combinations = (bits: number): number => 2 ** bits;
 
 /** Největší hodnota z n krystalů: 2ⁿ − 1. */
@@ -55,7 +55,7 @@ export function notationParts(mask: number, bits: number): Notation {
   return { binary: toBinaryString(mask, bits), terms: decompose(mask), value: mask };
 }
 
-/** Slovní popis obrazce od nejvyšší pozice, např. „světlo, stín, světlo“. */
+/** Slovní popis kombinace od nejvyšší pozice, např. „světlo, stín, světlo“. */
 export function patternWords(mask: number, bits: number): string {
   const words: string[] = [];
   for (let i = bits - 1; i >= 0; i--) words.push(isBitSet(mask, i) ? 'světlo' : 'stín');

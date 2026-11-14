@@ -8,7 +8,8 @@
   import EchoBubble from '../EchoBubble.svelte';
   import FxLayer, { type Area, type Point } from '../FxLayer.svelte';
   import Icon from '../Icon.svelte';
-  import { actOf, getLevel, instantiate, nextLevelId } from '../../content/levels';
+  import { GATE, actOf, getLevel, instantiate, nextLevelId, partsOf, roomNumber } from '../../content/levels';
+  import type { PuzzleLevel } from '../../content/types';
   import { kodexById } from '../../content/kodex';
   import { maxValue, patternWords, toBinaryString } from '../../core/bits';
   import type { AltarEvent, AltarState } from '../../core/puzzles/altar';
@@ -16,7 +17,7 @@
   import type { InscriptionEvent, InscriptionState } from '../../core/puzzles/inscription';
   import type { TideEvent, TideOp, TideState } from '../../core/puzzles/tide';
   import { AltarGame } from '../../game/altarGame.svelte.ts';
-  import type { GameEvent } from '../../game/baseGame.svelte.ts';
+  import type { GameEvent, LevelResult } from '../../game/baseGame.svelte.ts';
   import { CascadeGame } from '../../game/cascadeGame.svelte.ts';
   import { InscriptionGame } from '../../game/inscriptionGame.svelte.ts';
   import { TideGame } from '../../game/tideGame.svelte.ts';
@@ -32,14 +33,25 @@
 
   // Komponenta se v App.svelte vytváří znovu pro každé id ({#key}).
   // Komnaty na procvičování dostanou při každém vstupu nově vylosované úlohy.
-  const level = instantiate(getLevel(untrack(() => id))!);
-  const next = nextLevelId(level.id);
-  const kodex = level.kodex ? (kodexById(level.kodex) ?? null) : null;
-  const act = actOf(level.id);
-  const bits = level.kind === 'cascade' ? level.config.width : level.config.bits;
+  const room = instantiate(getLevel(untrack(() => id))!);
+  /** Hádanky komnaty; smíšená brána jich má víc a hrají se po sobě. */
+  const parts = partsOf(room);
+  const next = nextLevelId(room.id);
+  const kodex = room.kodex ? (kodexById(room.kodex) ?? null) : null;
+  const act = actOf(room.id);
+  const isGate = roomNumber(room.id) === GATE;
+
+  const bitsOf = (l: PuzzleLevel) => (l.kind === 'cascade' ? l.config.width : l.config.bits);
+  /** Aktuální část komnaty (u obyčejné komnaty celá komnata). */
+  let partIndex = $state(0);
+  let level: PuzzleLevel = parts[0];
+  let bits = bitsOf(level);
+  const partResults: LevelResult[] = [];
+  /** Výsledek celé komnaty (u smíšené součet všech částí). */
+  let result: LevelResult | null = $state(null);
 
   const echo = new Echo();
-  const game = createGame();
+  let game = $state.raw(createGame());
 
   function createGame() {
     switch (level.kind) {
@@ -55,7 +67,7 @@
   }
 
   /** Repliky po dalších chybných čteních (první říká level.echo.wrong). */
-  const WRONG_AGAIN = ['Ještě ne. Který krystal nesedí?', 'Porovnej oba obrazce krystal po krystalu.'];
+  const WRONG_AGAIN = ['Ještě ne. Který krystal nesedí?', 'Porovnej obě kombinace krystal po krystalu.'];
   /** Sloupce Kaskády: v … sloupci, nad … sloupcem, do … sloupce. */
   const LOC = ['prvním', 'druhém', 'třetím', 'čtvrtém', 'pátém', 'šestém', 'sedmém', 'osmém'];
   const INS = ['prvním', 'druhým', 'třetím', 'čtvrtým', 'pátým', 'šestým', 'sedmým', 'osmým'];
@@ -81,10 +93,47 @@
   /** Roste s každým chybným potvrzením Kaskády (otřese sloupcem). */
   let wobble = $state(0);
   let completeTimer: ReturnType<typeof setTimeout> | undefined;
+  let partTimer: ReturnType<typeof setTimeout> | undefined;
 
-  echo.say(level.echo.intro);
+  echo.say(room.kind === 'mixed' ? [...room.echo.intro, ...level.echo.intro] : level.echo.intro);
 
-  $effect(() => () => clearTimeout(completeTimer));
+  $effect(() => () => {
+    clearTimeout(completeTimer);
+    clearTimeout(partTimer);
+  });
+
+  /** Smíšená brána: po splněné části přijde další hádanka. */
+  function nextPart() {
+    const done = level.echo.solved;
+    if (done.length) echo.say(done);
+    pulse += 1;
+    sound.playGrind(0.8);
+    stepFx('.row', '.board', '.register', '.wall');
+    announce(`Část ${partIndex + 1} z ${parts.length} splněna. ${done.map(plainText).join(' ')}`);
+    partTimer = setTimeout(
+      () => {
+        partIndex += 1;
+        level = parts[partIndex];
+        bits = bitsOf(level);
+        firstRevealSaid = false;
+        repeatSaid = false;
+        wrongCount = 0;
+        spillSaid = false;
+        game = createGame();
+        echo.say(level.echo.intro);
+        announce(`Část ${partIndex + 1} z ${parts.length}: ${level.title}. ${level.presentation.task}`);
+      },
+      settings.reducedMotion ? 400 : 1600,
+    );
+  }
+
+  /** Pečetě za celou komnatu: tahy a nápovědy všech částí dohromady. */
+  function combine(results: LevelResult[]): LevelResult {
+    const moves = results.reduce((sum, r) => sum + r.moves, 0);
+    const par = results.reduce((sum, r) => sum + r.par, 0);
+    const hintsUsed = results.reduce((sum, r) => sum + r.hintsUsed, 0);
+    return { moves, par, hintsUsed, seals: { solved: true, skill: moves <= par, pure: hintsUsed === 0 } };
+  }
 
   function announce(text: string) {
     announcement = announcement === text ? `${text} ` : text;
@@ -182,9 +231,17 @@
         break;
       }
       case 'solved': {
+        partResults.push(e.result);
+        if (partIndex + 1 < parts.length) {
+          nextPart();
+          break;
+        }
+        const total = combine(partResults);
+        result = total;
+        const lines = room.echo;
         sound.playSolved(bits);
-        recordResult(level.id, e.result, level.kodex);
-        solvedLines = [...level.echo.solved, ...(e.result.seals.skill && level.echo.skill ? [level.echo.skill] : [])];
+        recordResult(room.id, total, room.kodex);
+        solvedLines = [...lines.solved, ...(total.seals.skill && lines.skill ? [lines.skill] : [])];
         pulse += 1;
         fxState.wins += 1;
         sound.playRumble();
@@ -223,7 +280,7 @@
       stepFx('.niche.current', '.row');
       const line = level.echo.found?.[ev.count];
       if (line) echo.say([line]);
-      announce(`Nový obrazec. Nalezeno ${ev.count} z ${2 ** bits}.`);
+      announce(`Nová kombinace. Nalezeno ${ev.count} z ${2 ** bits}.`);
     } else if (ev.type === 'repeat') {
       sound.playSoft();
       fx?.puff(centerOf('.niche.current', '.row'), 10);
@@ -398,7 +455,8 @@
   /** Znovu: komnata se vytvoří od začátku (a u procvičování vylosuje nové úlohy). */
   function restart() {
     clearTimeout(completeTimer);
-    go({ name: 'level', id: level.id, run: Date.now() });
+    clearTimeout(partTimer);
+    go({ name: 'level', id: room.id, run: Date.now() });
   }
 
   function toggleSound() {
@@ -462,14 +520,14 @@
 
 <svelte:window onkeydown={onKey} />
 
-<div class="level">
+<div class="level" class:mixed={parts.length > 1}>
   <header class="topbar">
     <button type="button" class="icon-btn" onclick={() => go({ name: 'map' })} aria-label="Zpět na mapu">
       <Icon name="back" />
     </button>
     <div class="where">
       <span class="act carved hide-narrow">{act.title}</span>
-      <h1 class="inlaid"><span class="code">{level.id}</span> {level.title}</h1>
+      <h1 class="inlaid"><span class="code">{room.id}</span> {room.title}</h1>
     </div>
     <div class="tools">
       <button
@@ -492,16 +550,30 @@
     </div>
   </header>
 
+  {#if parts.length > 1}
+    <!-- Smíšená brána: kolik zkoušek je za hráčem a kolik před ním -->
+    <ol class="trials" aria-label="Zkoušky brány">
+      {#each parts as p, k (k)}
+        <li class:done={k < partIndex || (k === partIndex && game.phase === 'solved')} class:now={k === partIndex}>
+          <span class="dot" aria-hidden="true"></span>
+          <span>{k + 1}. {p.title}</span>
+        </li>
+      {/each}
+    </ol>
+  {/if}
+
   <div class="stage" bind:this={stageEl}>
-    {#if game.kind === 'altar'}
-      <Altar {game} {pulse} />
-    {:else if game.kind === 'inscription'}
-      <Inscription {game} {pulse} onNudge={nudge} />
-    {:else if game.kind === 'cascade'}
-      <Cascade {game} {pulse} {wobble} />
-    {:else}
-      <Tide {game} {pulse} />
-    {/if}
+    {#key partIndex}
+      {#if game.kind === 'altar'}
+        <Altar {game} {pulse} />
+      {:else if game.kind === 'inscription'}
+        <Inscription {game} {pulse} onNudge={nudge} />
+      {:else if game.kind === 'cascade'}
+        <Cascade {game} {pulse} {wobble} />
+      {:else}
+        <Tide {game} {pulse} />
+      {/if}
+    {/key}
   </div>
 
   <div class="echo-row">
@@ -531,14 +603,14 @@
   <FxLayer bind:this={fx} />
 </div>
 
-{#if showComplete && game.result}
+{#if showComplete && result}
   <LevelComplete
-    {level}
-    result={game.result}
+    level={room}
+    {result}
     lines={solvedLines}
     {kodex}
     hasNext={next !== null}
-    floorDone={next && actOf(next) !== act ? { numeral: act.numeral, next: actOf(next).title } : null}
+    floorDone={isGate ? { numeral: act.numeral, next: next ? actOf(next).title : (act.nextAct?.title ?? null) } : null}
     onNext={() => next && go({ name: 'level', id: next })}
     onMap={() => go({ name: 'map' })}
     onReplay={restart}
@@ -555,6 +627,9 @@
     max-width: 1180px;
     margin: 0 auto;
     padding: 0 16px;
+  }
+  .level.mixed {
+    grid-template-rows: auto auto 1fr auto auto;
   }
   .where {
     flex: 1;
@@ -602,6 +677,39 @@
     align-items: center;
     justify-content: center;
     padding: clamp(14px, 3.5vh, 36px) 0;
+  }
+  .trials {
+    display: flex;
+    justify-content: center;
+    gap: 18px;
+    margin: 6px 0 0;
+    padding: 0;
+    list-style: none;
+    font-family: var(--font-display);
+    font-size: var(--fs-xs);
+    font-weight: 700;
+    letter-spacing: var(--ls-label);
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+  .trials li {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+  }
+  .trials .dot {
+    width: 9px;
+    height: 9px;
+    transform: rotate(45deg);
+    border: 1.5px solid var(--stone-200);
+  }
+  .trials .now {
+    color: var(--text);
+  }
+  .trials .done .dot {
+    background: var(--lumen);
+    border-color: var(--lumen);
+    box-shadow: 0 0 6px rgba(255, 217, 138, 0.7);
   }
   .echo-row {
     display: flex;

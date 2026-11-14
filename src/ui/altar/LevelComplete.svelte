@@ -17,8 +17,8 @@
     lines: string[];
     kodex: KodexEntry | null;
     hasNext: boolean;
-    /** Komnata byla poslední v patře a další komnata je už o patro dál. */
-    floorDone: { numeral: string; next: string } | null;
+    /** Otevřela se brána patra: schody vedou dál (nebo prototyp končí) a otevřely se Hlubší síně. */
+    floorDone: { numeral: string; next: string | null } | null;
     onNext: () => void;
     onMap: () => void;
     onReplay: () => void;
@@ -31,11 +31,15 @@
   const onlyReading = $derived(
     level.kind === 'cascade' || (level.kind === 'inscription' && level.config.tasks.every((t) => t.dir === 'read')),
   );
-  const movesText = $derived(
-    onlyReading
-      ? `${result.moves} ${plural(result.moves, 'pokus', 'pokusy', 'pokusů')} · ideál ${result.par}`
-      : `${result.moves} ${plural(result.moves, 'tah', 'tahy', 'tahů')} · ideál ${result.par}`,
+  /** Smíšená brána sčítá tahy i pokusy dohromady jako kroky. */
+  const unit = $derived(
+    level.kind === 'mixed'
+      ? plural(result.moves, 'krok', 'kroky', 'kroků')
+      : onlyReading
+        ? plural(result.moves, 'pokus', 'pokusy', 'pokusů')
+        : plural(result.moves, 'tah', 'tahy', 'tahů'),
   );
+  const movesText = $derived(`${result.moves} ${unit} · ideál ${result.par}`);
 </script>
 
 <div class="wrap" transition:fade={{ duration: 200 * m }}>
@@ -99,11 +103,16 @@
       {/if}
     </div>
 
-    {#if floorDone}
-      <p class="proto">Patro {floorDone.numeral} je celé otevřené. Schody vedou dál: {floorDone.next}.</p>
-    {/if}
-    {#if !hasNext}
-      <p class="proto">Síň Počtářů je celá otevřená. Tady prototyp končí, Zahrada Bran zatím spí.</p>
+    {#if floorDone && hasNext}
+      <p class="proto">
+        Brána patra {floorDone.numeral} je otevřená. Schody vedou dál: {floorDone.next}. Na mapě se otevřely i Hlubší síně tohoto patra.
+      </p>
+    {:else if floorDone}
+      <p class="proto">
+        Brána patra {floorDone.numeral} je otevřená a s ní i Hlubší síně tohoto patra. Dál prototyp zatím nevede{floorDone.next
+          ? `, ${floorDone.next} ještě spí`
+          : ''}.
+      </p>
     {/if}
   </div>
 </div>

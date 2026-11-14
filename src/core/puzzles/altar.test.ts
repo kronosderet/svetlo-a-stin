@@ -73,14 +73,14 @@ describe('oltář: odhalování vah', () => {
   });
 });
 
-describe('oltář: všechny obrazce', () => {
+describe('oltář: všechny kombinace', () => {
   const cfg: AltarConfig = { bits: 3, goal: { kind: 'all' }, reveal: 'never' };
 
-  it('počáteční tma je první nalezený obrazec', () => {
+  it('počáteční tma je první nalezená kombinace', () => {
     expect(initAltar(cfg).found).toEqual([0]);
   });
 
-  it('opakovaný obrazec vyvolá repeat', () => {
+  it('opakovaná kombinace vyvolá repeat', () => {
     const st = play(cfg, [0]);
     const r = toggle(cfg, st, 0);
     expect(r.events).toContainEqual({ type: 'repeat', pattern: 0 });

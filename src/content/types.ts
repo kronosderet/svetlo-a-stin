@@ -98,7 +98,28 @@ export interface TideLevel extends LevelBase {
   generate?: (rng: Rng) => TideConfig;
 }
 
-export type LevelDef = AltarLevel | InscriptionLevel | CascadeLevel | TideLevel;
+/** Komnata s jedinou hádankou. */
+export type PuzzleLevel = AltarLevel | InscriptionLevel | CascadeLevel | TideLevel;
+
+/**
+ * Smíšená komnata (brány): několik hádanek různých archetypů za sebou.
+ * Každá část má vlastní zadání, nápovědy a repliky; pečetě se počítají za celou komnatu.
+ */
+export interface MixedLevel {
+  kind: 'mixed';
+  id: string;
+  title: string;
+  parts: PuzzleLevel[];
+  echo: {
+    /** Úvod komnaty (před úvodem první části). */
+    intro: string[];
+    solved: string[];
+    skill?: string;
+  };
+  kodex?: string;
+}
+
+export type LevelDef = PuzzleLevel | MixedLevel;
 
 export interface ActDef {
   numeral: string;
@@ -106,6 +127,10 @@ export interface ActDef {
   theme: string;
   /** Glyfy komnat na mapě: patro I má prázdný střed (0), Síň Počtářů rozsvícený (16). */
   glyphBase: number;
+  /**
+   * Komnaty patra. Číslo v id je zároveň glyf: 1–7 základní cesta (7 = brána patra),
+   * 8–15 pokročilé Hlubší síně (15 = velká brána). Chybějící čísla jsou zatím zapečetěná.
+   */
   levels: LevelDef[];
   /** Další patro observatoře, které v prototypu ještě není. */
   nextAct?: { numeral: string; title: string; theme: string };

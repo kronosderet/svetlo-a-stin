@@ -2,6 +2,8 @@
  * Losování úloh pro komnaty, kde se procvičuje nebo zkouší: každý hráč (a každý nový pokus)
  * dostane jiné příklady, takže se nedají naučit nazpaměť ani napovědět sousedovi.
  */
+import type { QuizQuestion } from './types';
+
 export type Rng = () => number;
 
 /** Rychlý generátor s pevným semínkem (pro testy a opakovatelné ladění). */
@@ -20,6 +22,16 @@ export function seeded(seed: number): Rng {
 export const int = (rng: Rng, lo: number, hi: number): number => lo + Math.floor(rng() * (hi - lo + 1));
 
 export const pick = <T>(rng: Rng, list: readonly T[]): T => list[Math.floor(rng() * list.length)];
+
+/** Kopie seznamu v náhodném pořadí (Fisher–Yates). */
+export function shuffled<T>(rng: Rng, list: readonly T[]): T[] {
+  const out = [...list];
+  for (let k = out.length - 1; k > 0; k--) {
+    const j = Math.floor(rng() * (k + 1));
+    [out[k], out[j]] = [out[j], out[k]];
+  }
+  return out;
+}
 
 /** Losuje, dokud výsledek nesplní podmínku. */
 export function until<T>(make: () => T, ok: (v: T) => boolean, tries = 5000): T {
@@ -56,4 +68,10 @@ export function sequence<T>(
     },
     () => true,
   );
+}
+
+/** Otázka kvízu s možnostmi v náhodném pořadí (index správné odpovědi se přepočítá). */
+export function shuffleOptions(q: QuizQuestion, rng: Rng = Math.random): QuizQuestion {
+  const order = shuffled(rng, q.options.map((_, k) => k));
+  return { ...q, options: order.map((k) => q.options[k]), correct: order.indexOf(q.correct) };
 }

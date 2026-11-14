@@ -1,5 +1,5 @@
 /**
- * Archetyp „Nápis“: chrám rozsvítí obrazec a hráč na kamenných kotoučích nastaví její
+ * Archetyp „Nápis“: chrám rozsvítí kombinaci a hráč na kamenných kotoučích nastaví její
  * hodnotu (čtení: dvojková → desítková).
  * Pro závěrečnou zkoušku aktu umí i opačný směr (zápis): kotouč ukáže číslo a hráč ho
  * rozsvítí krystaly. Každá úloha začíná ve tmě a s kotouči na nule.
@@ -46,7 +46,7 @@ export function currentTask(cfg: InscriptionConfig, st: InscriptionState): Inscr
   return st.complete ? null : (cfg.tasks[st.step] ?? null);
 }
 
-/** Obrazec, který krystaly právě ukazují: nápis při čtení, hráčovo světlo při zápisu. */
+/** Kombinace, kterou krystaly právě ukazují: nápis při čtení, hráčovo světlo při zápisu. */
 export function shownMask(cfg: InscriptionConfig, st: InscriptionState): number {
   const task = st.complete ? cfg.tasks[cfg.tasks.length - 1] : cfg.tasks[st.step];
   if (!task) return 0;

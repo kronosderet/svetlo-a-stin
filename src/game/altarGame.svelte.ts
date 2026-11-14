@@ -53,12 +53,7 @@ export class AltarGame extends BaseGame<AltarLevel> {
     if (!this.canUndo) return;
     const prev = this.history[this.history.length - 1];
     this.history = this.history.slice(0, -1);
-    // Odhalené váhy zůstávají: co hráč zjistil, už ví.
-    this.state = { ...prev, revealed: this.state.revealed };
-  }
-
-  protected resetPuzzle(): void {
-    this.state = initAltar(this.level.config);
-    this.history = [];
+    // Odhalené váhy zůstávají: co hráč zjistil, už ví. Vrácený dotek se do tahů počítá dál.
+    this.state = { ...prev, revealed: this.state.revealed, moves: this.state.moves };
   }
 }

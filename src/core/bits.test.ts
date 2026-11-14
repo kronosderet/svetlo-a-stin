@@ -51,7 +51,7 @@ describe('bits', () => {
     expect(notationParts(5, 3)).toEqual({ binary: '101', terms: [4, 1], value: 5 });
   });
 
-  it('slovní popis obrazce', () => {
+  it('slovní popis kombinace', () => {
     expect(patternWords(0b10, 2)).toBe('světlo, stín');
   });
 

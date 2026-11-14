@@ -110,7 +110,7 @@ export const KODEX: KodexEntry[] = [
     modernName: 'Shrnutí Aktu I',
     ancient: 'Kdo prošel Předsíní, umí světlem číst i psát.',
     modern:
-      'Bit má dvě hodnoty. n bitů má 2ⁿ kombinací a zapíše čísla 0 až 2ⁿ − 1. Pozice váží zprava 1, 2, 4, 8… Čtení: sečti váhy jedniček. Zápis: od největší váhy, která se vejde. Přičtení jedničky: přenos zprava.',
+      'Bit má dvě hodnoty. n bitů má 2ⁿ kombinací a zapíše čísla 0 až 2ⁿ − 1. Pozice váží zprava 1, 2, 4, 8… Čtení: sečti váhy jedniček. Zápis: od největší váhy, která se vejde.',
     formula: '45 = 32 + 8 + 4 + 1 = 101101₂',
     today:
       'Tohle je celá abeceda počítačů. Stojí na ní sčítání, logika i paměť, které čekají v dalších patrech observatoře.',
@@ -226,12 +226,12 @@ export const KODEX: KodexEntry[] = [
     glyph: 0b11001,
     ancientName: 'Zákony Síně',
     modernName: 'Shrnutí Aktu II',
-    ancient: 'Kdo prošel Síní Počtářů, umí světla sčítat, ubírat, zdvojovat i půlit.',
+    ancient: 'Kdo prošel bránou Síně Počtářů, umí světla sčítat, zdvojovat i půlit.',
     modern:
-      'Sčítání po sloupcích s přenosem (2 → 0 a přenos, 3 → 1 a přenos). Odčítání s výpůjčkou. Pevná šířka znamená přetečení. Posun vlevo = ×2, posun vpravo = ÷2. Násobení = součet posunutých kopií.',
+      'Sčítání po sloupcích s přenosem (2 → 0 a přenos, 3 → 1 a přenos). Součet dvou n-bitových čísel má nejvýš n + 1 bitů; při pevné šířce to, co se nevejde, přeteče. Posun vlevo = ×2, posun vpravo = ÷2 (co vypadne, se ztratí).',
     formula: '0110₂ + 0111₂ = 1101₂   ·   0101₂ << 2 = 10100₂',
     today:
-      'Tyhle operace umí aritmetická jednotka každého procesoru (ALU). V dalších patrech observatoře se dozvíš, jak ji poskládat z hradel.',
+      'Tyhle operace umí aritmetická jednotka každého procesoru (ALU). Odčítání a násobení najdeš v Hlubších síních, a jak ALU poskládat z hradel, v dalších patrech observatoře.',
   },
 ];
 

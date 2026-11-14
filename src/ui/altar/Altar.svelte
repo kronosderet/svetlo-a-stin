@@ -40,7 +40,7 @@
   }
 
   function patternLabel(mask: number): string {
-    return digits ? `Obrazec ${toBinaryString(mask, bits)}` : `Obrazec: ${patternWords(mask, bits)}`;
+    return digits ? `Kombinace ${toBinaryString(mask, bits)}` : `Kombinace: ${patternWords(mask, bits)}`;
   }
 </script>
 
@@ -76,7 +76,7 @@
         <!-- Kamenné kolo oltáře se s každou přijatou váhou pootočí. -->
         <Disc value={target} turn={st.step * 60} label="Požadovaná váha" />
       {:else}
-        <div class="registry stone" role="list" aria-label="Deska obrazců: nalezeno {st.found.length} z {slots.length}">
+        <div class="registry stone" role="list" aria-label="Deska kombinací: nalezeno {st.found.length} z {slots.length}">
           {#each slots as p (p)}
             <div class="niche stone-inset" class:found={st.found.includes(p)} class:current={p === st.mask} role="listitem">
               {#if st.found.includes(p)}
@@ -208,7 +208,7 @@
     grid-area: 1 / 1;
   }
 
-  /* Výklenky pro obrazce (I-3) */
+  /* Výklenky pro kombinace (I-3) */
   .registry {
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));

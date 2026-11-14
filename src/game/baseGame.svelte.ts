@@ -2,7 +2,8 @@ import type { AltarEvent, AltarState } from '../core/puzzles/altar';
 import type { CascadeEvent, CascadeState } from '../core/puzzles/cascade';
 import type { InscriptionEvent, InscriptionState } from '../core/puzzles/inscription';
 import type { TideEvent, TideState } from '../core/puzzles/tide';
-import type { LevelDef, QuizQuestion } from '../content/types';
+import type { PuzzleLevel, QuizQuestion } from '../content/types';
+import { shuffleOptions } from '../content/random';
 import { settings } from './settings.svelte.ts';
 
 export interface LevelResult {
@@ -27,7 +28,7 @@ export type Phase = 'play' | 'quiz' | 'solved';
  * Společný průběh komnaty bez ohledu na archetyp: nápovědy, závěrečný kvíz, pečetě.
  * Potomek drží stav hádanky a volá solve(), když je hádanka hotová.
  */
-export abstract class BaseGame<L extends LevelDef = LevelDef> {
+export abstract class BaseGame<L extends PuzzleLevel = PuzzleLevel> {
   readonly level: L;
   readonly par: number;
 
@@ -46,33 +47,22 @@ export abstract class BaseGame<L extends LevelDef = LevelDef> {
 
   protected readonly emit: (e: GameEvent) => void;
 
+  /** Kvíz s možnostmi v náhodném pořadí: každý hráč je má jinak, takže se nedají napovědět „první“. */
+  readonly quiz: QuizQuestion[];
+
   constructor(level: L, par: number, emit: (e: GameEvent) => void) {
     this.level = level;
     this.par = par;
     this.emit = emit;
+    this.quiz = (level.quiz ?? []).map((q) => shuffleOptions(q));
   }
 
   abstract get moves(): number;
   abstract get canUndo(): boolean;
   abstract undo(): void;
-  /** Vrátí hádanku do počátečního stavu. */
-  protected abstract resetPuzzle(): void;
 
   get question(): QuizQuestion | null {
-    return this.level.quiz?.[this.quizIndex] ?? null;
-  }
-
-  restart(): void {
-    clearTimeout(this.#holdTimer);
-    this.holding = false;
-    this.resetPuzzle();
-    this.hintLevel = 0;
-    this.hintsUsed = 0;
-    this.phase = 'play';
-    this.quizIndex = 0;
-    this.quizWrong = [];
-    this.quizAnswered = false;
-    this.result = null;
+    return this.quiz[this.quizIndex] ?? null;
   }
 
   useHint(): void {
@@ -93,7 +83,7 @@ export abstract class BaseGame<L extends LevelDef = LevelDef> {
 
   continueQuiz(): void {
     if (!this.quizAnswered) return;
-    if (this.quizIndex + 1 < (this.level.quiz?.length ?? 0)) {
+    if (this.quizIndex + 1 < this.quiz.length) {
       this.quizIndex++;
       this.quizWrong = [];
       this.quizAnswered = false;
@@ -111,7 +101,7 @@ export abstract class BaseGame<L extends LevelDef = LevelDef> {
 
   /** Hádanka je hotová: následuje kvíz, nebo rovnou výsledek. */
   protected solve(): void {
-    if (this.level.quiz?.length) this.phase = 'quiz';
+    if (this.quiz.length) this.phase = 'quiz';
     else this.#finish();
   }
 

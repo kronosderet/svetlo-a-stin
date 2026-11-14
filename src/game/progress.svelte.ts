@@ -1,4 +1,5 @@
-import { LEVELS } from '../content/levels';
+import { BASIC_PATH, actOf, advancedRooms, gateOf, isAdvanced } from '../content/levels';
+import { LAYOUT, migrateLevelIds } from './migrate';
 
 const KEY = 'svetlo-stin.progress.v1';
 /** Klíč z doby, kdy se hra jmenovala Lumen & Umbra; postup se z něj převezme. */
@@ -12,11 +13,12 @@ export interface Seals {
 
 export interface LevelRecord {
   seals: Seals;
-  bestMoves: number;
 }
 
 export interface ProgressData {
   version: 1;
+  /** Číslování komnat (viz migrate.ts). */
+  layout: number;
   levels: Record<string, LevelRecord>;
   /** Přeložené (odemčené) záznamy Kodexu. */
   kodex: string[];
@@ -25,7 +27,7 @@ export interface ProgressData {
 }
 
 function empty(): ProgressData {
-  return { version: 1, levels: {}, kodex: [], seen: [] };
+  return { version: 1, layout: LAYOUT, levels: {}, kodex: [], seen: [] };
 }
 
 function load(): ProgressData {
@@ -34,7 +36,14 @@ function load(): ProgressData {
     if (!raw) return empty();
     const data = JSON.parse(raw);
     if (data?.version !== 1) return empty();
-    return { ...empty(), ...data };
+    const loaded: ProgressData = { ...empty(), ...data };
+    if (data.layout !== LAYOUT) {
+      // Postup z doby před rozdělením pater: komnaty dostanou nová čísla a hned se uloží.
+      loaded.levels = migrateLevelIds(loaded.levels);
+      loaded.layout = LAYOUT;
+      localStorage.setItem(KEY, JSON.stringify(loaded));
+    }
+    return loaded;
   } catch {
     return empty();
   }
@@ -72,7 +81,7 @@ export function replaceProgress(data: ProgressData): void {
   save();
 }
 
-export function recordResult(levelId: string, result: { moves: number; seals: Seals }, kodexId?: string): void {
+export function recordResult(levelId: string, result: { seals: Seals }, kodexId?: string): void {
   const prev = progress.levels[levelId];
   progress.levels[levelId] = {
     seals: {
@@ -80,7 +89,6 @@ export function recordResult(levelId: string, result: { moves: number; seals: Se
       skill: result.seals.skill || !!prev?.seals.skill,
       pure: result.seals.pure || !!prev?.seals.pure,
     },
-    bestMoves: Math.min(result.moves, prev?.bestMoves ?? Number.MAX_SAFE_INTEGER),
   };
   if (kodexId && !progress.kodex.includes(kodexId)) progress.kodex.push(kodexId);
   save();
@@ -90,10 +98,21 @@ export function isCompleted(id: string): boolean {
   return !!progress.levels[id];
 }
 
+/**
+ * Základní cesta se otevírá po jedné komnatě napříč patry (brána otevře další patro).
+ * Hlubší síně patra se otevřou po jeho bráně a pak zase po jedné. Hotová komnata je vždy otevřená.
+ */
 export function isUnlocked(id: string): boolean {
-  const i = LEVELS.findIndex((l) => l.id === id);
-  if (i < 0) return false;
-  return i === 0 || isCompleted(LEVELS[i - 1].id);
+  if (isCompleted(id)) return true;
+  if (isAdvanced(id)) {
+    const act = actOf(id);
+    if (!isCompleted(gateOf(act))) return false;
+    const rooms = advancedRooms(act);
+    const i = rooms.findIndex((l) => l.id === id);
+    return i === 0 || (i > 0 && isCompleted(rooms[i - 1].id));
+  }
+  const i = BASIC_PATH.findIndex((l) => l.id === id);
+  return i === 0 || (i > 0 && isCompleted(BASIC_PATH[i - 1].id));
 }
 
 export function hasStarted(): boolean {

@@ -120,7 +120,7 @@
             {#if st.lastGuess > maxValue(bits)}
               <p>Číslo {st.lastGuess} se do {bits} krystalů nevejde. Nejvíc unesou {maxValue(bits)}.</p>
             {:else}
-              <p class="cmp-title">Kotouče nezapadly. Porovnej obrazce:</p>
+              <p class="cmp-title">Kotouče nezapadly. Porovnej kombinace:</p>
               <div class="cmp-grid">
                 <span class="cmp-name">nápis</span>
                 <MiniPattern mask={task.value} {bits} size="md" {digits} label="Nápis: {words(task.value)}" />

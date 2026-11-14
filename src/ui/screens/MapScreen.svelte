@@ -1,28 +1,40 @@
 <script lang="ts">
+  import { untrack } from 'svelte';
   import Glyph from '../Glyph.svelte';
   import Icon from '../Icon.svelte';
   import { fade } from 'svelte/transition';
-  import { ACTS, LEVELS, actOf } from '../../content/levels';
+  import { ACTS, BASIC_PATH, GATE, LEVELS, actOf, advancedRooms, basicRooms, gateOf, roomNumber } from '../../content/levels';
   import { go, openKodex, ui } from '../../game/nav.svelte.ts';
   import { isUnlocked, progress, sealCount, unseenKodex } from '../../game/progress.svelte.ts';
   import { settings } from '../../game/settings.svelte.ts';
 
   const SEALS = ['solved', 'skill', 'pure'] as const;
 
-  /** Nejbližší komnata, která čeká na otevření (napříč patry). */
-  const nextId = $derived(LEVELS.find((l) => !progress.levels[l.id] && isUnlocked(l.id))?.id ?? null);
+  const open = (id: string) => !progress.levels[id] && isUnlocked(id);
+  /** Nejbližší komnata, která čeká na otevření: na základní cestě, a když je hotová, v Hlubších síních. */
+  const nextId = $derived(BASIC_PATH.find((l) => open(l.id))?.id ?? LEVELS.find((l) => open(l.id))?.id ?? null);
   /** Zobrazené patro: na začátku to, kde hráč právě je. */
-  let shown = $state(ACTS.indexOf(actOf(LEVELS.find((l) => !progress.levels[l.id])?.id ?? LEVELS[LEVELS.length - 1].id)));
+  let shown = $state(ACTS.indexOf(actOf(untrack(() => nextId) ?? LEVELS[LEVELS.length - 1].id)));
 
   const act = $derived(ACTS[shown]);
   const below = $derived(ACTS[shown + 1] ?? null);
-  const totalRooms = $derived(act.levels.length);
-  const done = $derived(act.levels.filter((l) => progress.levels[l.id]).length);
-  const actDone = $derived(done === totalRooms);
+  const basic = $derived(basicRooms(act));
+  const deep = $derived(advancedRooms(act));
+  const done = $derived(basic.filter((l) => progress.levels[l.id]).length);
+  const deepDone = $derived(deep.filter((l) => progress.levels[l.id]).length);
+  /** Brána patra je otevřená: schody vedou dál a Hlubší síně se otevřely. */
+  const actDone = $derived(!!progress.levels[gateOf(act)]);
   const roomIds = $derived(act.levels.map((l) => l.id));
+  /** Místa pro Hlubší síně 8–15; komnaty, které prototyp ještě nemá, jsou zapečetěné. */
+  const deepSlots = $derived(
+    Array.from({ length: 8 }, (_, k) => {
+      const n = GATE + 1 + k;
+      return { n, level: deep.find((l) => roomNumber(l.id) === n) ?? null };
+    }),
+  );
   /** Uzly na trase: komnaty a na konci schodiště do dalšího patra. */
-  const stops = $derived(totalRooms + (below || act.nextAct ? 1 : 0));
-  const actNext = $derived(act.levels.some((l) => l.id === nextId));
+  const stops = $derived(basic.length + (below || act.nextAct ? 1 : 0));
+  const actNext = $derived(basic.some((l) => l.id === nextId));
   /** Jak daleko vede červená trasa (podíl výšky cesty). */
   const routeShare = $derived(Math.min(1, (done + (actNext ? 0.5 : 0)) / Math.max(1, stops - 1)));
   const m = $derived(settings.reducedMotion ? 0 : 1);
@@ -93,14 +105,16 @@
         <p class="eyebrow">Akt {act.numeral} · {act.theme}</p>
         <h1>{act.title}</h1>
         <p class="stats">
-          <span>{done} / {totalRooms} komnat</span>
+          <span>{done} / {basic.length} komnat</span>
           <span aria-hidden="true">·</span>
-          <span>{sealCount(roomIds)} / {totalRooms * 3} pečetí</span>
+          <span>Hlubší síně {deepDone} / {deep.length}</span>
+          <span aria-hidden="true">·</span>
+          <span>{sealCount(roomIds)} / {roomIds.length * 3} pečetí</span>
         </p>
       </section>
 
       <ol class="path" style:--route={routeShare}>
-        {#each act.levels as l, k (l.id)}
+        {#each basic as l (l.id)}
           {@const unlocked = isUnlocked(l.id)}
           {@const rec = progress.levels[l.id]}
           <li class="node" class:done={!!rec} class:current={l.id === nextId} class:locked={!unlocked}>
@@ -113,7 +127,7 @@
             >
               <span class="medallion">
                 {#if unlocked}
-                  <Glyph value={act.glyphBase + k + 1} size={32} />
+                  <Glyph value={act.glyphBase + roomNumber(l.id)} size={32} />
                 {:else}
                   <Icon name="lock" size={20} />
                 {/if}
@@ -147,7 +161,7 @@
               <span class="info">
                 <span class="code">Akt {below.numeral} · {below.theme}</span>
                 <span class="name">{below.title}</span>
-                <span class="soon">{actDone ? 'schody jsou volné' : 'otevře se po poslední komnatě'}</span>
+                <span class="soon">{actDone ? 'schody jsou volné' : 'otevře se po bráně patra'}</span>
               </span>
               {#if actDone}<span class="go">Jít dál</span>{/if}
             </button>
@@ -169,6 +183,61 @@
           </li>
         {/if}
       </ol>
+
+      <!-- Hlubší síně: nepovinné komnaty 8–15, glyf má rozsvícenou i horní stranu. -->
+      <section class="deep" aria-labelledby="deep-title">
+        <h2 id="deep-title" class="deep-title">Hlubší síně</h2>
+        <p class="deep-note">
+          {actDone
+            ? 'Nepovinné komnaty pro zvídavé. Na dveřích svítí i čtvrtá strana glyfu.'
+            : `Nepovinné komnaty pro zvídavé. Otevřou se po bráně patra (komnata ${GATE}).`}
+        </p>
+        <ol class="deep-grid">
+          {#each deepSlots as slot (slot.n)}
+            {#if slot.level}
+              {@const l = slot.level}
+              {@const unlocked = isUnlocked(l.id)}
+              {@const rec = progress.levels[l.id]}
+              <li class="node small" class:done={!!rec} class:current={l.id === nextId} class:locked={!unlocked}>
+                <button
+                  type="button"
+                  class="node-btn"
+                  disabled={!unlocked}
+                  onclick={() => go({ name: 'level', id: l.id })}
+                  aria-label={nodeLabel(l.id, l.title)}
+                >
+                  <span class="medallion">
+                    {#if unlocked}
+                      <Glyph value={act.glyphBase + slot.n} size={26} />
+                    {:else}
+                      <Icon name="lock" size={17} />
+                    {/if}
+                  </span>
+                  <span class="info">
+                    <span class="code">{l.id}</span>
+                    <span class="name">{l.title}</span>
+                    <span class="seals" aria-hidden="true">
+                      {#each SEALS as s (s)}<span class="s" class:on={rec?.seals[s]}></span>{/each}
+                    </span>
+                  </span>
+                  {#if l.id === nextId}<span class="go">Vstoupit</span>{/if}
+                </button>
+              </li>
+            {:else}
+              <li class="node small sealed">
+                <div class="node-btn">
+                  <span class="medallion" aria-hidden="true"><Glyph value={act.glyphBase + slot.n} size={26} /></span>
+                  <span class="info">
+                    <span class="code">{act.numeral}-{slot.n}</span>
+                    <span class="name">Zapečetěná síň</span>
+                    <span class="soon">v prototypu zatím spí</span>
+                  </span>
+                </div>
+              </li>
+            {/if}
+          {/each}
+        </ol>
+      </section>
       </div>
       {/key}
     </div>
@@ -300,8 +369,9 @@
   }
   .stats {
     display: flex;
+    flex-wrap: wrap;
     justify-content: center;
-    gap: 10px;
+    gap: 2px 10px;
     margin: 0;
     font-family: var(--font-body);
     font-style: italic;
@@ -462,7 +532,66 @@
     font-size: var(--fs-sm);
     color: var(--ink-muted);
   }
+  .stats span {
+    white-space: nowrap;
+  }
+  /* Hlubší síně: menší uzly ve dvou sloupcích pod hlavní cestou */
+  .deep {
+    max-width: 640px;
+    margin: 30px auto 0;
+    padding-top: 22px;
+    border-top: 1.5px dashed rgba(92, 74, 51, 0.45);
+  }
+  .deep-title {
+    margin: 0;
+    text-align: center;
+    font-size: var(--fs-xl);
+    color: var(--ink);
+  }
+  .deep-note {
+    margin: 4px 0 16px;
+    text-align: center;
+    font-family: var(--font-body);
+    font-style: italic;
+    font-size: var(--fs-md);
+    color: var(--ink-muted);
+  }
+  .deep-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 4px 14px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .small .node-btn {
+    gap: 12px;
+  }
+  .small .medallion {
+    width: 46px;
+    height: 46px;
+  }
+  .small .name {
+    font-size: var(--fs-base);
+  }
+  .small .go {
+    padding: 3px 8px;
+    font-size: var(--fs-xs);
+  }
+  .sealed {
+    opacity: 0.55;
+  }
+  .sealed .medallion {
+    border-style: dashed;
+  }
+  .sealed .name {
+    font-weight: 400;
+    font-style: italic;
+  }
   @media (max-width: 560px) {
+    .deep-grid {
+      grid-template-columns: minmax(0, 1fr);
+    }
     .compass {
       display: none;
     }

@@ -3,9 +3,12 @@
 Didaktická hra o binární matematice, logice a výpočtech v atmosféře zapomenuté civilizace.
 Cílová skupina: sexta gymnázia. Herní design a plán vývoje jsou v [PLAN.md](PLAN.md).
 
-**Stav:** prototyp, Akty I a II, 20 komnat. Akt I, Předsíň Prvního Světla (bit, kombinace 2ⁿ,
-poziční hodnota, převody oběma směry, přenos, bajt). Akt II, Síň Počtářů (sčítání s přenosem,
-přetečení, odčítání s výpůjčkou, posuny ×2 a ÷2, násobení). Archetypy Oltář, Nápis (kotouče),
+**Stav:** prototyp, Akty I a II, 21 komnat. Každé patro má základní cestu 1–7 (komnata 7 je
+brána) a nepovinné Hlubší síně 8–15; ty, které ještě nejsou hotové, jsou na mapě zapečetěné.
+Akt I, Předsíň Prvního Světla: základ (bit, kombinace 2ⁿ, poziční hodnota, převody oběma
+směry), Hlubší síně (pátý krystal, přenos, bajt). Akt II, Síň Počtářů: základ (sčítání
+s přenosem, přetečení, posuny ×2 a ÷2, smíšená brána), Hlubší síně (odčítání s výpůjčkou,
+stavba čísla, násobení, Váhy Osudu). Archetypy Oltář, Nápis (kotouče),
 Počítadlo, Kaskáda (počítání pod sebou) a Příliv (páky posunu). Komnaty na procvičování
 a zkoušky losují úlohy při každém vstupu (`src/content/generators.ts`).
 

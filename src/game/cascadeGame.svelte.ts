@@ -92,12 +92,6 @@ export class CascadeGame extends BaseGame<CascadeLevel> {
     this.state = { ...this.state, result: prev.result, carries: prev.carries, wrong: null };
   }
 
-  protected resetPuzzle(): void {
-    this.state = initCascade();
-    this.history = [];
-    this.held = null;
-  }
-
   #apply(state: CascadeState, events: CascadeEvent[]): void {
     this.state = state;
     for (const event of events) this.emit({ kind: 'cascade', event, state });

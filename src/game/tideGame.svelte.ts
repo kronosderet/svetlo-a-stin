@@ -95,15 +95,8 @@ export class TideGame extends BaseGame<TideLevel> {
 
   undo(): void {
     if (!this.canUndo) return;
-    this.state = this.history[this.history.length - 1];
+    // Světlo se vrátí, ale tah pákou se do počtu tahů počítá dál.
+    this.state = { ...this.history[this.history.length - 1], moves: this.state.moves };
     this.history = this.history.slice(0, -1);
-  }
-
-  protected resetPuzzle(): void {
-    this.state = initTide(this.level.config);
-    this.history = [];
-    this.lastPull = null;
-    this.trails = [];
-    this.held = null;
   }
 }

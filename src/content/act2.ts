@@ -1,4 +1,4 @@
-import { genII10, genII2, genII3, genII4, genII5, genII6, genII8, genII9 } from './generators';
+import { genII10, genII14, genII2, genII3, genII4, genII5, genII7Cascade, genII7Tide, genII8, genII9 } from './generators';
 import type { ActDef, LevelDef } from './types';
 
 const CELL_HINT = 'Zvýrazněný krystal je potřeba přepnout.';
@@ -167,7 +167,6 @@ const levels: LevelDef[] = [
       carries: 'manual',
       tasks: [
         { op: 'add', operands: [0b011111, 0b000001] },
-        { op: 'add', operands: [0b010111, 0b001101] },
         { op: 'add', operands: [0b101101, 0b011011] },
         { op: 'add', operands: [0b111111, 0b111111] },
       ],
@@ -188,8 +187,8 @@ const levels: LevelDef[] = [
     echo: {
       intro: ['Velká kaskáda. Světlo tu padá přes šest stupňů.', 'Počty pod sloupci zmizely. Počítej sám.'],
       step: {
-        0: 'Přenos proběhl pěti sloupci. Jako u Počítadla poutníků.',
-        2: 'Zbývá poslední: všechna světla dvakrát.',
+        0: 'Přenos proběhl pěti sloupci, jeden za druhým.',
+        1: 'Zbývá poslední: všechna světla dvakrát.',
       },
       complete: 'Sto dvacet šest. Sedm krystalů, i když řady měly jen šest.',
       solved: [
@@ -276,46 +275,6 @@ const levels: LevelDef[] = [
   },
   {
     id: 'II-6',
-    title: 'Odliv',
-    kind: 'cascade',
-    config: {
-      width: 4,
-      carries: 'manual',
-      tasks: [
-        { op: 'sub', operands: [0b0111, 0b0010] },
-        { op: 'sub', operands: [0b0110, 0b0011] },
-        { op: 'sub', operands: [0b1000, 0b0001] },
-        { op: 'sub', operands: [0b1101, 0b0110] },
-      ],
-    },
-    generate: genII6,
-    presentation: {
-      task: 'Odečti spodní řadu od horní. Kde nemáš z čeho brát, půjč si od souseda vlevo.',
-      showDigits: true,
-      showSum: false,
-      sizes: 'equal',
-      ledger: true,
-      showValues: true,
-    },
-    hints: [
-      'Začni vpravo. Jde v tomhle sloupci odečítat? Když ne, kdo ti může půjčit?',
-      'Půjčené světlo má ve sloupci váhu dvou: 0 − 1 s výpůjčkou je 10 − 1 = 1. Výpůjčku zapiš krystalem pod spodní řadu ve sloupci vlevo, odečte se spolu s ní. Nad sloupcem vpravo se objeví dva krystaly.',
-      CELL_HINT,
-    ],
-    echo: {
-      intro: ['Odliv. Tady světla ubývají.', 'Kde nemáš z čeho brát, půjč si od souseda vlevo.'],
-      step: {
-        0: 'Sedm bez dvou je pět. Zatím bez půjčování.',
-        1: 'Půjčené světlo se ve sloupci rozpadlo na dvě. Jedno se odečetlo, jedno zůstalo.',
-        2: 'Výpůjčka prošla několika sloupci. Přenos pozpátku.',
-      },
-      solved: ['Odčítání je sčítání pozpátku: místo přenosu si půjčuješ.', 'Půjčené světlo váží ve sloupci vpravo dvě.'],
-      skill: 'Každá výpůjčka napoprvé.',
-    },
-    kodex: 'odliv',
-  },
-  {
-    id: 'II-7',
     title: 'Příliv a odliv',
     kind: 'tide',
     config: {
@@ -373,7 +332,146 @@ const levels: LevelDef[] = [
     kodex: 'priliv',
   },
   {
+    id: 'II-7',
+    title: 'Brána Síně',
+    kind: 'mixed',
+    echo: {
+      intro: ['Brána Síně Počtářů. Projde jen ten, kdo umí světla sčítat i posouvat.', 'Dvě zkoušky: nejdřív kaskáda, potom páky.'],
+      solved: [
+        'Brána Síně Počtářů se otevírá. Umíš světla sčítat i posouvat, a na tom stojí každé počítání.',
+        'Na dveřích se rozsvítila čtvrtá strana glyfu: Hlubší síně Počtářů jsou otevřené.',
+      ],
+      skill: 'Celá brána bez jediného zbytečného kroku.',
+    },
+    parts: [
+      {
+        id: 'II-7',
+        title: 'Kaskáda',
+        kind: 'cascade',
+        config: {
+          width: 6,
+          bits: 5,
+          carries: 'manual',
+          tasks: [
+            { op: 'add', operands: [0b01011, 0b00111] },
+            { op: 'add', operands: [0b10110, 0b01101] },
+            { op: 'add', operands: [0b11011, 0b10110] },
+          ],
+        },
+        generate: genII7Cascade,
+        presentation: {
+          task: 'První zkouška: sečti řady. Přenosy zapiš nad sloupce.',
+          showDigits: true,
+          showSum: false,
+          sizes: 'equal',
+          ledger: true,
+        },
+        hints: [
+          'Postupuj zprava, sloupec po sloupci. Přenos z jednoho sloupce mění ten další.',
+          'V každém sloupci spočítej světla i s krystalem přenosu: dvě dají dole stín a přenos, tři dají dole světlo a přenos.',
+          CELL_HINT,
+        ],
+        echo: {
+          intro: ['První zkouška: tři součty, pět krystalů v řadě.'],
+          step: { 0: 'Sečteno. Brána se pohnula.', 1: 'Ještě jeden součet.' },
+          solved: ['Kaskáda proběhla. Teď páky.'],
+        },
+      },
+      {
+        id: 'II-7',
+        title: 'Páky',
+        kind: 'tide',
+        config: {
+          bits: 6,
+          ops: ['shl', 'shr'],
+          tasks: [{ start: 3, target: 24 }, { start: 40, target: 5 }, { start: 27, target: 6 }],
+        },
+        generate: genII7Tide,
+        presentation: {
+          task: 'Druhá zkouška: páky posouvají všechna světla najednou. Dosáhni váhy, kterou žádá brána.',
+          showDigits: true,
+          showSum: true,
+          sizes: 'equal',
+          ledger: true,
+          levers: 'shift',
+        },
+        hints: [
+          'Kolikrát musíš světlo zdvojit, nebo rozpůlit?',
+          'Posun vlevo váhu zdvojí, posun vpravo ji rozpůlí. Co spadne přes pravý okraj, je pryč.',
+          'Zvýrazněná páka vede nejkratší cestou.',
+        ],
+        echo: {
+          intro: ['Druhá zkouška: páky. Kolikrát zdvojit, kolikrát rozpůlit?'],
+          spill: 'Světlo spadlo přes okraj. Co přeteče, je pryč.',
+          step: { 0: 'Správně. Brána se pohnula.', 1: 'Poslední váha.' },
+          complete: 'Páky dosáhly všech vah. Brána se ptá naposledy.',
+          solved: [],
+        },
+        quiz: [
+          {
+            question: 'Nádoba unese čtyři krystaly. Co v ní zůstane po 1100 + 0110 (12 + 6)?',
+            options: ['0010', '10010', '1111', '0110'],
+            correct: 0,
+            hint: 'Sečti a podívej se, jestli se výsledek vejde do čtyř krystalů.',
+            explain: '12 + 6 = 18 = 10010₂. Páté světlo (16) se do nádoby nevejde a vyteče, zůstane 0010 = 2.',
+          },
+          {
+            question: 'Světla 0000 0110 (6) posuneš o tři místa vlevo. Kolik budou vážit?',
+            options: ['48', '18', '9', '24'],
+            correct: 0,
+            hint: 'Každý posun vlevo zdvojí.',
+            explain: '6 · 2 · 2 · 2 = 48 = 0011 0000₂. Posun o tři místa násobí 2³ = 8.',
+          },
+        ],
+      },
+    ],
+    kodex: 'pocetari',
+  },
+  {
     id: 'II-8',
+    title: 'Odliv',
+    kind: 'cascade',
+    config: {
+      width: 4,
+      carries: 'manual',
+      tasks: [
+        { op: 'sub', operands: [0b0111, 0b0010] },
+        { op: 'sub', operands: [0b0110, 0b0011] },
+        { op: 'sub', operands: [0b1000, 0b0001] },
+        { op: 'sub', operands: [0b1101, 0b0110] },
+      ],
+    },
+    generate: genII8,
+    presentation: {
+      task: 'Odečti spodní řadu od horní. Kde nemáš z čeho brát, půjč si od souseda vlevo.',
+      showDigits: true,
+      showSum: false,
+      sizes: 'equal',
+      ledger: true,
+      showValues: true,
+    },
+    hints: [
+      'Začni vpravo. Jde v tomhle sloupci odečítat? Když ne, kdo ti může půjčit?',
+      'Půjčené světlo má ve sloupci váhu dvou: 0 − 1 s výpůjčkou je 10 − 1 = 1. Výpůjčku zapiš krystalem pod spodní řadu ve sloupci vlevo, odečte se spolu s ní. Nad sloupcem vpravo se objeví dva krystaly.',
+      CELL_HINT,
+    ],
+    echo: {
+      intro: [
+        'Hlubší síně Počtářů. Tady se počítá i pozpátku.',
+        'Odliv: světla ubývají. Kde nemáš z čeho brát, půjč si od souseda vlevo.',
+      ],
+      step: {
+        0: 'Sedm bez dvou je pět. Zatím bez půjčování.',
+        1: 'Půjčené světlo se ve sloupci rozpadlo na dvě. Jedno se odečetlo, jedno zůstalo.',
+        2: 'Výpůjčka prošla několika sloupci. Přenos pozpátku.',
+      },
+      solved: ['Odčítání je sčítání pozpátku: místo přenosu si půjčuješ.', 'Půjčené světlo váží ve sloupci vpravo dvě.'],
+      skill: 'Každá výpůjčka napoprvé.',
+    },
+    kodex: 'odliv',
+  },
+  {
+    id: 'II-9',
     title: 'Zdvojení',
     kind: 'tide',
     config: {
@@ -386,7 +484,7 @@ const levels: LevelDef[] = [
         { start: 1, target: 27 },
       ],
     },
-    generate: genII8,
+    generate: genII9,
     presentation: {
       task: 'Začni jediným světlem. Jen zdvojením a přidáním jedné dosáhni požadované váhy.',
       showDigits: true,
@@ -432,7 +530,7 @@ const levels: LevelDef[] = [
     kodex: 'zdvojeni',
   },
   {
-    id: 'II-9',
+    id: 'II-10',
     title: 'Násobení po lumenitsku',
     kind: 'cascade',
     config: {
@@ -445,7 +543,7 @@ const levels: LevelDef[] = [
         { op: 'mul', operands: [0b110, 0b110] },
       ],
     },
-    generate: genII9,
+    generate: genII10,
     presentation: {
       task: 'Násob po lumenitsku: posunuté kopie prvního čísla sečti.',
       showDigits: true,
@@ -487,7 +585,7 @@ const levels: LevelDef[] = [
     kodex: 'nasobeni',
   },
   {
-    id: 'II-10',
+    id: 'II-14',
     title: 'Váhy Osudu',
     kind: 'tide',
     config: {
@@ -502,7 +600,7 @@ const levels: LevelDef[] = [
         { start: 5, target: 39 },
       ],
     },
-    generate: genII10,
+    generate: genII14,
     presentation: {
       task: 'Vyrovnej misky. Osud dovolí jen tolik tahů, kolik je nezbytně potřeba.',
       showDigits: true,
@@ -519,14 +617,14 @@ const levels: LevelDef[] = [
     ],
     echo: {
       intro: [
-        'Váhy Osudu. Poslední zkouška Síně Počtářů.',
+        'Váhy Osudu. Nejtěžší zkouška Hlubších síní.',
         'Osud dovolí jen tolik tahů, kolik je nezbytně potřeba. Kdo je přečerpá, začíná znovu.',
       ],
       reset: 'Tahy došly a misky se vrátily. Promysli cestu dřív, než zatáhneš.',
       step: { 0: 'Vyrovnáno. Osud kývl.', 2: 'Osud vidí, že počítáš dopředu.' },
       complete: 'Poslední miska se vyrovnala.',
       solved: [
-        'Váhy Osudu se vyrovnaly. Síň Počtářů je celá otevřená.',
+        'Váhy Osudu se vyrovnaly.',
         'Umíš sčítat, odčítat, násobit i dělit. Stačí ti k tomu světlo a posun.',
       ],
       skill: 'Misky se ani jednou nevrátily.',
@@ -547,7 +645,6 @@ const levels: LevelDef[] = [
         explain: 'Násobit čtyřmi znamená dvakrát zdvojit, tedy posunout o dvě místa: 0101 → 10100 = 20.',
       },
     ],
-    kodex: 'pocetari',
   },
 ];
 

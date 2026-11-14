@@ -7,6 +7,7 @@
   import Lever from './Lever.svelte';
   import Scale from './Scale.svelte';
   import TideLedger from './TideLedger.svelte';
+  import { GATE, GREAT_GATE, roomNumber } from '../../content/levels';
   import { isBitSet } from '../../core/bits';
   import type { TideOp } from '../../core/puzzles/tide';
   import { settings } from '../../game/settings.svelte.ts';
@@ -77,7 +78,7 @@
         {#if pres.scale}
           <Scale target={game.demand} {value} />
         {:else}
-          <Disc value={game.demand} turn={game.state.step * 60} label="Oltář žádá" />
+          <Disc value={game.demand} turn={game.state.step * 60} label={[GATE, GREAT_GATE].includes(roomNumber(game.level.id)) ? 'Brána žádá' : 'Oltář žádá'} />
         {/if}
       </div>
       {#if cfg.tasks.length > 1}

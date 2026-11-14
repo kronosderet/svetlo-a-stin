@@ -1,4 +1,4 @@
-import { genI10, genI5, genI6, genI7 } from './generators';
+import { genI5, genI6, genI7, genI8 } from './generators';
 import type { ActDef, LevelDef } from './types';
 
 const levels: LevelDef[] = [
@@ -28,7 +28,7 @@ const levels: LevelDef[] = [
     kind: 'altar',
     config: { bits: 2, goal: { kind: 'pattern', targets: [0b01, 0b10, 0b11, 0b00] }, reveal: 'never' },
     presentation: {
-      task: 'Napodob obrazec vyrytý ve stěně.',
+      task: 'Napodob kombinaci vyrytou ve stěně.',
       showDigits: false,
       showSum: false,
       sizes: 'equal',
@@ -41,9 +41,9 @@ const levels: LevelDef[] = [
     ],
     echo: {
       intro: ['Dva krystaly. Stěna si pamatuje, jak kdysi svítily.', 'Napodob, co vidíš.'],
-      step: { 0: 'Ano. Pravá svítí, levá mlčí.', 2: 'Zbývá poslední obrazec. Ten nejtišší.' },
+      step: { 0: 'Ano. Pravá svítí, levá mlčí.', 2: 'Zbývá poslední kombinace. Ta nejtišší.' },
       solved: [
-        'Dva krystaly, čtyři obrazce. Víc jich není.',
+        'Dva krystaly, čtyři kombinace. Víc jich není.',
         'Lumenité psali jen dvěma znaky: světlem a stínem. Kodex ti je teď přeloží.',
       ],
       skill: 'Ani jeden zbytečný dotek.',
@@ -52,11 +52,11 @@ const levels: LevelDef[] = [
   },
   {
     id: 'I-3',
-    title: 'Kolik obrazců?',
+    title: 'Kolik kombinací?',
     kind: 'altar',
     config: { bits: 3, goal: { kind: 'all' }, reveal: 'never' },
     presentation: {
-      task: 'Najdi všechny obrazce tří krystalů.',
+      task: 'Najdi všechny kombinace tří krystalů.',
       showDigits: true,
       showSum: false,
       sizes: 'equal',
@@ -64,34 +64,34 @@ const levels: LevelDef[] = [
     },
     hints: [
       'Zkus měnit vždy jen jeden krystal.',
-      'Postupuj systematicky: každým dotekem změň jediný krystal tak, aby vznikl obrazec, který deska ještě nezná.',
-      'Zvýrazněný krystal tě dovede k obrazci, který deska ještě nezná.',
+      'Postupuj systematicky: každým dotekem změň jediný krystal tak, aby vznikla kombinace, kterou deska ještě nezná.',
+      'Zvýrazněný krystal tě dovede ke kombinaci, kterou deska ještě nezná.',
     ],
     echo: {
       intro: [
-        'Tři krystaly. Kolik různých obrazců dokážou utvořit?',
-        'Každý nový obrazec si deska zapamatuje. I tma, ve které stojíš, je obrazec. Ten první.',
+        'Tři krystaly. Kolik různých kombinací dokážou utvořit?',
+        'Každou novou kombinaci si deska zapamatuje. I tma, ve které stojíš, je kombinace. Ta první.',
       ],
       found: { 4: 'Polovina desky.', 7: 'Chybí jediná.' },
-      repeat: 'Tenhle obrazec už deska zná.',
-      complete: 'Osm obrazců. Deska je plná. Ale zákon, který za tím stojí, ještě neznáš.',
+      repeat: 'Tuhle kombinaci už deska zná.',
+      complete: 'Osm kombinací. Deska je plná. Ale zákon, který za tím stojí, ještě neznáš.',
       solved: ['Každý krystal zdvojí svět. To byl první zákon Lumenitů.'],
-      skill: 'Sedm doteků na osm obrazců, pokaždé jediná změna. Tenhle postup má i moderní jméno: Grayův kód.',
+      skill: 'Sedm doteků na osm kombinací, pokaždé jediná změna. Tenhle postup má i moderní jméno: Grayův kód.',
     },
     quiz: [
       {
-        question: 'Tři krystaly dávají 8 obrazců. Kolik obrazců dají čtyři krystaly?',
+        question: 'Tři krystaly dávají 8 kombinací. Kolik kombinací dají čtyři krystaly?',
         options: ['8', '12', '16', '32'],
         correct: 2,
-        hint: 'Přidej v duchu čtvrtý krystal. Každý z osmi obrazců ho teď může mít zhasnutý, nebo rozsvícený.',
-        explain: 'Každý nový krystal zdvojí počet obrazců: 8 · 2 = 16.',
+        hint: 'Přidej v duchu čtvrtý krystal. Každá z osmi kombinací ho teď může mít zhasnutý, nebo rozsvícený.',
+        explain: 'Každý nový krystal zdvojí počet kombinací: 8 · 2 = 16.',
       },
       {
         question: 'A osm krystalů, celá oktáva?',
         options: ['64', '128', '256', '512'],
         correct: 2,
-        hint: 'Začni u jednoho krystalu (2 obrazce) a sedmkrát zdvojnásob.',
-        explain: '2 · 2 · 2 · 2 · 2 · 2 · 2 · 2 = 2⁸ = 256. Obecně: n krystalů má 2ⁿ obrazců.',
+        hint: 'Začni u jednoho krystalu (2 kombinace) a sedmkrát zdvojnásob.',
+        explain: '2 · 2 · 2 · 2 · 2 · 2 · 2 · 2 = 2⁸ = 256. Obecně: n krystalů má 2ⁿ kombinací.',
       },
     ],
     kodex: 'podoby',
@@ -157,7 +157,7 @@ const levels: LevelDef[] = [
       firstReveal: 'Osm. Sedí to s tvým odhadem?',
       step: { 2: 'Osm, čtyři, dva, jedna. Víc vah tu není.' },
       solved: [
-        'Čtyři krystaly: šestnáct obrazců, váhy od nuly do patnácti.',
+        'Čtyři krystaly: šestnáct kombinací, váhy od nuly do patnácti.',
         'Předsíň se probouzí.',
       ],
       skill: 'Bez jediného zbytečného doteku. Lumenité by byli spokojeni.',
@@ -166,38 +166,6 @@ const levels: LevelDef[] = [
   },
   {
     id: 'I-6',
-    title: 'Skryté váhy',
-    kind: 'altar',
-    config: { bits: 5, goal: { kind: 'value', targets: [11, 6, 13, 20, 27] }, reveal: 'never' },
-    generate: genI6,
-    presentation: {
-      task: 'Váhy zmizely. Oltář přesto žádá přesnou váhu.',
-      showDigits: true,
-      showSum: true,
-      sizes: 'equal',
-      ledger: true,
-    },
-    hints: [
-      'Váhy zmizely, ale zákon zůstal. Kolik váží krystal úplně vpravo? A jeho soused?',
-      'Zprava 1, 2, 4, 8, 16. Vezmi největší váhu, která se vejde, odečti ji a pokračuj se zbytkem.',
-      'Zvýrazněný krystal je potřeba přepnout.',
-    ],
-    echo: {
-      intro: [
-        'Tady kámen váhy zapomněl. A krystaly jsou si podobné jako vejce vejci.',
-        'Pátý krystal je nový. Kolik asi váží? Zákon už znáš.',
-      ],
-      step: { 0: 'Přijato. Váhy nosíš v hlavě.', 3: 'Šestnáct a víc. Bez pátého krystalu by to nešlo.' },
-      solved: [
-        'Váhy nejsou vyryté v kameni, ale v zákoně.',
-        'Jedna, dvě, čtyři, osm, šestnáct. Tuhle řadu si zapamatuj.',
-      ],
-      skill: 'Ani jeden zbytečný dotek, a to bez vah.',
-    },
-    kodex: 'mocniny',
-  },
-  {
-    id: 'I-7',
     title: 'Čtení nápisů',
     kind: 'inscription',
     config: {
@@ -210,7 +178,7 @@ const levels: LevelDef[] = [
         { dir: 'read', value: 0b1011 },
       ],
     },
-    generate: genI7,
+    generate: genI6,
     presentation: {
       task: 'Přečti nápis a nastav jeho váhu na kotoučích.',
       showDigits: true,
@@ -229,14 +197,90 @@ const levels: LevelDef[] = [
         'Přečti nápis a nastav jeho váhu na kotoučích.',
       ],
       step: { 0: 'Kotouče zapadly. První nápis je přečtený.', 3: 'Čteš rychleji než já.' },
-      wrong: 'Kotouče nezapadly. Porovnej oba obrazce.',
+      wrong: 'Kotouče nezapadly. Porovnej obě kombinace.',
       solved: ['Číst světlo je snadné: sečti váhy krystalů, které svítí.', 'Stín neváží nic.'],
       skill: 'Každý nápis napoprvé.',
     },
     kodex: 'cteni',
   },
   {
+    id: 'I-7',
+    title: 'Brána Předsíně',
+    kind: 'inscription',
+    config: {
+      bits: 4,
+      tasks: [
+        { dir: 'write', value: 11 },
+        { dir: 'read', value: 0b0110 },
+        { dir: 'write', value: 13 },
+        { dir: 'read', value: 0b1011 },
+        { dir: 'write', value: 15 },
+      ],
+    },
+    generate: genI7,
+    presentation: {
+      task: 'Přečti nápis a nastav jeho váhu na kotoučích.',
+      writeTask: 'Rozsviť krystaly tak, aby světlo vážilo, kolik žádá brána.',
+      showDigits: true,
+      showSum: false,
+      sizes: 'equal',
+      ledger: true,
+    },
+    hints: [
+      'Čtyři krystaly váží zprava 1, 2, 4, 8.',
+      'Číst: sečti váhy svítících krystalů. Psát: začni největší váhou, která se vejde, a se zbytkem pokračuj doprava.',
+      'Brána ukazuje krok: při psaní zvýrazní krystal, při čtení odhalí váhy.',
+    ],
+    echo: {
+      intro: [
+        'Brána Předsíně. Projde jen ten, kdo umí světlem číst i psát.',
+        'Pět zkoušek, čtyři krystaly, žádné váhy ani součet.',
+      ],
+      step: { 0: 'Zapsáno. Teď čti.', 1: 'Správně. Brána se pohnula.', 3: 'Poslední zkouška: nejtěžší světlo čtyř krystalů.' },
+      wrong: 'Brána se nepohnula. Porovnej obě kombinace.',
+      solved: [
+        'Brána Předsíně se otevírá. Za ní vedou schody do Síně Počtářů, kde se světla začnou sčítat.',
+        'A na dveřích se rozsvítila čtvrtá strana glyfu: Hlubší síně Předsíně jsou otevřené.',
+      ],
+      skill: 'Bez jediné chyby a bez zbytečného doteku.',
+    },
+    kodex: 'predsin',
+  },
+  {
     id: 'I-8',
+    title: 'Skryté váhy',
+    kind: 'altar',
+    config: { bits: 5, goal: { kind: 'value', targets: [11, 6, 13, 20, 27] }, reveal: 'never' },
+    generate: genI8,
+    presentation: {
+      task: 'Váhy zmizely. Oltář přesto žádá přesnou váhu.',
+      showDigits: true,
+      showSum: true,
+      sizes: 'equal',
+      ledger: true,
+    },
+    hints: [
+      'Váhy zmizely, ale zákon zůstal. Kolik váží krystal úplně vpravo? A jeho soused?',
+      'Zprava 1, 2, 4, 8, 16. Vezmi největší váhu, která se vejde, odečti ji a pokračuj se zbytkem.',
+      'Zvýrazněný krystal je potřeba přepnout.',
+    ],
+    echo: {
+      intro: [
+        'Hlubší síně. Sem chodili jen ti nejzvídavější z Lumenitů.',
+        'Tady kámen váhy zapomněl. A krystaly jsou si podobné jako vejce vejci.',
+        'Pátý krystal je nový. Kolik asi váží? Zákon už znáš.',
+      ],
+      step: { 0: 'Přijato. Váhy nosíš v hlavě.', 3: 'Šestnáct a víc. Bez pátého krystalu by to nešlo.' },
+      solved: [
+        'Váhy nejsou vyryté v kameni, ale v zákoně.',
+        'Jedna, dvě, čtyři, osm, šestnáct. Tuhle řadu si zapamatuj.',
+      ],
+      skill: 'Ani jeden zbytečný dotek, a to bez vah.',
+    },
+    kodex: 'mocniny',
+  },
+  {
+    id: 'I-9',
     title: 'Počítadlo poutníků',
     kind: 'altar',
     config: {
@@ -271,7 +315,7 @@ const levels: LevelDef[] = [
     },
     quiz: [
       {
-        question: 'Jaký obrazec následuje po 1011?',
+        question: 'Jaká kombinace následuje po 1011?',
         options: ['1100', '1010', '1111', '0100'],
         correct: 0,
         hint: 'Zprava: svítící krystaly zhasni, první zhasnutý rozsviť.',
@@ -288,7 +332,7 @@ const levels: LevelDef[] = [
     kodex: 'preliti',
   },
   {
-    id: 'I-9',
+    id: 'I-10',
     title: 'Nejvyšší světlo',
     kind: 'altar',
     config: { bits: 8, goal: { kind: 'value', targets: [31, 32, 63, 255] }, reveal: 'never' },
@@ -312,7 +356,7 @@ const levels: LevelDef[] = [
         2: 'Šest světel: 63. Zase o jedna méně než další váha.',
       },
       complete: 'Celá oktáva svítí. Těžší světlo z osmi krystalů neexistuje.',
-      solved: ['Samá světla dají vždy o jedna méně než další váha.', 'Oktáva krystalů unese 256 obrazců, od 0 do 255.'],
+      solved: ['Samá světla dají vždy o jedna méně než další váha.', 'Oktáva krystalů unese 256 kombinací, od 0 do 255.'],
       skill: 'Ani jeden zbytečný dotek, a to na osmi krystalech.',
     },
     quiz: [
@@ -332,46 +376,6 @@ const levels: LevelDef[] = [
       },
     ],
     kodex: 'venec',
-  },
-  {
-    id: 'I-10',
-    title: 'Brána Předsíně',
-    kind: 'inscription',
-    config: {
-      bits: 6,
-      tasks: [
-        { dir: 'write', value: 37 },
-        { dir: 'read', value: 0b110110 },
-        { dir: 'write', value: 50 },
-        { dir: 'read', value: 0b011011 },
-        { dir: 'write', value: 63 },
-      ],
-    },
-    generate: genI10,
-    presentation: {
-      task: 'Přečti nápis a nastav jeho váhu na kotoučích.',
-      writeTask: 'Rozsviť krystaly tak, aby světlo vážilo, kolik žádá brána.',
-      showDigits: true,
-      showSum: false,
-      sizes: 'equal',
-      ledger: true,
-    },
-    hints: [
-      'Šest krystalů váží zprava 1, 2, 4, 8, 16, 32.',
-      'Číst: sečti váhy svítících krystalů. Psát: začni největší váhou, která se vejde, a se zbytkem pokračuj doprava.',
-      'Brána ukazuje krok: při psaní zvýrazní krystal, při čtení odhalí váhy.',
-    ],
-    echo: {
-      intro: [
-        'Brána Předsíně. Projde jen ten, kdo umí světlem číst i psát.',
-        'Pět zkoušek, šest krystalů, žádné opory.',
-      ],
-      step: { 0: 'Zapsáno. Teď čti.', 1: 'Správně. Brána se pohnula.', 3: 'Poslední zkouška: nejtěžší světlo šesti krystalů.' },
-      wrong: 'Brána se nepohnula. Porovnej oba obrazce.',
-      solved: ['Brána Předsíně se otevírá.', 'Za ní vedou schody do Síně Počtářů. Tam se světla začnou sčítat.'],
-      skill: 'Bez jediné chyby a bez zbytečného doteku.',
-    },
-    kodex: 'predsin',
   },
 ];
 

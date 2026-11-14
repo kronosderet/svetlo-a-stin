@@ -1,8 +1,8 @@
 /**
  * Archetyp „Oltář“: hráč přepíná krystaly (bity) a plní cíle.
- *  - pattern: napodobit obrazec vyrytý ve stěně,
+ *  - pattern: napodobit kombinaci vyrytou ve stěně,
  *  - value:   dosáhnout požadované váhy (hodnoty),
- *  - all:     najít všech 2ⁿ obrazců.
+ *  - all:     najít všech 2ⁿ kombinací.
  * Čistě funkční: každá operace vrací nový stav a seznam událostí pro UI.
  */
 import { combinations, flipBit, hamming, isBitSet, popcount } from '../bits';
@@ -30,7 +30,7 @@ export interface AltarState {
   mask: number;
   /** Index aktuálního cíle (pattern/value). */
   step: number;
-  /** Nalezené obrazce (all). */
+  /** Nalezené kombinace (all). */
   found: number[];
   /** Pozice, jejichž váha je odhalená. */
   revealed: number;
@@ -151,7 +151,7 @@ export function hintBit(cfg: AltarConfig, st: AltarState): number | null {
     for (let i = cfg.bits - 1; i >= 0; i--) {
       if (!st.found.includes(flipBit(st.mask, i))) return i;
     }
-    // Jinak krok k nejbližšímu nenalezenému obrazci.
+    // Jinak krok k nejbližší nenalezené kombinaci.
     let best: number | null = null;
     let bestDist = Infinity;
     for (let p = 0; p < combinations(cfg.bits); p++) {

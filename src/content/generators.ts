@@ -31,8 +31,8 @@ export function genI5(rng: Rng): AltarConfig {
   return { bits: 4, goal: { kind: 'value', targets: [9, ...rest] }, reveal: 'solo', initialRevealed: 0b0111 };
 }
 
-/** I-6: pět cílů do 31 bez vah; čtvrtý potřebuje pátý krystal (Echo to komentuje). */
-export function genI6(rng: Rng): AltarConfig {
+/** I-8: pět cílů do 31 bez vah; čtvrtý potřebuje pátý krystal (Echo to komentuje). */
+export function genI8(rng: Rng): AltarConfig {
   const targets = until(
     () => sequence(rng, 5, () => int(rng, 3, 31)),
     (vs) =>
@@ -41,8 +41,8 @@ export function genI6(rng: Rng): AltarConfig {
   return { bits: 5, goal: { kind: 'value', targets }, reveal: 'never' };
 }
 
-/** I-7: pět nápisů ze čtyř krystalů, začíná se lehčím. */
-export function genI7(rng: Rng): InscriptionConfig {
+/** I-6: pět nápisů ze čtyř krystalů, začíná se lehčím. */
+export function genI6(rng: Rng): InscriptionConfig {
   const values = until(
     () => sequence(rng, 5, () => int(rng, 3, 15)),
     (vs) => vs[0] < 8 && popcount(vs[0]) === 2 && vs.filter((v) => v >= 8).length >= 3 && vs.every((v) => popcount(v) >= 2),
@@ -50,10 +50,10 @@ export function genI7(rng: Rng): InscriptionConfig {
   return { bits: 4, tasks: values.map(read) };
 }
 
-/** I-10: zápis, čtení, zápis, čtení ze šesti krystalů; poslední je vždy nejtěžší světlo 63. */
-export function genI10(rng: Rng): InscriptionConfig {
-  const [w1, r1, w2, r2] = sequence(rng, 4, () => int(rng, 17, 62), (v) => popcount(v) >= 3);
-  return { bits: 6, tasks: [write(w1), read(r1), write(w2), read(r2), write(63)] };
+/** I-7, brána Předsíně: zápis, čtení, zápis, čtení ze čtyř krystalů; poslední je vždy nejtěžší světlo 15. */
+export function genI7(rng: Rng): InscriptionConfig {
+  const [w1, r1, w2, r2] = sequence(rng, 4, () => int(rng, 5, 14), (v) => popcount(v) >= 2);
+  return { bits: 4, tasks: [write(w1), read(r1), write(w2), read(r2), write(15)] };
 }
 
 // --- Akt II ---
@@ -88,13 +88,13 @@ export function genII3(rng: Rng): CascadeConfig {
   return { ...base, tasks: [first, ...rest] };
 }
 
-/** II-4: mezi pevnou ukázkou 31 + 1 a závěrečným 63 + 63 dva šestimístné součty s řetězem přenosů. */
+/** II-4: mezi pevnou ukázkou 31 + 1 a závěrečným 63 + 63 jeden šestimístný součet s řetězem přenosů. */
 export function genII4(rng: Rng): CascadeConfig {
   const base: CascadeConfig = { width: 7, bits: 6, carries: 'manual', tasks: [] };
   const fixed = [add(0b011111, 0b000001), add(0b111111, 0b111111)];
   const middle = sequence(
     rng,
-    2,
+    1,
     () => add(int(rng, 5, 62), int(rng, 5, 62)),
     (t) => sumOf(t) >= 32 && carryCount(base, t) >= 3 && !fixed.some((f) => pairKey(f) === pairKey(t)),
     pairKey,
@@ -120,8 +120,56 @@ export function genII5(rng: Rng): CascadeConfig {
   return { ...base, tasks: [...tasks, add(0b1111, 0b0001)] };
 }
 
-/** II-6: po ukázce 7 − 2 bez výpůjčky tři rozdíly s výpůjčkami; prostřední má výpůjček víc. */
-export function genII6(rng: Rng): CascadeConfig {
+/** II-7, brána Síně (kaskáda): tři pětimístné součty s přenosy; poslední přeteče do šestého krystalu. */
+export function genII7Cascade(rng: Rng): CascadeConfig {
+  const base: CascadeConfig = { width: 6, bits: 5, carries: 'manual', tasks: [] };
+  const tasks = until(
+    () =>
+      sequence(
+        rng,
+        3,
+        () => add(int(rng, 3, 31), int(rng, 3, 31)),
+        (t, k) => carryCount(base, t) >= 2 && (k === 2 ? sumOf(t) >= 32 : sumOf(t) < 32),
+        pairKey,
+      ),
+    (ts) => ts.some((t) => answer(base, t).inflow.includes(3)),
+  );
+  return { ...base, tasks };
+}
+
+/** II-7, brána Síně (páky): zdvojit několikrát, rozpůlit několikrát, rozpůlit se ztrátou přes okraj. */
+export function genII7Tide(rng: Rng): TideConfig {
+  const base: TideConfig = { bits: 6, ops: ['shl', 'shr'], tasks: [] };
+  const exact = (t: TideTask, k: number) => distance(base, t.start!, t.target) === k;
+  const up = until(
+    () => {
+      const k = int(rng, 2, 3);
+      const v = pick(rng, [3, 5, 7]);
+      return { k, t: { start: v, target: v << k } };
+    },
+    ({ k, t }) => t.target <= 63 && exact(t, k),
+  ).t;
+  const down = until(
+    () => {
+      const k = int(rng, 2, 3);
+      const v = pick(rng, [3, 5, 7]);
+      return { k, t: { start: v << k, target: v } };
+    },
+    ({ k, t }) => t.start <= 63 && t.start !== up.target && exact(t, k),
+  ).t;
+  const lossy = until(
+    () => {
+      const k = int(rng, 1, 2);
+      const v = int(rng, 13, 31);
+      return { k, t: { start: v, target: v >> k } };
+    },
+    ({ k, t }) => (t.start & ((1 << k) - 1)) !== 0 && t.target >= 3 && exact(t, k),
+  ).t;
+  return { ...base, tasks: [up, down, lossy] };
+}
+
+/** II-8: po ukázce 7 − 2 bez výpůjčky tři rozdíly s výpůjčkami; prostřední má výpůjček víc. */
+export function genII8(rng: Rng): CascadeConfig {
   const base: CascadeConfig = { width: 4, carries: 'manual', tasks: [] };
   const rest = sequence(
     rng,
@@ -135,8 +183,8 @@ export function genII6(rng: Rng): CascadeConfig {
   return { ...base, tasks: [sub(0b0111, 0b0010), ...rest] };
 }
 
-/** II-8: po ukázce 6 tři cíle do 31 seřazené od nejkratší cesty po nejdelší. */
-export function genII8(rng: Rng): TideConfig {
+/** II-9: po ukázce 6 tři cíle do 31 seřazené od nejkratší cesty po nejdelší. */
+export function genII9(rng: Rng): TideConfig {
   const base: TideConfig = { bits: 5, ops: ['shl', 'inc'], tasks: [] };
   const steps = (target: number) => distance(base, 1, target);
   const targets = until(
@@ -146,8 +194,8 @@ export function genII8(rng: Rng): TideConfig {
   return { ...base, tasks: [{ start: 1, target: 6 }, ...targets.map((target) => ({ start: 1, target }))] };
 }
 
-/** II-9: po ukázce 5 × 3 dva součiny trojmístného čísla a čísla se dvěma jedničkami, aspoň s jedním přenosem. */
-export function genII9(rng: Rng): CascadeConfig {
+/** II-10: po ukázce 5 × 3 dva součiny trojmístného čísla a čísla se dvěma jedničkami, aspoň s jedním přenosem. */
+export function genII10(rng: Rng): CascadeConfig {
   const base: CascadeConfig = { width: 6, bits: 3, carries: 'manual', tasks: [] };
   const rest = sequence(
     rng,
@@ -191,8 +239,8 @@ function hintPath(cfg: TideConfig, task: TideTask): { ops: TideOp[]; wraps: bool
   return { ops, wraps };
 }
 
-/** II-10: pět vyvážení na tři tahy (poslední na čtyři), bez triku s přetočením, s půlením i ubíráním. */
-export function genII10(rng: Rng): TideConfig {
+/** II-14: pět vyvážení na tři tahy (poslední na čtyři), bez triku s přetočením, s půlením i ubíráním. */
+export function genII14(rng: Rng): TideConfig {
   const base: TideConfig = { bits: 6, ops: FATE_OPS, strict: true, tasks: [] };
   const fits = (t: TideTask, k: number) => {
     const start = t.start ?? 0;

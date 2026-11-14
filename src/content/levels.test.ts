@@ -4,9 +4,9 @@ import * as cascade from '../core/puzzles/cascade';
 import * as inscription from '../core/puzzles/inscription';
 import * as tide from '../core/puzzles/tide';
 import { KODEX } from './kodex';
-import { ACTS, LEVELS, actOf, instantiate, nextLevelId } from './levels';
+import { ACTS, BASIC_PATH, GATE, LEVELS, actOf, instantiate, isAdvanced, nextLevelId, partsOf, roomNumber } from './levels';
 import { seeded } from './random';
-import type { AltarLevel, CascadeLevel, InscriptionLevel, LevelDef, TideLevel } from './types';
+import type { AltarLevel, CascadeLevel, InscriptionLevel, PuzzleLevel, TideLevel } from './types';
 
 /** Kolik vylosovaných variant projde každá kontrola u komnat na procvičování. */
 const SEEDS = 150;
@@ -15,7 +15,7 @@ const SEEDS = 150;
  * Zaregistruje kontrolu pro výchozí podobu komnaty a u komnat s losováním
  * i pro SEEDS vylosovaných variant (každá musí projít stejně jako ručně vybrané úlohy).
  */
-function check<L extends LevelDef>(level: L, name: string, fn: (level: L) => void) {
+function check<L extends PuzzleLevel>(level: L, name: string, fn: (level: L) => void) {
   it(name, () => fn(level));
   if (level.generate) {
     it(`${name} (${SEEDS} vylosovaných variant)`, () => {
@@ -24,10 +24,14 @@ function check<L extends LevelDef>(level: L, name: string, fn: (level: L) => voi
   }
 }
 
-function commonChecks(level: LevelDef) {
+/** Části smíšené brány: poslední část nemá vlastní závěrečné repliky (mluví brána). */
+const partKey = (l: PuzzleLevel) => `${l.id}: ${l.title}`;
+const lastParts = new Set(LEVELS.flatMap((l) => (l.kind === 'mixed' ? [partKey(l.parts[l.parts.length - 1])] : [])));
+
+function commonChecks(level: PuzzleLevel) {
   expect(level.hints).toHaveLength(3);
   expect(level.echo.intro.length).toBeGreaterThan(0);
-  expect(level.echo.solved.length).toBeGreaterThan(0);
+  if (!lastParts.has(partKey(level))) expect(level.echo.solved.length).toBeGreaterThan(0);
   if (level.kodex) expect(KODEX.some((e) => e.id === level.kodex)).toBe(true);
   level.quiz?.forEach((q) => {
     expect(q.correct).toBeGreaterThanOrEqual(0);
@@ -195,27 +199,50 @@ function tideChecks(level: TideLevel) {
   }
 }
 
+function puzzleChecks(level: PuzzleLevel) {
+  if (level.kind === 'altar') altarChecks(level);
+  else if (level.kind === 'inscription') inscriptionChecks(level);
+  else if (level.kind === 'cascade') cascadeChecks(level);
+  else tideChecks(level);
+}
+
+const configs = (l: ReturnType<typeof instantiate>) => JSON.stringify(partsOf(l).map((p) => p.config));
+
 for (const act of ACTS) {
   describe(`obsah Aktu ${act.numeral}`, () => {
     for (const level of act.levels) {
       describe(level.id, () => {
-        if (level.kind === 'altar') altarChecks(level);
-        else if (level.kind === 'inscription') inscriptionChecks(level);
-        else if (level.kind === 'cascade') cascadeChecks(level);
-        else tideChecks(level);
+        if (level.kind === 'mixed') {
+          it('smíšená brána má aspoň dvě části a vlastní repliky', () => {
+            expect(level.parts.length).toBeGreaterThanOrEqual(2);
+            expect(level.echo.intro.length).toBeGreaterThan(0);
+            expect(level.echo.solved.length).toBeGreaterThan(0);
+            level.parts.forEach((p) => expect(p.id).toBe(level.id));
+          });
+          level.parts.forEach((part, k) => describe(`část ${k + 1}: ${part.title}`, () => puzzleChecks(part)));
+        } else {
+          puzzleChecks(level);
+        }
       });
     }
 
-    for (const level of act.levels.filter((l) => l.generate)) {
+    for (const level of act.levels.filter((l) => partsOf(l).some((p) => p.generate))) {
       it(`${level.id}: losování dává pokaždé jiné úlohy`, () => {
-        const variants = new Set(Array.from({ length: 40 }, (_, s) => JSON.stringify(instantiate(level, seeded(1000 + s)).config)));
+        const variants = new Set(Array.from({ length: 40 }, (_, s) => configs(instantiate(level, seeded(1000 + s)))));
         expect(variants.size).toBeGreaterThanOrEqual(25);
       });
     }
 
-    it('má deset komnat s id podle čísla aktu', () => {
-      expect(act.levels).toHaveLength(10);
-      act.levels.forEach((l, k) => expect(l.id).toBe(`${act.numeral}-${k + 1}`));
+    it('základní cesta má komnaty 1–7, Hlubší síně čísla 8–15 vzestupně', () => {
+      const basic = act.levels.filter((l) => !isAdvanced(l.id));
+      expect(basic.map((l) => l.id)).toEqual(Array.from({ length: GATE }, (_, k) => `${act.numeral}-${k + 1}`));
+      const deep = act.levels.filter((l) => isAdvanced(l.id)).map((l) => roomNumber(l.id));
+      deep.forEach((n, k) => {
+        expect(n).toBeGreaterThan(GATE);
+        expect(n).toBeLessThanOrEqual(15);
+        if (k > 0) expect(n).toBeGreaterThan(deep[k - 1]);
+      });
+      act.levels.forEach((l) => expect(l.id.startsWith(`${act.numeral}-`)).toBe(true));
     });
   });
 }
@@ -235,17 +262,23 @@ describe('celá observatoř', () => {
   it('glyfy Kodexu jsou různé a Síň Počtářů má rozsvícený střed', () => {
     expect(new Set(KODEX.map((e) => e.glyph)).size).toBe(KODEX.length);
     for (const act of ACTS) {
-      for (const l of act.levels) {
+      for (const l of act.levels.filter((l) => l.kodex)) {
         const glyph = KODEX.find((e) => e.id === l.kodex)!.glyph;
         expect(glyph >= 16).toBe(act.glyphBase === 16);
       }
     }
   });
 
-  it('levely na sebe navazují i přes hranici aktů', () => {
+  it('základní cesta vede přes bránu do dalšího patra, Hlubší síně jdou po sobě', () => {
     expect(nextLevelId('I-1')).toBe('I-2');
-    expect(nextLevelId('I-10')).toBe('II-1');
-    expect(nextLevelId('II-10')).toBeNull();
+    expect(nextLevelId('I-6')).toBe('I-7');
+    expect(nextLevelId('I-7')).toBe('II-1');
+    expect(nextLevelId('II-7')).toBeNull();
+    expect(nextLevelId('I-8')).toBe('I-9');
+    expect(nextLevelId('I-10')).toBeNull();
+    expect(nextLevelId('II-10')).toBe('II-14');
+    expect(nextLevelId('II-14')).toBeNull();
+    expect(BASIC_PATH.map((l) => l.id)).toHaveLength(14);
     expect(actOf('II-3').numeral).toBe('II');
     expect(ACTS[ACTS.length - 1].nextAct).toBeDefined();
     ACTS.slice(0, -1).forEach((a) => expect(a.nextAct).toBeUndefined());
