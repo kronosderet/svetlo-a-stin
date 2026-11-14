@@ -1,5 +1,6 @@
 <script lang="ts">
   import Icon from '../Icon.svelte';
+  import ProgressFile from '../ProgressFile.svelte';
   import { go, ui } from '../../game/nav.svelte.ts';
   import { hasStarted } from '../../game/progress.svelte.ts';
   import { playDoor, unlock } from '../../audio/sound';
@@ -77,6 +78,8 @@
     <button type="button" class="btn btn-primary btn-lg" onclick={enter}>
       {started ? 'Pokračovat' : 'Vstoupit do observatoře'}
     </button>
+    <!-- Na jiném počítači: pokračovat tam, kde hráč skončil (soubor třeba ze školního OneDrive). -->
+    <ProgressFile compact />
   </div>
 
   <footer class="foot">

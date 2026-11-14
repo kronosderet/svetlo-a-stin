@@ -15,7 +15,7 @@ export interface LevelRecord {
   bestMoves: number;
 }
 
-interface ProgressData {
+export interface ProgressData {
   version: 1;
   levels: Record<string, LevelRecord>;
   /** Přeložené (odemčené) záznamy Kodexu. */
@@ -42,12 +42,34 @@ function load(): ProgressData {
 
 export const progress: ProgressData = $state(load());
 
+/** Kdo chce vědět o každém uložení (průběžné ukládání do souboru s postupem). */
+const saveListeners = new Set<() => void>();
+
+export function onProgressSaved(fn: () => void): () => void {
+  saveListeners.add(fn);
+  return () => saveListeners.delete(fn);
+}
+
 function save(): void {
   try {
     localStorage.setItem(KEY, JSON.stringify(progress));
   } catch {
     /* úložiště nedostupné, postup vydrží do zavření stránky */
   }
+  for (const fn of saveListeners) fn();
+}
+
+/** Obyčejná kopie postupu (pro zápis do souboru). */
+export function progressSnapshot(): ProgressData {
+  return $state.snapshot(progress) as ProgressData;
+}
+
+/** Nahradí postup v prohlížeči jiným (načteným ze souboru). */
+export function replaceProgress(data: ProgressData): void {
+  progress.levels = data.levels;
+  progress.kodex = data.kodex;
+  progress.seen = data.seen;
+  save();
 }
 
 export function recordResult(levelId: string, result: { moves: number; seals: Seals }, kodexId?: string): void {

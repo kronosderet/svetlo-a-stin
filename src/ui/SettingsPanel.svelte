@@ -1,9 +1,11 @@
 <script lang="ts">
   import { fade, fly } from 'svelte/transition';
   import Icon from './Icon.svelte';
+  import ProgressFile from './ProgressFile.svelte';
   import { autofocus } from './actions';
   import { ui } from '../game/nav.svelte.ts';
   import { resetProgress } from '../game/progress.svelte.ts';
+  import { unlinkFile } from '../game/progressLink.svelte.ts';
   import { saveSettings, settings, type Settings } from '../game/settings.svelte.ts';
   import { unlock } from '../audio/sound';
 
@@ -29,6 +31,8 @@
       confirmReset = true;
       return;
     }
+    // Nejdřív odpojit soubor, aby se do něj nezapsal prázdný postup dalšího hráče.
+    unlinkFile();
     resetProgress();
     confirmReset = false;
     resetDone = true;
@@ -76,6 +80,10 @@
       {@render toggle('alwaysDigits', 'Vždy ukazovat 0 a 1', 'Číslice pod krystaly i v komnatách, kde je Kodex ještě nepřeložil.')}
       {@render toggle('alwaysWeights', 'Vždy ukazovat váhy', 'Váhy krystalů i v komnatách, kde už zmizely. Opora pro ty, kdo si řadu 1, 2, 4, 8… ještě nepamatují.')}
       {@render toggle('reducedMotion', 'Omezit animace', 'Vypne pohyb pozadí, částice a přechody.')}
+
+      <div class="file-row">
+        <ProgressFile />
+      </div>
 
       <div class="danger">
         <button type="button" class="btn btn-ghost" class:confirm={confirmReset} onclick={reset}>
@@ -173,6 +181,10 @@
     box-shadow:
       0 2px 3px rgba(0, 0, 0, 0.6),
       0 0 10px rgba(242, 193, 78, 0.55);
+  }
+  .file-row {
+    padding: 14px 0 4px;
+    border-top: 1px solid var(--line);
   }
   .danger {
     margin-top: 18px;
