@@ -50,8 +50,10 @@
     flex-direction: column;
     gap: 6px;
   }
+  /* Úvodní obrazovka: vedlejší volba, s odstupem pod hlavním tlačítkem. */
   .compact {
     align-items: center;
+    margin-top: 22px;
     text-align: center;
   }
   .label {
