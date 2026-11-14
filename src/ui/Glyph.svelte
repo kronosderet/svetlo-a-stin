@@ -1,0 +1,59 @@
+<script lang="ts">
+  /**
+   * Čtveřicový glyf Lumenitů: čtyři strany čtverce = čtyři bity.
+   * horní = 8, pravá = 4, dolní = 2, levá = 1. Rozsvícený střed (16) mají glyfy Síně Počtářů.
+   */
+  let { value, size = 24, label }: { value: number; size?: number; label?: string } = $props();
+
+  const sides = [
+    { bit: 3, d: 'M5 5H19' },
+    { bit: 2, d: 'M19 5V19' },
+    { bit: 1, d: 'M19 19H5' },
+    { bit: 0, d: 'M5 19V5' },
+  ];
+</script>
+
+<svg
+  class="glyph"
+  width={size}
+  height={size}
+  viewBox="0 0 24 24"
+  role={label ? 'img' : undefined}
+  aria-label={label}
+  aria-hidden={label ? undefined : 'true'}
+  focusable="false"
+>
+  {#each sides as s (s.bit)}
+    <path d={s.d} class:lit={((value >> s.bit) & 1) === 1} />
+  {/each}
+  <circle cx="12" cy="12" r={value & 16 ? 2.6 : 1.6} class:lit={(value & 16) !== 0} />
+</svg>
+
+<style>
+  .glyph {
+    flex: none;
+    display: inline-block;
+    overflow: visible;
+  }
+  path {
+    stroke: var(--umbra);
+    stroke-opacity: 0.4;
+    stroke-width: 2.4;
+    stroke-linecap: round;
+    fill: none;
+  }
+  path.lit {
+    stroke: var(--lumen);
+    stroke-opacity: 1;
+    filter: drop-shadow(0 0 2px rgba(255, 217, 138, 0.7));
+  }
+  circle {
+    fill: var(--umbra);
+    opacity: 0.6;
+  }
+  circle.lit {
+    fill: var(--lumen);
+    opacity: 1;
+    filter: drop-shadow(0 0 2px rgba(255, 217, 138, 0.7));
+  }
+</style>

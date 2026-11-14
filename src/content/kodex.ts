@@ -1,0 +1,240 @@
+import type { KodexEntry } from './types';
+
+export const KODEX: KodexEntry[] = [
+  {
+    id: 'jiskra',
+    glyph: 0b0001,
+    ancientName: 'Krystal',
+    modernName: 'Bit',
+    ancient: 'Nejmenší kus světla. Buď svítí, nebo mlčí. Nic mezi tím.',
+    modern:
+      'Bit (z angl. binary digit) je nejmenší jednotka informace. Nabývá jedné ze dvou hodnot. Ve stroji to může být proud, nebo žádný proud; zmagnetováno, nebo ne; světlo, nebo tma.',
+    today: 'Moderní procesor má desítky miliard tranzistorů. Každý z nich je drobný vypínač: proud buď pustí, nebo ne.',
+  },
+  {
+    id: 'svit-stin',
+    glyph: 0b1010,
+    ancientName: 'Světlo a stín',
+    modernName: '1 a 0',
+    ancient: 'Lumenité psali jen dvěma znaky: světlem a stínem.',
+    modern:
+      'Světlo zapisujeme jako 1, stín jako 0. Řadu krystalů pak čteme jako řetězec číslic: rozsvícený a zhasnutý krystal dají 10. Odteď uvidíš pod krystaly i moderní zápis.',
+    today: 'Celý obsah tvého telefonu (fotky, zprávy, hudba) je jen velmi dlouhá řada nul a jedniček.',
+  },
+  {
+    id: 'podoby',
+    glyph: 0b0111,
+    ancientName: 'Zákon zdvojení',
+    modernName: '2ⁿ kombinací',
+    ancient: 'Každý nový krystal zdvojí svět.',
+    modern:
+      'n bitů má 2ⁿ různých kombinací: 1 bit → 2, 2 bity → 4, 3 bity → 8, 8 bitů → 256. Důvod: každý další bit může každou dosavadní kombinaci doplnit buď nulou, nebo jedničkou.',
+    formula: 'počet kombinací = 2ⁿ',
+    today: 'Osm bitů tvoří bajt. Jeden bajt rozliší 256 hodnot, tolik odstínů má jeden barevný kanál pixelu.',
+  },
+  {
+    id: 'vaha',
+    glyph: 0b1100,
+    ancientName: 'Váha světla',
+    modernName: 'Poziční hodnota',
+    ancient: 'Každý krystal váží dvakrát víc než soused po pravici.',
+    modern:
+      'Ve dvojkové soustavě je váha každé pozice mocninou dvou: zprava 1, 2, 4, 8, 16… Hodnota čísla je součet vah těch pozic, na kterých stojí 1.',
+    formula: '101₂ = 1·4 + 0·2 + 1·1 = 5',
+    today: 'Desítková soustava funguje stejně, jen s vahami 1, 10, 100… Číslo 101₁₀ = 1·100 + 0·10 + 1·1.',
+  },
+  {
+    id: 'prevod',
+    glyph: 0b1101,
+    ancientName: 'Hledání vah',
+    modernName: 'Převod do dvojkové soustavy',
+    ancient: 'Nejdřív nejtěžší kámen, který se vejde. Pak další.',
+    modern:
+      'Hladový postup: projdi váhy od největší. Když se váha vejde do zbytku, zapiš 1 a odečti ji, jinak zapiš 0. Největší číslo z n bitů je 2ⁿ − 1, tedy samé jedničky.',
+    formula: '13 = 8 + 4 + 1 = 1101₂',
+    today:
+      'Druhý způsob: opakovaně děl dvěma a zbytky čti odzdola nahoru. 13 → 6 zb. 1 → 3 zb. 0 → 1 zb. 1 → 0 zb. 1, tedy 1101₂.',
+  },
+  {
+    id: 'mocniny',
+    glyph: 0b1000,
+    ancientName: 'Řada vah',
+    modernName: 'Mocniny dvojky',
+    ancient: 'Kámen váhy zapomene. Kdo zná řadu, nepotřebuje je vidět.',
+    modern:
+      'Váhy pozic jsou mocniny dvojky. Pozice se číslují zprava od nuly a pozice i váží 2ⁱ. Každá váha je dvojnásobkem předchozí. Vyplatí se znát řadu zpaměti aspoň do 2¹⁰ = 1024.',
+    formula: '2⁰ … 2¹⁰ = 1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024',
+    today:
+      'Proto mají paměti „divné“ velikosti jako 512 nebo 4096 bajtů. A proto kibibajt (KiB) není 1000, ale 1024 bajtů.',
+  },
+  {
+    id: 'cteni',
+    glyph: 0b1011,
+    ancientName: 'Čtení nápisu',
+    modernName: 'Převod z dvojkové soustavy',
+    ancient: 'Sečti váhy krystalů, které svítí. Stín neváží nic.',
+    modern:
+      'Dvojkové číslo převedeš do desítkové soustavy tak, že sečteš váhy pozic, na kterých stojí 1. Jde to i zleva bez znalosti vah: začni nulou a u každé číslice dosavadní hodnotu zdvojnásob a přičti tu číslici.',
+    formula: '1101₂: 1 → 1·2 + 1 = 3 → 3·2 + 0 = 6 → 6·2 + 1 = 13',
+    today:
+      'Postup zleva se jmenuje Hornerovo schéma. Počítač ho používá, když čte číslo napsané v textu, jen místo dvojkou násobí desítkou.',
+  },
+  {
+    id: 'preliti',
+    glyph: 0b0100,
+    ancientName: 'Předání',
+    modernName: 'Přenos (carry)',
+    ancient: 'Když krystal přeteče, zhasne a předá světlo sousedovi vlevo.',
+    modern:
+      'Přičtení jedničky: zprava měň jedničky na nuly, dokud nenarazíš na nulu, a tu změň na jedničku. Jednička, která se tak posouvá doleva, se jmenuje přenos. V desítkové soustavě je to totéž: 0999 + 1 = 1000.',
+    formula: '0111₂ + 1 = 1000₂   (7 + 1 = 8)',
+    today:
+      'Počítadlo kilometrů v autě předává desítky stejně: 0999 → 1000. Procesor si přenos pamatuje ve zvláštním bitu, kterému se říká příznak přenosu (carry flag).',
+  },
+  {
+    id: 'venec',
+    glyph: 0b1111,
+    ancientName: 'Oktáva',
+    modernName: 'Bajt',
+    ancient: 'Osm krystalů v řadě. Nejtěžší světlo oktávy váží dvě stě padesát pět.',
+    modern:
+      'Osm bitů tvoří bajt. Bajt má 2⁸ = 256 kombinací, tedy hodnoty 0 až 255. Obecně je největší číslo z n bitů tvořené samými jedničkami a platí pro něj 2ⁿ − 1. Přičteš-li k němu jedničku, přenos proběhne všemi bity a vznikne 2ⁿ.',
+    formula: '11111111₂ = 2⁸ − 1 = 255',
+    today:
+      'Barva pixelu se obvykle ukládá do tří bajtů: červená, zelená a modrá. Každý kanál má tedy hodnoty 0–255 a dohromady vychází 256³, přes 16,7 milionu barev.',
+  },
+  {
+    id: 'predsin',
+    glyph: 0b1001,
+    ancientName: 'Zákony Předsíně',
+    modernName: 'Shrnutí Aktu I',
+    ancient: 'Kdo prošel Předsíní, umí světlem číst i psát.',
+    modern:
+      'Bit má dvě hodnoty. n bitů má 2ⁿ kombinací a zapíše čísla 0 až 2ⁿ − 1. Pozice váží zprava 1, 2, 4, 8… Čtení: sečti váhy jedniček. Zápis: od největší váhy, která se vejde. Přičtení jedničky: přenos zprava.',
+    formula: '45 = 32 + 8 + 4 + 1 = 101101₂',
+    today:
+      'Tohle je celá abeceda počítačů. Stojí na ní sčítání, logika i paměť, které čekají v dalších patrech observatoře.',
+  },
+
+  // Akt II, Síň Počtářů: glyfy mají rozsvícený střed.
+  {
+    id: 'soutok',
+    glyph: 0b10010,
+    ancientName: 'Soutok',
+    modernName: 'Sčítání bitů',
+    ancient: 'Jedna a jedna se do jednoho krystalu nevejdou. Přetečou k sousedovi.',
+    modern:
+      'Sčítání ve dvojkové soustavě má jen čtyři případy: 0 + 0 = 0, 0 + 1 = 1, 1 + 1 = 10 a 1 + 1 + 1 = 11. Jakmile součet ve sloupci dosáhne dvou, jednička přeteče do sloupce vlevo, kde váží dvakrát víc.',
+    formula: '1 + 1 = 10₂   ·   1 + 1 + 1 = 11₂',
+    today: 'V desítkové soustavě se přetéká až při deseti (5 + 5 = 10). Ve dvojkové stačí dvě světla.',
+  },
+  {
+    id: 'proudy',
+    glyph: 0b10101,
+    ancientName: 'Dvě řady',
+    modernName: 'Sčítání pod sebou',
+    ancient: 'Každý sloupec teče sám za sebe, zprava doleva.',
+    modern:
+      'Čísla se sčítají pod sebou po sloupcích, stejně jako v desítkové soustavě. Dokud v žádném sloupci nejsou dvě jedničky, výsledek je prostě sjednocení jedniček obou čísel.',
+    formula: '0101₂ + 0010₂ = 0111₂   (5 + 2 = 7)',
+    today: 'Když se dvě čísla v žádném bitu nepřekrývají, sčítání dá stejný výsledek jako bitové OR. To potkáš v Zahradě Bran.',
+  },
+  {
+    id: 'sloupec',
+    glyph: 0b10011,
+    ancientName: 'Zákon sloupce',
+    modernName: 'Sčítání s přenosem',
+    ancient: 'Spočítej světla ve sloupci. Každá dvojice přeteče, co zbude, zůstane dole.',
+    modern:
+      'V každém sloupci sečti oba bity a přenos zprava. Výsledek 0 až 3 zapiš dvojkově: nižší číslici napiš dolů, vyšší pošli jako přenos do dalšího sloupce.',
+    formula: '0 → 0   ·   1 → 1   ·   2 → 0, přenos 1   ·   3 → 1, přenos 1',
+    today:
+      'Obvod, který tohle pravidlo počítá pro jeden sloupec, se jmenuje úplná sčítačka (full adder). Postavíš si ji v Hlubině Strojů.',
+  },
+  {
+    id: 'kaskada',
+    glyph: 0b11111,
+    ancientName: 'Kaskáda',
+    modernName: 'Řetězení přenosu',
+    ancient: 'Přenos padá ze stupně na stupeň jako voda.',
+    modern:
+      'Přenos z jednoho sloupce může způsobit přenos v dalším, a tak dál přes celé číslo. Součet dvou n-bitových čísel má proto nejvýš n + 1 bitů.',
+    formula: '011111₂ + 1 = 100000₂   (31 + 1 = 32)',
+    today:
+      'Nejjednodušší sčítačka v procesoru řadí úplné sčítačky za sebe a přenos jimi probíhá postupně (ripple carry). Rychlé procesory přenos předvídají dopředu, aby nemusely čekat.',
+  },
+  {
+    id: 'nadoba',
+    glyph: 0b10000,
+    ancientName: 'Přetékající nádoba',
+    modernName: 'Přetečení (overflow)',
+    ancient: 'Co se do nádoby nevejde, vyteče a je navždy ztracené.',
+    modern:
+      'Počítač ukládá čísla do pevného počtu bitů. Když součet potřebuje víc bitů, nejvyšší přenos se ztratí a zůstane jen zbytek. Ve 4 bitech je 12 + 6 = 18 − 16 = 2, v bajtu je 255 + 1 = 0.',
+    formula: '1100₂ + 0110₂ = (1)0010₂   →   ve 4 bitech zbyde 2',
+    today:
+      'Přetečení způsobilo i skutečné havárie. Proto si procesor ztracený přenos poznamená do příznaku přenosu (carry flag) a programy si ho mohou zkontrolovat.',
+  },
+  {
+    id: 'odliv',
+    glyph: 0b10001,
+    ancientName: 'Odliv',
+    modernName: 'Odčítání s výpůjčkou',
+    ancient: 'Kde nemáš z čeho brát, půjč si od souseda vlevo.',
+    modern:
+      'Odčítá se po sloupcích zprava. Když je ve sloupci 0 − 1, půjčíš si od sloupce vlevo: půjčená jednička má ve sloupci vpravo váhu 2, takže 10 − 1 = 1. Ve sloupci vlevo pak výpůjčku odečteš.',
+    formula: '1000₂ − 0001₂ = 0111₂   (8 − 1 = 7)',
+    today:
+      'Procesory většinou odčítají jinak: přičtou takzvaný doplněk menšitele. Díky tomu jim stačí jedna sčítačka pro sčítání i odčítání.',
+  },
+  {
+    id: 'priliv',
+    glyph: 0b10110,
+    ancientName: 'Příliv a odliv',
+    modernName: 'Bitový posun',
+    ancient: 'Posuň světla vlevo a jejich váha se zdvojí. Posuň je vpravo a polovina zmizí.',
+    modern:
+      'Posun vlevo (shift left, <<) přidá vpravo nulu a každý bit se ocitne na místě s dvojnásobnou váhou: číslo se vynásobí dvěma. Posun vpravo (>>) číslo vydělí dvěma a nejnižší bit se ztratí, takže 13 >> 1 = 6.',
+    formula: '0101₂ << 1 = 1010₂ (5 · 2 = 10)   ·   1101₂ >> 1 = 0110₂ (13 : 2 = 6, zbytek 1)',
+    today: 'V desítkové soustavě funguje totéž s desítkou: připsáním nuly násobíš deseti. Programátoři posunem násobí a dělí mocninami dvou.',
+  },
+  {
+    id: 'zdvojeni',
+    glyph: 0b11011,
+    ancientName: 'Zdvojení',
+    modernName: 'Zápis jako návod',
+    ancient: 'Z jediného světla vystavíš každé číslo. Návod je v jeho zápisu.',
+    modern:
+      'Čti dvojkový zápis zleva. Začni první jedničkou a za každou další číslici zdvoj; je-li to jednička, přidej ještě jedna. Je to Hornerovo schéma z Čtení nápisu, tentokrát jako stavební návod.',
+    formula: '1011₂: 1 → ×2 → 10 → ×2 +1 → 101 → ×2 +1 → 1011 = 11',
+    today:
+      'Stejně počítače rychle umocňují: x¹³ nespočítají dvanácti násobeními, ale pár umocněními na druhou a násobeními podle zápisu 1101₂.',
+  },
+  {
+    id: 'nasobeni',
+    glyph: 0b11110,
+    ancientName: 'Lumenitské násobení',
+    modernName: 'Násobení posunem a sčítáním',
+    ancient: 'Kdo umí posouvat a sčítat, nepotřebuje násobilku.',
+    modern:
+      'Za každou jedničku druhého činitele napiš první činitel posunutý na její místo a kopie sečti. Násobilka je ve dvojkové soustavě jen 0 · 1 = 0 a 1 · 1 = 1.',
+    formula: '101₂ · 11₂ = 101₂ + 1010₂ = 1111₂   (5 · 3 = 15)',
+    today: 'Tak násobí jednoduché procesory a stejně se násobí i pod sebou na papíře, jen s desítkovými ciframi.',
+  },
+  {
+    id: 'pocetari',
+    glyph: 0b11001,
+    ancientName: 'Zákony Síně',
+    modernName: 'Shrnutí Aktu II',
+    ancient: 'Kdo prošel Síní Počtářů, umí světla sčítat, ubírat, zdvojovat i půlit.',
+    modern:
+      'Sčítání po sloupcích s přenosem (2 → 0 a přenos, 3 → 1 a přenos). Odčítání s výpůjčkou. Pevná šířka znamená přetečení. Posun vlevo = ×2, posun vpravo = ÷2. Násobení = součet posunutých kopií.',
+    formula: '0110₂ + 0111₂ = 1101₂   ·   0101₂ << 2 = 10100₂',
+    today:
+      'Tyhle operace umí aritmetická jednotka každého procesoru (ALU). V dalších patrech observatoře se dozvíš, jak ji poskládat z hradel.',
+  },
+];
+
+export function kodexById(id: string): KodexEntry | undefined {
+  return KODEX.find((e) => e.id === id);
+}

@@ -1,0 +1,621 @@
+<script lang="ts">
+  import { untrack } from 'svelte';
+  import Altar from '../altar/Altar.svelte';
+  import LevelComplete from '../altar/LevelComplete.svelte';
+  import Inscription from '../inscription/Inscription.svelte';
+  import Cascade from '../cascade/Cascade.svelte';
+  import Tide from '../tide/Tide.svelte';
+  import EchoBubble from '../EchoBubble.svelte';
+  import Icon from '../Icon.svelte';
+  import { actOf, getLevel, nextLevelId } from '../../content/levels';
+  import { kodexById } from '../../content/kodex';
+  import { maxValue, patternWords, toBinaryString } from '../../core/bits';
+  import type { AltarEvent, AltarState } from '../../core/puzzles/altar';
+  import type { CascadeEvent, CascadeState } from '../../core/puzzles/cascade';
+  import type { InscriptionEvent, InscriptionState } from '../../core/puzzles/inscription';
+  import type { TideEvent, TideOp, TideState } from '../../core/puzzles/tide';
+  import { AltarGame } from '../../game/altarGame.svelte.ts';
+  import type { GameEvent } from '../../game/baseGame.svelte.ts';
+  import { CascadeGame } from '../../game/cascadeGame.svelte.ts';
+  import { InscriptionGame } from '../../game/inscriptionGame.svelte.ts';
+  import { TideGame } from '../../game/tideGame.svelte.ts';
+  import { Echo } from '../../game/echo.svelte.ts';
+  import { go, openKodex, ui } from '../../game/nav.svelte.ts';
+  import { recordResult, unseenKodex } from '../../game/progress.svelte.ts';
+  import { saveSettings, settings } from '../../game/settings.svelte.ts';
+  import { plainText } from '../../game/text';
+  import * as sound from '../../audio/sound';
+
+  let { id }: { id: string } = $props();
+
+  // Komponenta se v App.svelte vytváří znovu pro každé id ({#key}).
+  const level = getLevel(untrack(() => id))!;
+  const next = nextLevelId(level.id);
+  const kodex = level.kodex ? (kodexById(level.kodex) ?? null) : null;
+  const act = actOf(level.id);
+  const bits = level.kind === 'cascade' ? level.config.width : level.config.bits;
+
+  const echo = new Echo();
+  const game = createGame();
+
+  function createGame() {
+    switch (level.kind) {
+      case 'altar':
+        return new AltarGame(level, handle);
+      case 'inscription':
+        return new InscriptionGame(level, handle);
+      case 'cascade':
+        return new CascadeGame(level, handle);
+      case 'tide':
+        return new TideGame(level, handle);
+    }
+  }
+
+  /** Repliky po dalších chybných čteních (první říká level.echo.wrong). */
+  const WRONG_AGAIN = ['Ještě ne. Který krystal nesedí?', 'Porovnej oba obrazce krystal po krystalu.'];
+  /** Sloupce Kaskády: v … sloupci, nad … sloupcem, do … sloupce. */
+  const LOC = ['prvním', 'druhém', 'třetím', 'čtvrtém', 'pátém', 'šestém', 'sedmém', 'osmém'];
+  const INS = ['prvním', 'druhým', 'třetím', 'čtvrtým', 'pátým', 'šestým', 'sedmým', 'osmým'];
+  const GEN = ['prvního', 'druhého', 'třetího', 'čtvrtého', 'pátého', 'šestého', 'sedmého', 'osmého'];
+  const FLOW = ['žádné světlo', 'jedno světlo', 'dvě světla', 'tři světla'];
+  const LEVER_NAME: Record<TideOp, string> = {
+    shl: 'Posun vlevo',
+    shr: 'Posun vpravo',
+    inc: 'Přidána jedna',
+    dec: 'Ubrána jedna',
+  };
+
+  let announcement = $state('');
+  let pulse = $state(0);
+  let showComplete = $state(false);
+  let solvedLines: string[] = $state([]);
+  let firstRevealSaid = false;
+  let repeatSaid = false;
+  let wrongCount = 0;
+  let spillSaid = false;
+  /** Roste s každým chybným potvrzením Kaskády (otřese sloupcem). */
+  let wobble = $state(0);
+  let completeTimer: ReturnType<typeof setTimeout> | undefined;
+
+  echo.say(level.echo.intro);
+
+  $effect(() => () => clearTimeout(completeTimer));
+
+  function announce(text: string) {
+    announcement = announcement === text ? `${text} ` : text;
+  }
+
+  function words(mask: number): string {
+    return level.presentation.showDigits || settings.alwaysDigits ? toBinaryString(mask, bits) : patternWords(mask, bits);
+  }
+
+  function handle(e: GameEvent) {
+    switch (e.kind) {
+      case 'altar':
+        onAltar(e.event, e.state);
+        break;
+      case 'inscription':
+        onInscription(e.event, e.state);
+        break;
+      case 'cascade':
+        onCascade(e.event, e.state);
+        break;
+      case 'tide':
+        onTide(e.event, e.state);
+        break;
+      case 'hint': {
+        const text = level.hints[e.level - 1];
+        echo.say([text], 'hint');
+        announce(`Nápověda ${e.level}: ${text}`);
+        break;
+      }
+      case 'quiz': {
+        if (e.correct) sound.playChime();
+        else sound.playSoft();
+        break;
+      }
+      case 'solved': {
+        sound.playSolved(bits);
+        recordResult(level.id, e.result, level.kodex);
+        solvedLines = [...level.echo.solved, ...(e.result.seals.skill && level.echo.skill ? [level.echo.skill] : [])];
+        pulse += 1;
+        announce(`Komnata otevřena. ${solvedLines.map(plainText).join(' ')}`);
+        completeTimer = setTimeout(() => {
+          showComplete = true;
+          sound.playDoor();
+        }, settings.reducedMotion ? 250 : 1300);
+        break;
+      }
+    }
+  }
+
+  function onAltar(ev: AltarEvent, state: AltarState) {
+    if (level.kind !== 'altar') return;
+    const cfg = level.config;
+    const counter = !!level.presentation.counter;
+    if (ev.type === 'toggle') {
+      sound.playBit(ev.bit, ev.on);
+      let msg = `Krystal ${bits - ev.bit} zleva ${ev.on ? 'rozsvícen' : 'zhasnut'}.`;
+      if (level.presentation.showSum) msg += ` Světlo váží ${state.mask}.`;
+      announce(msg);
+    } else if (ev.type === 'reveal') {
+      sound.playReveal();
+      if (ev.allRevealed && level.echo.allRevealed) echo.say([level.echo.allRevealed]);
+      else if (!firstRevealSaid && level.echo.firstReveal) {
+        echo.say([level.echo.firstReveal]);
+        firstRevealSaid = true;
+      }
+    } else if (ev.type === 'found') {
+      sound.playChord(ev.pattern, bits, 0.08);
+      const line = level.echo.found?.[ev.count];
+      if (line) echo.say([line]);
+      announce(`Nový obrazec. Nalezeno ${ev.count} z ${2 ** bits}.`);
+    } else if (ev.type === 'repeat') {
+      sound.playSoft();
+      if (!repeatSaid && level.echo.repeat) {
+        echo.say([level.echo.repeat]);
+        repeatSaid = true;
+      }
+    } else if (ev.type === 'step') {
+      sound.playChord(ev.target, bits, 0.1);
+      if (counter) sound.playCarve();
+      else if (cfg.goal.kind === 'value') sound.playGrind();
+      pulse += 1;
+      const line = level.echo.step?.[ev.index];
+      if (line) echo.say([line]);
+      const targets = cfg.goal.kind === 'all' ? [] : cfg.goal.targets;
+      const upcoming = targets[state.step];
+      if (upcoming === undefined) announce('Přijato.');
+      else if (counter) announce(`Přijato. Poutníků: ${ev.target}. Přichází další.`);
+      else announce(`Přijato. Oltář žádá ${upcoming}.`);
+    } else if (ev.type === 'complete') {
+      if (level.quiz?.length && level.echo.complete) echo.say([level.echo.complete]);
+    }
+  }
+
+  function onInscription(ev: InscriptionEvent, state: InscriptionState) {
+    if (level.kind !== 'inscription') return;
+    const cfg = level.config;
+    if (ev.type === 'toggle') {
+      sound.playBit(ev.bit, ev.on);
+      announce(`Krystal ${bits - ev.bit} zleva ${ev.on ? 'rozsvícen' : 'zhasnut'}.`);
+    } else if (ev.type === 'wrong') {
+      sound.playSoft();
+      wrongCount++;
+      if (ev.guess > maxValue(bits)) echo.say([`Tolik se do ${bits} krystalů nevejde. Nejvíc je ${maxValue(bits)}.`]);
+      else if (wrongCount === 1 && level.echo.wrong) echo.say([level.echo.wrong]);
+      else echo.say([WRONG_AGAIN[wrongCount % WRONG_AGAIN.length]]);
+      announce(`Kotouče ukazují ${ev.guess}. Nápis váží jinak.`);
+    } else if (ev.type === 'step') {
+      sound.playChord(ev.task.value, bits, 0.1);
+      sound.playGrind(ev.task.dir === 'read' ? 0.6 : 0.9);
+      pulse += 1;
+      const line = level.echo.step?.[ev.index];
+      if (line) echo.say([line]);
+      const upcoming = cfg.tasks[state.step];
+      if (!upcoming) announce('Správně.');
+      else if (upcoming.dir === 'read') announce(`Správně. Další nápis: ${words(upcoming.value)}.`);
+      else announce(`Správně. Brána žádá ${upcoming.value}.`);
+    } else if (ev.type === 'complete') {
+      if (level.quiz?.length && level.echo.complete) echo.say([level.echo.complete]);
+    }
+  }
+
+  /** Proč Kaskáda výsledek nepřijala: vysvětlí první sloupec zprava, který nesedí. */
+  function cascadeWhy(ev: Extract<CascadeEvent, { type: 'wrong' }>, state: CascadeState): string {
+    if (level.kind !== 'cascade') return '';
+    const cfg = level.config;
+    const task = cfg.tasks[state.step];
+    const sub = task.op === 'sub';
+    const c = ev.cell.column;
+    if (ev.cell.row === 'carry') {
+      if (c === cfg.width) {
+        return ev.expected ? 'Nejlevější sloupec přetekl. To světlo patří do přepadu.' : 'Nic nepřeteklo. Přepad má zůstat suchý.';
+      }
+      if (sub) {
+        return ev.expected
+          ? `Ve sloupci vpravo nebylo z čeho brát. Výpůjčku zapiš krystalem pod spodní řadu v ${LOC[c]} sloupci zprava.`
+          : `Sloupec vpravo si nepůjčoval. V ${LOC[c]} sloupci zprava výpůjčka být nemá.`;
+      }
+      return ev.expected
+        ? `Ve sloupci vpravo se slila ${FLOW[ev.inflow]} a jedno přeteklo. Nad ${INS[c]} sloupcem zprava chybí krystal přenosu.`
+        : `Nad ${INS[c]} sloupcem zprava svítí krystal přenosu, ale sloupec vpravo nepřetekl.`;
+    }
+    if (sub) {
+      if (ev.inflow < 0) {
+        return `V ${LOC[c]} sloupci zprava nemáš z čeho brát. Půjčené světlo tu váží dvě: ${ev.inflow === -1 ? '10 − 1 = 1' : '10 − 1 − 1 = 0'}.`;
+      }
+      return `V ${LOC[c]} sloupci zprava ${ev.inflow === 1 ? 'zbude jedno světlo' : 'nezbude nic'}.`;
+    }
+    const bitsInWall = cfg.bits ?? cfg.width;
+    if (cfg.carries === 'none' && c >= bitsInWall) {
+      return `Do ${GEN[c]} sloupce zprava přeteklo světlo ze sousedního sloupce. Rozsviť ho tam.`;
+    }
+    if (ev.inflow >= 2) {
+      return `V ${LOC[c]} sloupci zprava se slévají ${FLOW[ev.inflow]}. Do jednoho krystalu se nevejdou: co zůstane dole a co přeteče?`;
+    }
+    return ev.inflow === 1
+      ? `V ${LOC[c]} sloupci zprava je jedno světlo. Nikam nepřetéká, zůstane dole.`
+      : `V ${LOC[c]} sloupci zprava není žádné světlo. Krystal dole má zůstat zhasnutý.`;
+  }
+
+  function onCascade(ev: CascadeEvent, state: CascadeState) {
+    if (level.kind !== 'cascade') return;
+    const cfg = level.config;
+    if (ev.type === 'toggle') {
+      const { row, column } = ev.cell;
+      if (row === 'result') sound.playBit(column, ev.on);
+      else sound.playSpark(ev.on);
+      const what =
+        row === 'result'
+          ? `Krystal výsledku ${column + 1} zprava`
+          : column === cfg.width
+            ? 'Přepad'
+            : cfg.tasks[state.step]?.op === 'sub'
+              ? `Krystal výpůjčky ve sloupci ${column + 1} zprava`
+              : `Krystal přenosu nad sloupcem ${column + 1} zprava`;
+      announce(`${what}: ${ev.on ? 'světlo' : 'stín'}.`);
+    } else if (ev.type === 'wrong') {
+      sound.playSoft();
+      wobble += 1;
+      const why = cascadeWhy(ev, state);
+      echo.say([why]);
+      announce(`Výsledek nepřijat. ${why}`);
+    } else if (ev.type === 'step') {
+      sound.playCascade(cfg.width);
+      sound.playGrind(0.7);
+      pulse += 1;
+      const line = level.echo.step?.[ev.index];
+      if (line) echo.say([line]);
+      announce(state.complete ? 'Správně.' : 'Správně. Ve stěně je další úloha.');
+    } else if (ev.type === 'complete') {
+      if (level.quiz?.length && level.echo.complete) echo.say([level.echo.complete]);
+    }
+  }
+
+  function onTide(ev: TideEvent, state: TideState) {
+    if (level.kind !== 'tide') return;
+    const cfg = level.config;
+    if (ev.type === 'pull') {
+      sound.playShift();
+      sound.playChord(ev.to, bits, 0.06);
+      const lost = ev.spill === 'left' || ev.spill === 'right';
+      if (ev.spill) sound.playSpill();
+      if (lost && !spillSaid && level.echo.spill) {
+        echo.say([level.echo.spill]);
+        spillSaid = true;
+      }
+      announce(`${LEVER_NAME[ev.op]}. Světlo váží ${ev.to}.${lost ? ' Jedno světlo spadlo přes okraj.' : ''}`);
+    } else if (ev.type === 'reset') {
+      sound.playSoft();
+      sound.playGrind(0.6);
+      if (level.echo.reset) echo.say([level.echo.reset]);
+      announce(`Tahy došly. Světlo se vrátilo na ${ev.to}.`);
+    } else if (ev.type === 'step') {
+      sound.playChord(ev.target, bits, 0.1);
+      sound.playGrind(0.8);
+      pulse += 1;
+      const line = level.echo.step?.[ev.index];
+      if (line) echo.say([line]);
+      const upcoming = cfg.tasks[state.step];
+      announce(upcoming && !state.complete ? `Správně. Teď z ${state.value} na ${upcoming.target}.` : 'Správně.');
+    } else if (ev.type === 'complete') {
+      if (level.quiz?.length && level.echo.complete) echo.say([level.echo.complete]);
+    }
+  }
+
+  function nudge(wheel: number, delta: number) {
+    if (game.kind !== 'inscription') return;
+    game.nudge(wheel, delta);
+    sound.playTick();
+  }
+
+  function restart() {
+    clearTimeout(completeTimer);
+    showComplete = false;
+    firstRevealSaid = false;
+    repeatSaid = false;
+    wrongCount = 0;
+    spillSaid = false;
+    game.restart();
+    echo.say(level.echo.intro);
+    // Ať Enter po restartu nespustí restart znovu, ale patří kotoučům.
+    if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
+  }
+
+  function toggleSound() {
+    settings.sound = !settings.sound;
+    saveSettings();
+    if (settings.sound) sound.unlock();
+  }
+
+  function onKey(ev: KeyboardEvent) {
+    if (ui.kodexOpen || ui.settingsOpen || showComplete) return;
+    const plain = !ev.ctrlKey && !ev.metaKey && !ev.altKey;
+    if (game.kind === 'inscription' && game.reading && plain) {
+      // Kotouče jdou nastavit i z klávesnice: číslice se přidávají zprava.
+      if (/^[0-9]$/.test(ev.key)) {
+        ev.preventDefault();
+        game.typeDigit(Number(ev.key));
+        sound.playTick();
+        return;
+      }
+      if (ev.key === 'Backspace') {
+        ev.preventDefault();
+        game.eraseDigit();
+        sound.playTick();
+        return;
+      }
+      // Enter potvrdí kotouče i po kliknutí na šipku; jiná tlačítka (Potvrdit, Nápověda…) stiskne normálně.
+      const target = ev.target as HTMLElement | null;
+      const otherButton = target instanceof HTMLButtonElement && !target.closest('.dial');
+      if (ev.key === 'Enter' && !otherButton) {
+        ev.preventDefault();
+        game.confirm();
+        return;
+      }
+    }
+    if (game.kind === 'cascade' && game.playing && plain && ev.key === 'Enter') {
+      // Buňku vybranou klávesnicí přepne Enter sám; po kliknutí myší Enter výsledek potvrdí.
+      const keyboardFocus = ev.target instanceof HTMLButtonElement && ev.target.matches(':focus-visible');
+      if (!keyboardFocus) {
+        ev.preventDefault();
+        game.confirm();
+        return;
+      }
+    }
+    if (game.kind === 'tide' && game.playing && plain) {
+      const keys: Record<string, TideOp> = { ArrowLeft: 'shl', ArrowRight: 'shr', '+': 'inc', '-': 'dec', '−': 'dec' };
+      const op = keys[ev.key];
+      if (op && game.level.config.ops.includes(op)) {
+        ev.preventDefault();
+        game.pull(op);
+        return;
+      }
+    }
+    if ((ev.ctrlKey || ev.metaKey) && ev.key.toLowerCase() === 'z') {
+      ev.preventDefault();
+      game.undo();
+    } else if (plain && ev.key.toLowerCase() === 'h') {
+      game.useHint();
+    }
+  }
+</script>
+
+<svelte:window onkeydown={onKey} />
+
+<div class="level">
+  <header class="topbar">
+    <button type="button" class="icon-btn" onclick={() => go({ name: 'map' })} aria-label="Zpět na mapu">
+      <Icon name="back" />
+    </button>
+    <div class="where">
+      <span class="act carved hide-narrow">{act.title}</span>
+      <h1 class="inlaid"><span class="code">{level.id}</span> {level.title}</h1>
+    </div>
+    <div class="tools">
+      <button
+        type="button"
+        class="icon-btn"
+        onclick={toggleSound}
+        aria-label={settings.sound ? 'Vypnout zvuk' : 'Zapnout zvuk'}
+        title={settings.sound ? 'Vypnout zvuk' : 'Zapnout zvuk'}
+      >
+        <Icon name={settings.sound ? 'sound-on' : 'sound-off'} />
+      </button>
+      <button type="button" class="icon-btn" onclick={() => (ui.settingsOpen = true)} aria-label="Nastavení" title="Nastavení">
+        <Icon name="settings" />
+      </button>
+      <button type="button" class="btn btn-ghost kodex-btn" onclick={() => openKodex()}>
+        <Icon name="book" />
+        <span class="hide-narrow">Kodex</span>
+        {#if unseenKodex().length > 0}<span class="new-dot" aria-label="nové záznamy"></span>{/if}
+      </button>
+    </div>
+  </header>
+
+  <div class="stage">
+    {#if game.kind === 'altar'}
+      <Altar {game} {pulse} />
+    {:else if game.kind === 'inscription'}
+      <Inscription {game} {pulse} onNudge={nudge} />
+    {:else if game.kind === 'cascade'}
+      <Cascade {game} {pulse} {wobble} />
+    {:else}
+      <Tide {game} {pulse} />
+    {/if}
+  </div>
+
+  <div class="echo-row">
+    <EchoBubble {echo} />
+  </div>
+
+  <footer class="actionbar wood">
+    <button type="button" class="btn btn-ghost" onclick={() => game.undo()} disabled={!game.canUndo} title="Zpět (Ctrl+Z)">
+      <Icon name="undo" /> Zpět
+    </button>
+    <button type="button" class="btn btn-ghost" onclick={restart} title="Začít komnatu znovu">
+      <Icon name="restart" /> Znovu
+    </button>
+    <span class="spacer"></span>
+    <button
+      type="button"
+      class="btn btn-ghost hint-btn"
+      onclick={() => game.useHint()}
+      disabled={game.phase !== 'play' || game.hintLevel >= 3}
+      title="Nápověda (H)"
+    >
+      <Icon name="hint" /> Nápověda <span class="count">{game.hintLevel}/3</span>
+    </button>
+  </footer>
+
+  <div class="visually-hidden" aria-live="polite">{announcement}</div>
+</div>
+
+{#if showComplete && game.result}
+  <LevelComplete
+    {level}
+    result={game.result}
+    lines={solvedLines}
+    {kodex}
+    hasNext={next !== null}
+    floorDone={next && actOf(next) !== act ? { numeral: act.numeral, next: actOf(next).title } : null}
+    onNext={() => next && go({ name: 'level', id: next })}
+    onMap={() => go({ name: 'map' })}
+    onReplay={restart}
+  />
+{/if}
+
+<style>
+  .level {
+    --bar-h: 72px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto 1fr auto auto;
+    min-height: 100dvh;
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 0 16px;
+  }
+  .where {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+  .act {
+    font-family: var(--font-display);
+    font-size: var(--fs-xs);
+    font-weight: 700;
+    letter-spacing: var(--ls-label);
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+  h1 {
+    margin: 0;
+    font-size: clamp(var(--fs-base), 4.2vw, var(--fs-2xl));
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+  }
+  .code {
+    margin-right: 0.4em;
+    font-family: var(--font-mono);
+    font-size: 0.64em;
+    font-weight: 700;
+    color: var(--stone-200);
+    vertical-align: 0.1em;
+  }
+  .kodex-btn {
+    position: relative;
+    padding: 0 14px;
+  }
+  .kodex-btn .new-dot {
+    position: absolute;
+    top: 7px;
+    right: 7px;
+  }
+  .stage {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: clamp(14px, 3.5vh, 36px) 0;
+  }
+  .echo-row {
+    display: flex;
+    justify-content: center;
+    min-height: 76px;
+    padding-bottom: 12px;
+  }
+  /* Na širší obrazovce zůstává Echo vždy vidět nad trámem, i když se scéna celá nevejde. */
+  @media (min-width: 561px) {
+    .echo-row {
+      position: sticky;
+      bottom: var(--bar-h);
+      z-index: 4;
+      pointer-events: none;
+    }
+    .echo-row > :global(*) {
+      pointer-events: auto;
+    }
+  }
+  /* Nízká obrazovka (např. 1366 × 768 s lištami prohlížeče): úspornější okraje. */
+  @media (max-height: 820px) {
+    .level {
+      --bar-h: 58px;
+    }
+    .stage {
+      padding: 6px 0;
+    }
+    .echo-row {
+      min-height: 0;
+      padding-bottom: 6px;
+    }
+  }
+  /* Dřevěný trám s ovládáním */
+  .actionbar {
+    position: sticky;
+    bottom: 0;
+    z-index: 5;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0 -16px;
+    padding: 12px 16px 14px;
+    border-radius: 6px 6px 0 0;
+  }
+  .actionbar::before,
+  .actionbar::after {
+    /* mosazné nýty */
+    content: '';
+    position: absolute;
+    top: 50%;
+    width: 9px;
+    height: 9px;
+    margin-top: -4.5px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 35%, #f6e2a6, #a8822f 60%, #4d3810);
+    box-shadow: 0 1px 1px rgba(0, 0, 0, 0.6);
+  }
+  .actionbar::before {
+    left: 6px;
+  }
+  .actionbar::after {
+    right: 6px;
+  }
+  .spacer {
+    flex: 1;
+  }
+  .count {
+    font-family: var(--font-mono);
+    font-size: var(--fs-sm);
+    color: var(--text-muted);
+  }
+  @media (min-width: 1212px) {
+    .actionbar {
+      margin: 0;
+    }
+  }
+  @media (max-height: 820px) {
+    .actionbar {
+      padding-top: 7px;
+      padding-bottom: 7px;
+    }
+  }
+  @media (max-width: 560px) {
+    .actionbar {
+      gap: 6px;
+    }
+    .actionbar .btn {
+      gap: 6px;
+      padding: 0 10px;
+    }
+    .actionbar::before,
+    .actionbar::after {
+      display: none;
+    }
+  }
+</style>
