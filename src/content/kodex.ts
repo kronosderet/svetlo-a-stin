@@ -323,6 +323,82 @@ export const KODEX: KodexEntry[] = [
     formula: '101₂ · 110₂ = 1010₂ + 10100₂ = 11110₂   (5 · 6 = 30)',
     today: 'To je celá aritmetická jednotka procesoru. V dalších patrech observatoře se dozvíš, jak ji postavit z hradel.',
   },
+  // Akt III, Zahrada Bran: glyfy mají uprostřed kosočtverec.
+  {
+    id: 'obracec',
+    glyph: 0b100001,
+    ancientName: 'Obraceč',
+    modernName: 'NOT (negace)',
+    ancient: 'Kde bylo světlo, je stín. Kde byl stín, je světlo.',
+    modern:
+      'Hradlo NOT má jeden vstup a výstup je vždy opačný: z 1 udělá 0 a z 0 udělá 1. Dvě hradla NOT za sebou se navzájem zruší.',
+    formula: '¬0 = 1 · ¬1 = 0 · ¬¬A = A',
+    today: 'V matematice je to negace výroku: „prší“ a „neprší“. V počítači stojí invertor skoro v každém obvodu.',
+  },
+  {
+    id: 'pouto',
+    glyph: 0b100010,
+    ancientName: 'Pouto',
+    modernName: 'AND (konjunkce)',
+    ancient: 'Světlo projde, jen když přijde z obou stran.',
+    modern: 'Hradlo AND dá na výstupu 1 jen tehdy, když jsou oba vstupy 1. Jinak dá 0.',
+    formula: 'A ∧ B: 00 → 0 · 01 → 0 · 10 → 0 · 11 → 1',
+    today: 'V matematice konjunkce: „prší a fouká“. Ve vyhledávači najdeš se slovem AND jen stránky, kde je obojí.',
+  },
+  {
+    id: 'rozcesti',
+    glyph: 0b100011,
+    ancientName: 'Rozcestí',
+    modernName: 'OR (disjunkce)',
+    ancient: 'Stačí jedna cesta a světlo dorazí.',
+    modern: 'Hradlo OR dá na výstupu 1, když je aspoň jeden vstup 1. Nulu dá jen tehdy, když jsou oba vstupy 0.',
+    formula: 'A ∨ B: 00 → 0 · 01 → 1 · 10 → 1 · 11 → 1',
+    today: 'V matematice disjunkce: „půjdu do kina, nebo do divadla“ platí i tehdy, když půjdeš na obojí.',
+  },
+  {
+    id: 'vyluka',
+    glyph: 0b100100,
+    ancientName: 'Výluka',
+    modernName: 'XOR (vylučovací disjunkce)',
+    ancient: 'Jen jedno světlo projde. Dvě se vyruší.',
+    modern:
+      'Hradlo XOR dá 1, když se vstupy liší (právě jeden je 1). Je to spodní číslice součtu dvou bitů: 1 + 1 = 10, dole zůstane 0.',
+    formula: 'A ⊻ B: 00 → 0 · 01 → 1 · 10 → 1 · 11 → 0',
+    today: 'Česky „buď, anebo“. XOR se používá při sčítání, v šifrách a při kontrole chyb v přenesených datech.',
+  },
+  {
+    id: 'deska',
+    glyph: 0b100101,
+    ancientName: 'Deska zákona',
+    modernName: 'Pravdivostní tabulka',
+    ancient: 'Kdo zná desku, pozná runu i pod závojem.',
+    modern:
+      'Pravdivostní tabulka vypíše výstup hradla nebo obvodu pro každou kombinaci vstupů. Pro n vstupů má 2ⁿ řádků. Dva obvody se stejnou tabulkou dělají totéž.',
+    formula: 'n vstupů → 2ⁿ řádků',
+    today: 'Stejné tabulky kreslíte v matematice u výrokové logiky. Inženýři podle nich navrhují čipy.',
+  },
+  {
+    id: 'retezy',
+    glyph: 0b100110,
+    ancientName: 'Zlomené pouto a Zavřené rozcestí',
+    modernName: 'NAND a NOR',
+    ancient: 'Runa a za ní Obraceč dají runu novou.',
+    modern:
+      'NAND je AND s negací: dá 0 jen tehdy, když jsou oba vstupy 1. NOR je OR s negací: dá 1 jen tehdy, když jsou oba vstupy 0. Skládáním hradel vznikají nové funkce.',
+    formula: 'NAND = ¬(A ∧ B) · NOR = ¬(A ∨ B)',
+    today: 'Z hradel NAND se dá postavit úplně všechno, i celý procesor. Proto jsou čipy často vyrobené hlavně z nich.',
+  },
+  {
+    id: 'zahrada',
+    glyph: 0b100111,
+    ancientName: 'Zákony Zahrady',
+    modernName: 'Shrnutí Aktu III',
+    ancient: 'Kdo prošel bránou Zahrady, zná runy a umí je skládat.',
+    modern:
+      'NOT obrací, AND chce oba vstupy, OR stačí jeden, XOR chce právě jeden. Každé hradlo popisuje pravdivostní tabulka a hradla se dají řadit za sebe (NAND, NOR) i větvit.',
+    formula: '¬ · ∧ · ∨ · ⊻',
+    today: 'Z těchto hradel jsou složené všechny počítače. V Hlubině Strojů z nich poskládáš sčítačku a paměť.',
+  },
 ];
 
 export function kodexById(id: string): KodexEntry | undefined {

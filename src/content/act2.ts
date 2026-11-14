@@ -904,5 +904,4 @@ export const ACT_II: ActDef = {
   theme: 'Sčítání a přenos',
   glyphBase: 16,
   levels,
-  nextAct: { numeral: 'III', title: 'Zahrada Bran', theme: 'Logika' },
 };

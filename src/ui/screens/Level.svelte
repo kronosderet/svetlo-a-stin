@@ -5,6 +5,8 @@
   import Inscription from '../inscription/Inscription.svelte';
   import Cascade from '../cascade/Cascade.svelte';
   import Tide from '../tide/Tide.svelte';
+  import Gate from '../gate/Gate.svelte';
+  import Desk from '../gate/Desk.svelte';
   import EchoBubble from '../EchoBubble.svelte';
   import FxLayer, { type Area, type Point } from '../FxLayer.svelte';
   import Icon from '../Icon.svelte';
@@ -17,6 +19,8 @@
   import { CascadeGame } from '../../game/cascadeGame.svelte.ts';
   import { InscriptionGame } from '../../game/inscriptionGame.svelte.ts';
   import { TideGame } from '../../game/tideGame.svelte.ts';
+  import { GateGame } from '../../game/gateGame.svelte.ts';
+  import { TableGame } from '../../game/tableGame.svelte.ts';
   import { Echo } from '../../game/echo.svelte.ts';
   import { FX, fxState } from '../../game/fx.svelte.ts';
   import { go, openKodex, ui } from '../../game/nav.svelte.ts';
@@ -29,6 +33,7 @@
   import { onInscription } from './level/inscriptionEvents';
   import { onCascade } from './level/cascadeEvents';
   import { onTide } from './level/tideEvents';
+  import { onGate, onTable } from './level/gateEvents';
   import { puzzleKey } from './level/keys';
 
   let { id }: { id: string } = $props();
@@ -43,7 +48,11 @@
   const act = actOf(room.id);
   const isGate = roomNumber(room.id) === GATE;
 
-  const bitsOf = (l: PuzzleLevel) => (l.kind === 'cascade' ? l.config.width : l.config.bits);
+  const bitsOf = (l: PuzzleLevel): number => {
+    if (l.kind === 'cascade') return l.config.width;
+    if (l.kind === 'gate' || l.kind === 'table') return l.config.tasks[0].circuit.inputs.length;
+    return l.config.bits;
+  };
   /** Aktuální část komnaty (u obyčejné komnaty celá komnata). */
   let partIndex = $state(0);
   let level: PuzzleLevel = parts[0];
@@ -94,6 +103,10 @@
         return new CascadeGame(level, handle);
       case 'tide':
         return new TideGame(level, handle);
+      case 'gate':
+        return new GateGame(level, handle);
+      case 'table':
+        return new TableGame(level, handle);
     }
   }
 
@@ -202,6 +215,12 @@
         break;
       case 'tide':
         onTide(ctx, e.event, e.state);
+        break;
+      case 'gate':
+        onGate(ctx, e.event, e.state);
+        break;
+      case 'table':
+        onTable(ctx, e.event, e.state);
         break;
       case 'hint': {
         const text = level.hints[e.level - 1];
@@ -339,8 +358,12 @@
         <Inscription {game} {pulse} onNudge={nudge} />
       {:else if game.kind === 'cascade'}
         <Cascade {game} {pulse} {wobble} />
-      {:else}
+      {:else if game.kind === 'tide'}
         <Tide {game} {pulse} />
+      {:else if game.kind === 'gate'}
+        <Gate {game} {pulse} />
+      {:else}
+        <Desk {game} {pulse} />
       {/if}
     {/key}
   </div>

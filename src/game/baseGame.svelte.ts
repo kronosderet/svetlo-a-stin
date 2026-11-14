@@ -1,5 +1,7 @@
 import type { AltarEvent, AltarState } from '../core/puzzles/altar';
 import type { CascadeEvent, CascadeState } from '../core/puzzles/cascade';
+import type { GateEvent, GateState } from '../core/puzzles/gate';
+import type { TableEvent, TableState } from '../core/puzzles/table';
 import type { InscriptionEvent, InscriptionState } from '../core/puzzles/inscription';
 import type { TideEvent, TideState } from '../core/puzzles/tide';
 import type { PuzzleLevel, QuizQuestion } from '../content/types';
@@ -35,6 +37,8 @@ export type GameEvent =
   | { kind: 'inscription'; event: InscriptionEvent; state: InscriptionState }
   | { kind: 'cascade'; event: CascadeEvent; state: CascadeState }
   | { kind: 'tide'; event: TideEvent; state: TideState }
+  | { kind: 'gate'; event: GateEvent; state: GateState }
+  | { kind: 'table'; event: TableEvent; state: TableState }
   | { kind: 'hint'; level: number }
   | { kind: 'quiz'; correct: boolean; question: number }
   | { kind: 'solved'; result: LevelResult };

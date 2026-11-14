@@ -407,3 +407,17 @@ export function qFastMul(rng: Rng): QuizQuestion {
     `Násobit ${m} znamená ${k}× zdvojit, tedy posunout o ${places(k)}: ${bin(v, 4)} → ${(v << k).toString(2)} = ${v * m}.`,
   );
 }
+
+// --- Akt III ---
+
+/** III: deska zákona pro n vstupů má 2ⁿ řádků. */
+export function qTableRows(rng: Rng): QuizQuestion {
+  const n = int(rng, 3, 5);
+  return make(
+    `Kolik řádků má deska zákona pro runu se ${n} vstupy?`,
+    2 ** n,
+    [2 * n, 2 ** (n - 1), 2 ** (n + 1), n + 1],
+    'Každý řádek je jedna kombinace vstupů. Kolik kombinací má n krystalů?',
+    `Každý vstup je světlo, nebo stín, takže řádků je 2${sup(n)} = ${2 ** n}. Stejně jako kombinací ${n} krystalů v Předsíni.`,
+  );
+}

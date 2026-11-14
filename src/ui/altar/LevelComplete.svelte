@@ -31,7 +31,10 @@
   const m = $derived(settings.reducedMotion ? 0 : 1);
   /** Kde se výsledek potvrzuje (kotouče, Kaskáda), počítají se pokusy, ne tahy. */
   const onlyReading = $derived(
-    level.kind === 'cascade' || (level.kind === 'inscription' && level.config.tasks.every((t) => t.dir === 'read')),
+    level.kind === 'cascade' ||
+      level.kind === 'table' ||
+      (level.kind === 'gate' && level.config.tasks.every((t) => t.mode === 'slots')) ||
+      (level.kind === 'inscription' && level.config.tasks.every((t) => t.dir === 'read')),
   );
   /** Smíšená brána sčítá tahy i pokusy dohromady jako kroky. */
   const unit = $derived(

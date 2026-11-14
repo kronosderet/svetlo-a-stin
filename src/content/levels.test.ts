@@ -6,7 +6,10 @@ import * as tide from '../core/puzzles/tide';
 import { KODEX } from './kodex';
 import { ACTS, BASIC_PATH, GATE, LEVELS, actOf, instantiate, isAdvanced, nextLevelId, partsOf, roomNumber } from './levels';
 import { seeded } from './random';
-import type { AltarLevel, CascadeLevel, InscriptionLevel, PuzzleLevel, TideLevel } from './types';
+import { ARITY } from '../core/logic';
+import * as gate from '../core/puzzles/gate';
+import * as table from '../core/puzzles/table';
+import type { AltarLevel, CascadeLevel, GateLevel, InscriptionLevel, PuzzleLevel, TableLevel, TideLevel } from './types';
 
 /** Kolik vylosovaných variant projde každá kontrola u komnat na procvičování. */
 const SEEDS = 150;
@@ -206,11 +209,90 @@ function tideChecks(level: TideLevel) {
   }
 }
 
+function circuitChecks(c: gate.Circuit) {
+  const known = new Set(c.inputs);
+  for (const g of c.nodes) {
+    // Runa bere jen ze vstupů a z run před sebou, a buď pevná runa, nebo prázdný kámen.
+    g.from.forEach((f) => expect(known.has(f)).toBe(true));
+    expect(!!g.rune !== !!g.choices).toBe(true);
+    if (g.choices) expect(new Set(g.choices.map((r) => ARITY[r])).size).toBe(1);
+    known.add(g.id);
+  }
+  expect(known.has(c.output)).toBe(true);
+}
+
+function gateChecks(level: GateLevel) {
+  check(level, 'má platná data', (level) => {
+    level.config.tasks.forEach((t) => {
+      circuitChecks(t.circuit);
+      if (t.mode === 'slots') {
+        expect(t.target).toHaveLength(2 ** t.circuit.inputs.length);
+        expect(gate.slotNodes(t.circuit).length).toBeGreaterThan(0);
+        expect(gate.solutions(t).length).toBeGreaterThan(0);
+      } else {
+        expect(gate.slotNodes(t.circuit)).toHaveLength(0);
+      }
+    });
+    commonChecks(level);
+  });
+
+  check(level, 'jde vyřešit podle nápověd v ideálním počtu tahů', (level) => {
+    const cfg = level.config;
+    let st = gate.initGate();
+    let guard = 0;
+    while (!st.complete && guard++ < 300) {
+      const h = gate.hint(cfg, st);
+      if (h && 'input' in h) st = gate.toggleInput(cfg, st, h.input).state;
+      else if (h) st = gate.setRune(cfg, st, h.node, h.rune).state;
+      else st = gate.test(cfg, st).state;
+    }
+    expect(st.complete).toBe(true);
+    expect(st.mistakes).toBe(0);
+    expect(st.moves).toBe(gate.par(cfg));
+  });
+}
+
+function tableChecks(level: TableLevel) {
+  check(level, 'má platná data', (level) => {
+    level.config.tasks.forEach((t, k) => {
+      circuitChecks(t.circuit);
+      expect(gate.slotNodes(t.circuit)).toHaveLength(0);
+      const out = table.tableOf(t);
+      // Deska, kde lampa pořád svítí nebo pořád mlčí, by nic neučila.
+      expect(new Set(out).size).toBe(2);
+      if (t.mode === 'identify') {
+        expect(t.choices).toContain(t.answer);
+        // Žádná jiná nabízená runa nesmí mít stejnou desku.
+        t.choices.filter((r) => r !== t.answer).forEach((r) => expect(table.tableOf({ ...t, circuit: { ...t.circuit, nodes: [{ ...t.circuit.nodes[0], rune: r }] } })).not.toEqual(out));
+      }
+      if (k > 0) expect(t).not.toEqual(level.config.tasks[k - 1]);
+    });
+    commonChecks(level);
+  });
+
+  check(level, 'jde vyřešit podle nápověd napoprvé', (level) => {
+    const cfg = level.config;
+    let st = table.initTable();
+    let guard = 0;
+    while (!st.complete && guard++ < 300) {
+      const h = table.hint(cfg, st);
+      if (h && 'rune' in h) st = table.pick(cfg, st, h.rune).state;
+      else if (h) st = table.toggleCell(cfg, st, h.row).state;
+      else st = table.confirm(cfg, st).state;
+    }
+    expect(st.complete).toBe(true);
+    expect(st.mistakes).toBe(0);
+    expect(st.moves).toBe(table.par(cfg));
+  });
+}
+
 function puzzleChecks(level: PuzzleLevel) {
   if (level.kind === 'altar') altarChecks(level);
   else if (level.kind === 'inscription') inscriptionChecks(level);
   else if (level.kind === 'cascade') cascadeChecks(level);
-  else tideChecks(level);
+  else if (level.kind === 'tide') tideChecks(level);
+  else if (level.kind === 'gate') gateChecks(level);
+  else tableChecks(level);
 }
 
 const configs = (l: ReturnType<typeof instantiate>) => JSON.stringify(partsOf(l).map((p) => p.config));
@@ -236,7 +318,9 @@ for (const act of ACTS) {
     for (const level of act.levels.filter((l) => partsOf(l).some((p) => p.generate))) {
       it(`${level.id}: losování dává pokaždé jiné úlohy`, () => {
         const variants = new Set(Array.from({ length: 40 }, (_, s) => configs(instantiate(level, seeded(1000 + s)))));
-        expect(variants.size).toBeGreaterThanOrEqual(25);
+        // Obvodů ze dvou tří run je málo, proto u Zahrady Bran stačí menší pestrost.
+        const logic = partsOf(level).every((p) => p.kind === 'gate' || p.kind === 'table');
+        expect(variants.size).toBeGreaterThanOrEqual(logic ? 10 : 25);
       });
     }
 
@@ -244,7 +328,8 @@ for (const act of ACTS) {
       const basic = act.levels.filter((l) => !isAdvanced(l.id));
       expect(basic.map((l) => l.id)).toEqual(Array.from({ length: GATE }, (_, k) => `${act.numeral}-${k + 1}`));
       const deep = act.levels.filter((l) => isAdvanced(l.id)).map((l) => roomNumber(l.id));
-      expect(deep).toEqual([8, 9, 10, 11, 12, 13, 14, 15]);
+      // Patra I a II mají Hlubší síně celé, další se doplňují.
+      if (act.numeral === 'I' || act.numeral === 'II') expect(deep).toEqual([8, 9, 10, 11, 12, 13, 14, 15]);
       deep.forEach((n, k) => {
         expect(n).toBeGreaterThan(GATE);
         expect(n).toBeLessThanOrEqual(15);
@@ -267,12 +352,12 @@ describe('celá observatoř', () => {
     }
   });
 
-  it('glyfy Kodexu jsou různé a Síň Počtářů má rozsvícený střed', () => {
+  it('glyfy Kodexu jsou různé a nesou znamení patra (střed 16, kosočtverec 32)', () => {
     expect(new Set(KODEX.map((e) => e.glyph)).size).toBe(KODEX.length);
     for (const act of ACTS) {
       for (const l of act.levels.filter((l) => l.kodex)) {
         const glyph = KODEX.find((e) => e.id === l.kodex)!.glyph;
-        expect(glyph >= 16).toBe(act.glyphBase === 16);
+        expect(glyph & 48).toBe(act.glyphBase);
       }
     }
   });
@@ -281,14 +366,15 @@ describe('celá observatoř', () => {
     expect(nextLevelId('I-1')).toBe('I-2');
     expect(nextLevelId('I-6')).toBe('I-7');
     expect(nextLevelId('I-7')).toBe('II-1');
-    expect(nextLevelId('II-7')).toBeNull();
+    expect(nextLevelId('II-7')).toBe('III-1');
+    expect(nextLevelId('III-7')).toBeNull();
     expect(nextLevelId('I-8')).toBe('I-9');
     expect(nextLevelId('I-10')).toBe('I-11');
     expect(nextLevelId('I-15')).toBeNull();
     expect(nextLevelId('II-10')).toBe('II-11');
     expect(nextLevelId('II-14')).toBe('II-15');
     expect(nextLevelId('II-15')).toBeNull();
-    expect(BASIC_PATH.map((l) => l.id)).toHaveLength(14);
+    expect(BASIC_PATH.map((l) => l.id)).toHaveLength(21);
     expect(actOf('II-3').numeral).toBe('II');
     expect(ACTS[ACTS.length - 1].nextAct).toBeDefined();
     ACTS.slice(0, -1).forEach((a) => expect(a.nextAct).toBeUndefined());

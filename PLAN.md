@@ -269,8 +269,8 @@ Díky tomu je přidávání levelů rychlé a datově řízené.
 | **Kaskáda** | počítání pod sebou: ve stěně svítí řádky, hráč rozsvěcí krystaly výsledku a krystaly přenosu nad sloupci a výsledek potvrdí. Chyba otřese prvním špatným sloupcem zprava a Echo řekne proč (kolik světel se v něm slévá, který přenos chybí). Umí sčítání, pevnou nádobu s přepadem, odčítání s výpůjčkami, tři řady s přenosem o dvě místa i násobení, ve kterém hráč sám vybírá posunuté kopie | aritmetika | II |
 | **Příliv** | páky posouvají celou řadu (vlevo = ×2, vpravo = ÷2, co přeteče přes okraj, je ztracené), další páky přidají nebo uberou jedničku. Cíl co nejméně tahy; ve Vahách Osudu dovolí každá zkouška jen ideální počet tahů a pak se vrátí na začátek. Páka „převrať“ (doplněk), miska zbytku (dělení) a kolo může místo čísla ukázat „÷ 8“ nebo „−3“ | posuny, ×2, ÷2, doplněk | II |
 | **Smíšená komnata** | brána patra: několik hádanek různých archetypů za sebou (třeba Kaskáda a pak Příliv), nad scénou ukazatel zkoušek; tahy, pokusy i nápovědy se pro pečetě sčítají za celou komnatu | syntéza patra | II |
-| **Brána** | do slotů v hotovém obvodu vkládáš runy hradel | hradla | III |
-| **Deska zákona** | doplňuješ nebo určuješ pravdivostní tabulku | tabulky, ekvivalence | III |
+| **Brána** | kamenná deska s obvodem: vlevo krystaly vstupů, uprostřed kameny s runami, vpravo lampa, mezi nimi světlovody, které svítí, když nesou světlo. Zkoumání (runy pevné, hráč zkouší všechny kombinace vstupů) a vkládání run do prázdných kamenů (kliknutí runy střídá, Zkouška projde všechny řádky a nesedící rozsvítí okrově) | hradla, skládání | III |
+| **Deska zákona** | pravdivostní tabulka: hráč rozsvítí, ve kterých řádcích lampa svítí, nebo podle hotové desky pozná runu pod závojem | tabulky, identifikace | III |
 | **Dílna** | volná stavba obvodu (umísti hradla, propoj vodiče, spusť zkoušku) | návrh obvodů | III–IV |
 | **Maska** | bitové operace nad celými oktávami (bajty) | AND/OR/XOR masky | III |
 | **Šifra** | kódování/dekódování zpráv | XOR šifra, ASCII, hex | III, V |
@@ -336,20 +336,31 @@ Komnata 15 (glyf 1111) je velká brána patra. Akty I a II jsou rozdělené takt
 
 ### Akt III — Zahrada Bran (logika)
 
+Runy Lumenitů jsou logické spojky z výrokové logiky, kterou studenti znají z matematiky: Obraceč je
+negace (¬), Pouto konjunkce (∧), Rozcestí disjunkce (∨), Výluka vylučovací disjunkce (⊻). Lumenité je
+tesali těmi samými znaky. Moderní značka (NOT, AND…) se pod runou objeví, až ji Kodex přeloží.
+
 | # | Název | Archetyp | Nové | Popis |
 |---|---|---|---|---|
-| III-1 | Obraceč | Brána | NOT | Runa, která mění světlo ve stín. Vlož ji tak, aby se lampa rozsvítila. |
-| III-2 | Pouto | Brána + Deska | AND | Přepínej vstupy a zkoumej, kdy proteče světlo. Potom vyplň desku zákona. |
-| III-3 | Rozcestí | Brána + Deska | OR | Stejný postup pro OR. |
-| III-4 | Jen jeden | Brána + Deska | XOR | „Výlučná“ brána. Echo připomene Soutok z II-1. |
-| III-5 | Které pravidlo? | Deska | identifikace | Podle tabulky urči, která runa se skrývá za závojem. |
-| III-6 | Řetězy | Brána | skládání | Dvě hradla za sebou. Objev NAND a NOR. |
-| III-7 | Zrcadla | Dílna | De Morgan | Postav NOT(A AND B) i (NOT A) OR (NOT B). Komnata ekvivalence ukáže, že jsou totožné. |
-| III-8 | Hlas většiny | Dílna | 3 vstupy | Funkce „aspoň dva ze tří“. |
-| III-9 | Prapečeť | Dílna | univerzalita NAND | K dispozici je jen NAND. Postav z něj NOT, AND a OR. |
-| III-10 | Masky | Maska | bitové operace | AND vybírá, OR nastavuje, XOR přepíná. Odemkni zámek na 8 bitech. |
-| III-11 | Tajná řeč | Šifra | XOR šifra | Zašifruj zprávu klíčem a znovu ji rozšifruj. Objev, že XOR dvakrát vrací původní hodnotu. |
-| III-12 | **Strážce Zahrady** | Dílna | syntéza | Navrhni obvod k zadané tabulce s omezeným počtem hradel. |
+| III-1 | Obraceč | Brána | NOT | Do prázdného kamene mezi vstupem a lampou se vkládá Průchod, nebo Obraceč, aby lampa svítila podle brány. Pak dva Obraceče za sebou (¬¬A = A). |
+| III-2 | Pouto | smíšená (Brána + Deska) | AND | Hráč přepíná vstupy a zkouší všechny čtyři kombinace (deska objevů je zapisuje, ideál po jediné změně), pak vyplní desku zákona zpaměti. |
+| III-3 | Rozcestí | smíšená (Brána + Deska) | OR | Stejný postup pro OR. Kvíz: ve kterých řádcích se liší Pouto a Rozcestí. |
+| III-4 | Jen jeden | smíšená (Brána + Deska) | XOR | Výluka. Echo připomene Soutok: XOR je spodní číslice součtu 1 + 1. |
+| III-5 | Které pravidlo? | Deska zákona | identifikace | Losované desky: tři poznat (runa pod závojem), dvě vyplnit. Špatná volba řekne, ve kterém řádku by zvolená runa svítila jinak. |
+| III-6 | Řetězy | Brána | skládání | Dvě runy za sebou: hráč objeví Zlomené pouto (NAND) a Zavřené rozcestí (NOR), pak větvení s Obracečem na jednom vstupu. |
+| III-7 | **Brána Zahrady** | smíšená | syntéza | Deska zákona dvou obvodů, osazení kamenů ke třem deskám a dvě runy pod závojem z pěti. |
+| | *Hlubší síně* | | | *Nepovinné, otevřou se po bráně patra. Fáze B.* |
+| III-8 | *Zrcadla* (plán) | Brána s točitými kameny | De Morgan | NOT(A AND B) a (NOT A) OR (NOT B) dají stejnou desku. |
+| III-9 | *Rovnost a důsledek* (plán) | Deska | ekvivalence, implikace | Zbylé spojky výrokové logiky. |
+| III-10 | *Hlas většiny* (plán) | Brána | 3 vstupy | Lampa svítí, když svítí aspoň dva ze tří vstupů. |
+| III-11 | *Prapečeť* (plán) | Brána s točitými kameny | univerzalita NAND | Jen runy NAND: postav z nich NOT, AND a OR. |
+| III-12 | *Masky* (plán) | Maska | bitové operace | AND vybírá, OR rozsvěcí, XOR přepíná celou oktávu. |
+| III-13 | *Tajná řeč* (plán) | Maska | XOR šifra | Zašifruj zprávu klíčem a znovu ji rozšifruj. |
+| III-14 | *Méně je víc* (plán) | Brána | zjednodušení | Nahraď obvod ze tří run kratším se stejnou deskou. |
+| III-15 | ***Velká brána Zahrady*** (plán) | smíšená | syntéza | Obvod podle desky s omezeným počtem run a maska. |
+
+Volná stavba obvodů (Dílna) se přesouvá do Hlubiny Strojů. V Zahradě místo vodičů slouží točité kameny
+u vstupů run, které vybírají, odkud světlo přitéká.
 
 ### Akt IV — Hlubina Strojů (obvody a paměť)
 
@@ -868,4 +879,6 @@ osnovy nejde naučit těmi stávajícími.
     - obsluha komnaty rozdělená podle archetypů (`src/ui/screens/level/`),
     - úsporná grafika, kterou hra zapne sama, když se trhá (méně než 24 snímků za vteřinu).
     Zbývá vyzkoušet na skutečném školním počítači.
-12. Akt III, Zahrada Bran: archetypy Brána a Deska zákona.
+12. **Akt III, Zahrada Bran, fáze A ✓:** základ III-1 až III-7, archetypy Brána a Deska zákona,
+    runy NOT, AND, OR, XOR (NAND a NOR skládáním), glyfy patra s kosočtvercem uprostřed, sedm
+    záznamů Kodexu. Fáze B: Hlubší síně III-8 až III-15 (točité kameny vstupů, tři vstupy, Maska).

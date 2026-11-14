@@ -1,5 +1,7 @@
 import type { AltarConfig } from '../core/puzzles/altar';
 import type { CascadeConfig } from '../core/puzzles/cascade';
+import type { GateConfig } from '../core/puzzles/gate';
+import type { TableConfig } from '../core/puzzles/table';
 import type { InscriptionConfig } from '../core/puzzles/inscription';
 import type { TideConfig } from '../core/puzzles/tide';
 import type { Rng } from './random';
@@ -104,8 +106,20 @@ export interface TideLevel extends LevelBase {
   generate?: (rng: Rng) => TideConfig;
 }
 
+export interface GateLevel extends LevelBase {
+  kind: 'gate';
+  config: GateConfig;
+  generate?: (rng: Rng) => GateConfig;
+}
+
+export interface TableLevel extends LevelBase {
+  kind: 'table';
+  config: TableConfig;
+  generate?: (rng: Rng) => TableConfig;
+}
+
 /** Komnata s jedinou hádankou. */
-export type PuzzleLevel = AltarLevel | InscriptionLevel | CascadeLevel | TideLevel;
+export type PuzzleLevel = AltarLevel | InscriptionLevel | CascadeLevel | TideLevel | GateLevel | TableLevel;
 
 /**
  * Smíšená komnata (brány): několik hádanek různých archetypů za sebou.

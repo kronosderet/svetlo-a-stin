@@ -3,9 +3,11 @@ import type { AltarGame } from '../../../game/altarGame.svelte.ts';
 import type { CascadeGame } from '../../../game/cascadeGame.svelte.ts';
 import type { InscriptionGame } from '../../../game/inscriptionGame.svelte.ts';
 import type { TideGame } from '../../../game/tideGame.svelte.ts';
+import type { GateGame } from '../../../game/gateGame.svelte.ts';
+import type { TableGame } from '../../../game/tableGame.svelte.ts';
 import * as sound from '../../../audio/sound';
 
-export type AnyGame = AltarGame | InscriptionGame | CascadeGame | TideGame;
+export type AnyGame = AltarGame | InscriptionGame | CascadeGame | TideGame | GateGame | TableGame;
 
 const TIDE_KEYS: Record<string, TideOp> = {
   ArrowLeft: 'shl',
@@ -46,6 +48,16 @@ export function puzzleKey(game: AnyGame, ev: KeyboardEvent): boolean {
     const keyboardFocus = ev.target instanceof HTMLButtonElement && ev.target.matches(':focus-visible');
     if (!keyboardFocus) {
       game.confirm();
+      return true;
+    }
+  }
+  if ((game.kind === 'gate' || game.kind === 'table') && game.playing && ev.key === 'Enter') {
+    // Kámen nebo buňku vybranou klávesnicí přepne Enter sám; jinak Enter spustí Zkoušku nebo potvrdí desku.
+    const keyboardFocus = ev.target instanceof HTMLButtonElement && ev.target.matches(':focus-visible');
+    if (!keyboardFocus) {
+      if (game.kind === 'gate' && game.view.task.mode === 'slots') game.test();
+      else if (game.kind === 'table' && game.view.task.mode === 'fill') game.confirm();
+      else return false;
       return true;
     }
   }

@@ -127,8 +127,10 @@
         <h1>{act.title}</h1>
         <p class="stats">
           <span>{done} / {basic.length} komnat</span>
-          <span aria-hidden="true">·</span>
-          <span>Hlubší síně {deepDone} / {deep.length}</span>
+          {#if deep.length}
+            <span aria-hidden="true">·</span>
+            <span>Hlubší síně {deepDone} / {deep.length}</span>
+          {/if}
           <span aria-hidden="true">·</span>
           <span>{sealCount(roomIds)} / {roomIds.length * 3} pečetí</span>
         </p>
