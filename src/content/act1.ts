@@ -1,3 +1,4 @@
+import { genI10, genI5, genI6, genI7 } from './generators';
 import type { ActDef, LevelDef } from './types';
 
 const levels: LevelDef[] = [
@@ -138,6 +139,7 @@ const levels: LevelDef[] = [
       reveal: 'solo',
       initialRevealed: 0b0111,
     },
+    generate: genI5,
     presentation: {
       task: 'Oltář žádá světlo o přesné váze.',
       showDigits: true,
@@ -153,7 +155,7 @@ const levels: LevelDef[] = [
     echo: {
       intro: ['Čtvrtý krystal. Větší než ostatní.', 'Kolik asi váží? Odhadni to dřív, než ho rozsvítíš.'],
       firstReveal: 'Osm. Sedí to s tvým odhadem?',
-      step: { 2: 'Všechny čtyři svítí: patnáct. Víc už se z nich vyždímat nedá.' },
+      step: { 2: 'Osm, čtyři, dva, jedna. Víc vah tu není.' },
       solved: [
         'Čtyři krystaly: šestnáct obrazců, váhy od nuly do patnácti.',
         'Předsíň se probouzí.',
@@ -167,6 +169,7 @@ const levels: LevelDef[] = [
     title: 'Skryté váhy',
     kind: 'altar',
     config: { bits: 5, goal: { kind: 'value', targets: [11, 6, 13, 20, 27] }, reveal: 'never' },
+    generate: genI6,
     presentation: {
       task: 'Váhy zmizely. Oltář přesto žádá přesnou váhu.',
       showDigits: true,
@@ -184,7 +187,7 @@ const levels: LevelDef[] = [
         'Tady kámen váhy zapomněl. A krystaly jsou si podobné jako vejce vejci.',
         'Pátý krystal je nový. Kolik asi váží? Zákon už znáš.',
       ],
-      step: { 0: 'Přijato. Váhy nosíš v hlavě.', 3: 'Dvacet. Bez pátého krystalu by to nešlo.' },
+      step: { 0: 'Přijato. Váhy nosíš v hlavě.', 3: 'Šestnáct a víc. Bez pátého krystalu by to nešlo.' },
       solved: [
         'Váhy nejsou vyryté v kameni, ale v zákoně.',
         'Jedna, dvě, čtyři, osm, šestnáct. Tuhle řadu si zapamatuj.',
@@ -207,6 +210,7 @@ const levels: LevelDef[] = [
         { dir: 'read', value: 0b1011 },
       ],
     },
+    generate: genI7,
     presentation: {
       task: 'Přečti nápis a nastav jeho váhu na kotoučích.',
       showDigits: true,
@@ -343,6 +347,7 @@ const levels: LevelDef[] = [
         { dir: 'write', value: 63 },
       ],
     },
+    generate: genI10,
     presentation: {
       task: 'Přečti nápis a nastav jeho váhu na kotoučích.',
       writeTask: 'Rozsviť krystaly tak, aby světlo vážilo, kolik žádá brána.',

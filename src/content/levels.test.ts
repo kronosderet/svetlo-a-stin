@@ -4,8 +4,25 @@ import * as cascade from '../core/puzzles/cascade';
 import * as inscription from '../core/puzzles/inscription';
 import * as tide from '../core/puzzles/tide';
 import { KODEX } from './kodex';
-import { ACTS, LEVELS, actOf, nextLevelId } from './levels';
+import { ACTS, LEVELS, actOf, instantiate, nextLevelId } from './levels';
+import { seeded } from './random';
 import type { AltarLevel, CascadeLevel, InscriptionLevel, LevelDef, TideLevel } from './types';
+
+/** Kolik vylosovaných variant projde každá kontrola u komnat na procvičování. */
+const SEEDS = 150;
+
+/**
+ * Zaregistruje kontrolu pro výchozí podobu komnaty a u komnat s losováním
+ * i pro SEEDS vylosovaných variant (každá musí projít stejně jako ručně vybrané úlohy).
+ */
+function check<L extends LevelDef>(level: L, name: string, fn: (level: L) => void) {
+  it(name, () => fn(level));
+  if (level.generate) {
+    it(`${name} (${SEEDS} vylosovaných variant)`, () => {
+      for (let seed = 1; seed <= SEEDS; seed++) fn(instantiate(level, seeded(seed)) as L);
+    });
+  }
+}
 
 function commonChecks(level: LevelDef) {
   expect(level.hints).toHaveLength(3);
@@ -20,7 +37,7 @@ function commonChecks(level: LevelDef) {
 }
 
 function altarChecks(level: AltarLevel) {
-  it('má platná data', () => {
+  check(level, 'má platná data', (level) => {
     const { bits, goal } = level.config;
     const initial = level.config.initial ?? 0;
     if (goal.kind !== 'all') {
@@ -39,7 +56,7 @@ function altarChecks(level: AltarLevel) {
     commonChecks(level);
   });
 
-  it('jde vyřešit podle nápověd v ideálním počtu tahů', () => {
+  check(level, 'jde vyřešit podle nápověd v ideálním počtu tahů', (level) => {
     let st = initAltar(level.config);
     let guard = 0;
     while (!st.complete && guard++ < 300) {
@@ -53,7 +70,7 @@ function altarChecks(level: AltarLevel) {
 }
 
 function inscriptionChecks(level: InscriptionLevel) {
-  it('má platná data', () => {
+  check(level, 'má platná data', (level) => {
     const { bits, tasks } = level.config;
     expect(tasks.length).toBeGreaterThan(0);
     tasks.forEach((t, k) => {
@@ -68,7 +85,7 @@ function inscriptionChecks(level: InscriptionLevel) {
     commonChecks(level);
   });
 
-  it('jde vyřešit bez chyby v ideálním počtu tahů', () => {
+  check(level, 'jde vyřešit bez chyby v ideálním počtu tahů', (level) => {
     const cfg = level.config;
     let st = inscription.initInscription();
     let guard = 0;
@@ -89,7 +106,7 @@ function inscriptionChecks(level: InscriptionLevel) {
 }
 
 function cascadeChecks(level: CascadeLevel) {
-  it('má platná data', () => {
+  check(level, 'má platná data', (level) => {
     const cfg = level.config;
     const bits = cfg.bits ?? cfg.width;
     expect(cfg.tasks.length).toBeGreaterThan(0);
@@ -116,7 +133,7 @@ function cascadeChecks(level: CascadeLevel) {
     commonChecks(level);
   });
 
-  it('jde vyřešit podle nápověd napoprvé', () => {
+  check(level, 'jde vyřešit podle nápověd napoprvé', (level) => {
     const cfg = level.config;
     let st = cascade.initCascade();
     let guard = 0;
@@ -136,7 +153,7 @@ function cascadeChecks(level: CascadeLevel) {
 }
 
 function tideChecks(level: TideLevel) {
-  it('má platná data', () => {
+  check(level, 'má platná data', (level) => {
     const cfg = level.config;
     expect(cfg.tasks[0].start).toBeDefined();
     cfg.tasks.forEach((t, k) => {
@@ -150,7 +167,7 @@ function tideChecks(level: TideLevel) {
     commonChecks(level);
   });
 
-  it('jde vyřešit podle nápověd v ideálním počtu tahů', () => {
+  check(level, 'jde vyřešit podle nápověd v ideálním počtu tahů', (level) => {
     const cfg = level.config;
     let st = tide.initTide(cfg);
     let guard = 0;
@@ -165,7 +182,7 @@ function tideChecks(level: TideLevel) {
   });
 
   if (level.config.strict) {
-    it('nejkratší cesty nevedou přes přetočení', () => {
+    check(level, 'nejkratší cesty nevedou přes přetočení', (level) => {
       // Váhy Osudu se mají řešit posuny a ±1, ne trikem 0 − 1 = 63.
       const cfg = level.config;
       let st = tide.initTide(cfg);
@@ -186,6 +203,13 @@ for (const act of ACTS) {
         else if (level.kind === 'inscription') inscriptionChecks(level);
         else if (level.kind === 'cascade') cascadeChecks(level);
         else tideChecks(level);
+      });
+    }
+
+    for (const level of act.levels.filter((l) => l.generate)) {
+      it(`${level.id}: losování dává pokaždé jiné úlohy`, () => {
+        const variants = new Set(Array.from({ length: 40 }, (_, s) => JSON.stringify(instantiate(level, seeded(1000 + s)).config)));
+        expect(variants.size).toBeGreaterThanOrEqual(25);
       });
     }
 

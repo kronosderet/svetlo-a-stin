@@ -6,7 +6,8 @@ Cílová skupina: sexta gymnázia. Herní design a plán vývoje jsou v [PLAN.md
 **Stav:** prototyp, Akty I a II, 20 komnat. Akt I, Předsíň Prvního Světla (bit, kombinace 2ⁿ,
 poziční hodnota, převody oběma směry, přenos, bajt). Akt II, Síň Počtářů (sčítání s přenosem,
 přetečení, odčítání s výpůjčkou, posuny ×2 a ÷2, násobení). Archetypy Oltář, Nápis (kotouče),
-Počítadlo, Kaskáda (počítání pod sebou) a Příliv (páky posunu).
+Počítadlo, Kaskáda (počítání pod sebou) a Příliv (páky posunu). Komnaty na procvičování
+a zkoušky losují úlohy při každém vstupu (`src/content/generators.ts`).
 
 ## Spuštění
 

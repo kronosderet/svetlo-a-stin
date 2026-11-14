@@ -2,6 +2,7 @@ import type { AltarConfig } from '../core/puzzles/altar';
 import type { CascadeConfig } from '../core/puzzles/cascade';
 import type { InscriptionConfig } from '../core/puzzles/inscription';
 import type { TideConfig } from '../core/puzzles/tide';
+import type { Rng } from './random';
 
 export interface QuizQuestion {
   question: string;
@@ -73,22 +74,28 @@ interface LevelBase {
 
 export interface AltarLevel extends LevelBase {
   kind: 'altar';
+  /** Výchozí (ukázková) podoba úloh. */
   config: AltarConfig;
+  /** Komnata na procvičování: úlohy se při každém vstupu vylosují znovu. */
+  generate?: (rng: Rng) => AltarConfig;
 }
 
 export interface InscriptionLevel extends LevelBase {
   kind: 'inscription';
   config: InscriptionConfig;
+  generate?: (rng: Rng) => InscriptionConfig;
 }
 
 export interface CascadeLevel extends LevelBase {
   kind: 'cascade';
   config: CascadeConfig;
+  generate?: (rng: Rng) => CascadeConfig;
 }
 
 export interface TideLevel extends LevelBase {
   kind: 'tide';
   config: TideConfig;
+  generate?: (rng: Rng) => TideConfig;
 }
 
 export type LevelDef = AltarLevel | InscriptionLevel | CascadeLevel | TideLevel;

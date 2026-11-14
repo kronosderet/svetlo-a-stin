@@ -1,3 +1,4 @@
+import { genII10, genII2, genII3, genII4, genII5, genII6, genII8, genII9 } from './generators';
 import type { ActDef, LevelDef } from './types';
 
 const CELL_HINT = 'Zvýrazněný krystal je potřeba přepnout.';
@@ -74,6 +75,7 @@ const levels: LevelDef[] = [
         { op: 'add', operands: [0b1010, 0b0101] },
       ],
     },
+    generate: genII2,
     presentation: {
       task: 'Sečti dvě řady sloupec po sloupci.',
       showDigits: true,
@@ -91,7 +93,7 @@ const levels: LevelDef[] = [
     echo: {
       intro: ['Delší řady. Každý sloupec teče sám za sebe.', 'Sečti je sloupec po sloupci.'],
       step: {
-        0: 'Pět a dvě je sedm. A přitom stačilo opsat světla dolů.',
+        0: 'Přijato. A přitom stačilo opsat světla dolů.',
         2: 'Zatím žádný sloupec nepřetekl. To se brzy změní.',
       },
       solved: ['Sčítat se dá po sloupcích, jeden vedle druhého.', 'Dokud žádný sloupec nepřeteče, stačí světla opsat dolů.'],
@@ -114,6 +116,7 @@ const levels: LevelDef[] = [
         { op: 'add', operands: [0b1011, 0b0110] },
       ],
     },
+    generate: genII3,
     presentation: {
       task: 'Sečti řady. Co přeteče, zapiš krystalem přenosu nad další sloupec.',
       showDigits: true,
@@ -136,7 +139,7 @@ const levels: LevelDef[] = [
         0: 'Přenos přeskočil dva sloupce. Jako voda, která se přelévá z misky do misky.',
         2: 'Tři světla v jednom sloupci: jedno zůstane, jedno přeteče.',
       },
-      complete: 'Sedmnáct. Přenos doputoval až do pátého krystalu.',
+      complete: 'Přenos doputoval až do pátého krystalu.',
       solved: [
         'Dvě světla ve sloupci: dole stín, jedno přeteče. Tři světla: dole světlo, jedno přeteče.',
         'Takhle sčítá každý počítač na světě.',
@@ -169,6 +172,7 @@ const levels: LevelDef[] = [
         { op: 'add', operands: [0b111111, 0b111111] },
       ],
     },
+    generate: genII4,
     presentation: {
       task: 'Šest krystalů v každé řadě. Přenosy se řetězí.',
       showDigits: true,
@@ -221,6 +225,7 @@ const levels: LevelDef[] = [
         { op: 'add', operands: [0b1111, 0b0001] },
       ],
     },
+    generate: genII5,
     presentation: {
       task: 'Nádoba má jen čtyři krystaly. Co se nevejde, pošli do přepadu.',
       showDigits: true,
@@ -240,8 +245,8 @@ const levels: LevelDef[] = [
         'Co se nevejde, vyteče přepadem.',
       ],
       step: {
-        0: 'Jedenáct. Vešlo se.',
-        1: 'Osmnáct se nevešlo. Šestnáct vyteklo a v nádobě zbyly dvě.',
+        0: 'Vešlo se. Tohle nádoba unese.',
+        1: 'Tohle se nevešlo. Šestnáct vyteklo a v nádobě zbyl jen zbytek.',
       },
       complete: 'Patnáct a jedna, a nádoba je prázdná. Všechno vyteklo.',
       solved: [
@@ -283,6 +288,7 @@ const levels: LevelDef[] = [
         { op: 'sub', operands: [0b1101, 0b0110] },
       ],
     },
+    generate: genII6,
     presentation: {
       task: 'Odečti spodní řadu od horní. Kde nemáš z čeho brát, půjč si od souseda vlevo.',
       showDigits: true,
@@ -301,7 +307,7 @@ const levels: LevelDef[] = [
       step: {
         0: 'Sedm bez dvou je pět. Zatím bez půjčování.',
         1: 'Půjčené světlo se ve sloupci rozpadlo na dvě. Jedno se odečetlo, jedno zůstalo.',
-        2: 'Osm bez jedné: výpůjčka prošla třemi sloupci. Přenos pozpátku.',
+        2: 'Výpůjčka prošla několika sloupci. Přenos pozpátku.',
       },
       solved: ['Odčítání je sčítání pozpátku: místo přenosu si půjčuješ.', 'Půjčené světlo váží ve sloupci vpravo dvě.'],
       skill: 'Každá výpůjčka napoprvé.',
@@ -380,6 +386,7 @@ const levels: LevelDef[] = [
         { start: 1, target: 27 },
       ],
     },
+    generate: genII8,
     presentation: {
       task: 'Začni jediným světlem. Jen zdvojením a přidáním jedné dosáhni požadované váhy.',
       showDigits: true,
@@ -397,9 +404,9 @@ const levels: LevelDef[] = [
       intro: ['Zdvojení. Z jediného světla tu Lumenité vystavěli každé číslo.', 'Máš jen dvě páky: zdvoj a přidej jednu.'],
       step: {
         0: 'Šest. Podívej se na krystaly: 110.',
-        1: 'Jedenáct: 1011. Podívej se do zápisníku, v jakém pořadí šly páky.',
+        1: 'Podívej se na krystaly a do zápisníku. V jakém pořadí šly páky?',
       },
-      complete: 'Dvacet sedm: 11011. Zdvoj, přidej, zdvoj, zdvoj, přidej… Zní ti to povědomě?',
+      complete: 'Zdvoj, přidej, zdvoj… Porovnej páky s krystaly. Zní ti to povědomě?',
       solved: [
         'Zdvojení připíše vpravo stín, přidání jedné ho rozsvítí.',
         'Dvojkový zápis je tedy přesný návod, jak číslo z jediného světla vystavět.',
@@ -438,6 +445,7 @@ const levels: LevelDef[] = [
         { op: 'mul', operands: [0b110, 0b110] },
       ],
     },
+    generate: genII9,
     presentation: {
       task: 'Násob po lumenitsku: posunuté kopie prvního čísla sečti.',
       showDigits: true,
@@ -458,9 +466,9 @@ const levels: LevelDef[] = [
       ],
       step: {
         0: 'Pětkrát tři: pětka a k ní zdvojená pětka. Patnáct.',
-        1: 'Sedmkrát pět: sedmička a sedmička posunutá o dvě místa, tedy čtyřikrát větší.',
+        1: 'Každá jednička druhého čísla přinesla jednu posunutou kopii.',
       },
-      complete: 'Šestkrát šest: dvanáct a dvacet čtyři. Žádná násobilka.',
+      complete: 'Žádná násobilka. Jen posun a sčítání.',
       solved: [
         'Násobit dvojkově znamená posouvat a sčítat.',
         'Lumenité nepotřebovali násobilku. Stačily jim páky z Přílivu a Kaskáda.',
@@ -494,6 +502,7 @@ const levels: LevelDef[] = [
         { start: 5, target: 39 },
       ],
     },
+    generate: genII10,
     presentation: {
       task: 'Vyrovnej misky. Osud dovolí jen tolik tahů, kolik je nezbytně potřeba.',
       showDigits: true,
@@ -514,7 +523,7 @@ const levels: LevelDef[] = [
         'Osud dovolí jen tolik tahů, kolik je nezbytně potřeba. Kdo je přečerpá, začíná znovu.',
       ],
       reset: 'Tahy došly a misky se vrátily. Promysli cestu dřív, než zatáhneš.',
-      step: { 0: 'Vyrovnáno. Osud kývl.', 2: 'Přestřelit a ubrat. Tohle by Lumenité ocenili.' },
+      step: { 0: 'Vyrovnáno. Osud kývl.', 2: 'Osud vidí, že počítáš dopředu.' },
       complete: 'Poslední miska se vyrovnala.',
       solved: [
         'Váhy Osudu se vyrovnaly. Síň Počtářů je celá otevřená.',

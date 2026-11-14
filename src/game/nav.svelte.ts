@@ -1,4 +1,5 @@
-export type Screen = { name: 'title' } | { name: 'map' } | { name: 'level'; id: string };
+/** run: nový pokus o stejnou komnatu (komnata se vytvoří znovu a vylosuje nové úlohy). */
+export type Screen = { name: 'title' } | { name: 'map' } | { name: 'level'; id: string; run?: number };
 
 export const nav: { screen: Screen } = $state({ screen: { name: 'title' } });
 

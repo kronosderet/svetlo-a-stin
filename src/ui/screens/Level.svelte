@@ -8,7 +8,7 @@
   import EchoBubble from '../EchoBubble.svelte';
   import FxLayer, { type Area, type Point } from '../FxLayer.svelte';
   import Icon from '../Icon.svelte';
-  import { actOf, getLevel, nextLevelId } from '../../content/levels';
+  import { actOf, getLevel, instantiate, nextLevelId } from '../../content/levels';
   import { kodexById } from '../../content/kodex';
   import { maxValue, patternWords, toBinaryString } from '../../core/bits';
   import type { AltarEvent, AltarState } from '../../core/puzzles/altar';
@@ -31,7 +31,8 @@
   let { id }: { id: string } = $props();
 
   // Komponenta se v App.svelte vytváří znovu pro každé id ({#key}).
-  const level = getLevel(untrack(() => id))!;
+  // Komnaty na procvičování dostanou při každém vstupu nově vylosované úlohy.
+  const level = instantiate(getLevel(untrack(() => id))!);
   const next = nextLevelId(level.id);
   const kodex = level.kodex ? (kodexById(level.kodex) ?? null) : null;
   const act = actOf(level.id);
@@ -394,17 +395,10 @@
     sound.playTick();
   }
 
+  /** Znovu: komnata se vytvoří od začátku (a u procvičování vylosuje nové úlohy). */
   function restart() {
     clearTimeout(completeTimer);
-    showComplete = false;
-    firstRevealSaid = false;
-    repeatSaid = false;
-    wrongCount = 0;
-    spillSaid = false;
-    game.restart();
-    echo.say(level.echo.intro);
-    // Ať Enter po restartu nespustí restart znovu, ale patří kotoučům.
-    if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
+    go({ name: 'level', id: level.id, run: Date.now() });
   }
 
   function toggleSound() {

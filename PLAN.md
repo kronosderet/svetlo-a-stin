@@ -196,6 +196,12 @@ Tón je vždy neutrální až povzbudivý, bez červených křížků a rušivý
 
 - Každý akt znovu používá látku z předchozích (Akt IV staví sčítačku, kterou hráč v Aktu II
   počítal ručně).
+- **Losované úlohy:** komnaty na procvičování a zkoušky (I-5, I-6, I-7, I-10, II-2 až II-6,
+  II-8 až II-10) vylosují příklady při každém vstupu i po „Znovu“, takže se nedají naučit
+  nazpaměť ani napovědět sousedovi. Generátory drží stejné podmínky jako ručně vybrané úlohy
+  (třeba aspoň jedna výpůjčka v Odlivu, ve Vahách Osudu nikdy cesta přes přetočení) a ukázková
+  úloha na začátku nebo závěrečná zkouška, kterou Echo komentuje, zůstává pevná. Objevné komnaty
+  mají pevnou posloupnost, protože je součástí výkladu.
 - **Cvičná komnata:** procedurálně generované úlohy k jakémukoli odemčenému konceptu,
   s nastavitelnou obtížností. Nekonečné procvičování pro ty, kdo chtějí.
 - **Denní věštba:** jedna generovaná hádanka denně z náhodného již probraného tématu.

@@ -23,7 +23,7 @@
   {:else if nav.screen.name === 'map'}
     <MapScreen />
   {:else if nav.screen.name === 'level'}
-    {#key nav.screen.id}
+    {#key `${nav.screen.id}:${nav.screen.run ?? 0}`}
       <Level id={nav.screen.id} />
     {/key}
   {/if}
