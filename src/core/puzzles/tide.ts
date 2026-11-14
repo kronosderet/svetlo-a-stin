@@ -6,12 +6,14 @@
  */
 import { isBitSet, maxValue } from '../bits';
 
-export type TideOp = 'shl' | 'shr' | 'inc' | 'dec';
+export type TideOp = 'shl' | 'shr' | 'inc' | 'dec' | 'not';
 
 export interface TideTask {
   /** Výchozí váha; bez ní zkouška navazuje na cíl té předchozí. */
   start?: number;
   target: number;
+  /** Co ukáže kolo místo cílové váhy (třeba „÷ 8“ při dělení nebo „−3“ u doplňku). */
+  show?: string;
 }
 
 export interface TideConfig {
@@ -58,6 +60,8 @@ export function applyOp(op: TideOp, value: number, bits: number): { value: numbe
       return value === max ? { value: 0, spill: 'wrap' } : { value: value + 1, spill: null };
     case 'dec':
       return value === 0 ? { value: max, spill: 'wrap' } : { value: value - 1, spill: null };
+    case 'not':
+      return { value: value ^ max, spill: null };
   }
 }
 

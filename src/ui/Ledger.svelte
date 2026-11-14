@@ -1,13 +1,16 @@
 <script lang="ts">
   import { fade } from 'svelte/transition';
-  import { isBitSet, notationParts } from '../core/bits';
+  import { isBitSet, notationParts, toBinaryString, toHex } from '../core/bits';
   import { settings } from '../game/settings.svelte.ts';
 
   interface Props {
     values: number[];
     bits: number;
-    /** sum = rozklad na váhy; flips = červeně krystaly, které se proti předchozímu číslu změnily. */
-    mode?: 'sum' | 'flips';
+    /**
+     * sum = rozklad na váhy; flips = červeně krystaly, které se proti předchozímu číslu změnily;
+     * hex = čtveřice zvlášť a jejich glyfy šestnáctkově.
+     */
+    mode?: 'sum' | 'flips' | 'hex';
     /** Výchozí hodnota pro porovnání v režimu flips. */
     start?: number;
     empty: string;
@@ -30,7 +33,13 @@
     {#each values as v, k (k)}
       {@const n = notationParts(v, bits)}
       <li in:fade={{ duration: 500 * m }}>
-        {#if mode === 'flips'}
+        {#if mode === 'hex'}
+          {@const bin = toBinaryString(v, bits)}
+          <span class="bin">{bin.match(/.{1,4}/g)?.join(' ')}<sub>2</sub></span>
+          <span class="op">=</span>
+          <span class="terms">{toHex(v, Math.ceil(bits / 4))}<sub>16</sub></span>
+          <span class="tail"><span class="op">=</span> <span class="val">{v}</span></span>
+        {:else if mode === 'flips'}
           {@const prev = k === 0 ? start : values[k - 1]}
           <span class="flips" aria-label="{n.binary}, změněno {positions.filter((i) => isBitSet(v ^ prev, i)).length}">
             {#each positions as i (i)}<span class:flip={isBitSet(v ^ prev, i)}>{isBitSet(v, i) ? 1 : 0}</span>{/each}<sub>2</sub>

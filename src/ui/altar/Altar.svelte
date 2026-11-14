@@ -76,11 +76,11 @@
         <!-- Kamenné kolo oltáře se s každou přijatou váhou pootočí. -->
         <Disc value={target} turn={st.step * 60} label="Požadovaná váha" />
       {:else}
-        <div class="registry stone" role="list" aria-label="Deska kombinací: nalezeno {st.found.length} z {slots.length}">
+        <div class="registry stone" class:dense={slots.length > 8} role="list" aria-label="Deska kombinací: nalezeno {st.found.length} z {slots.length}">
           {#each slots as p (p)}
             <div class="niche stone-inset" class:found={st.found.includes(p)} class:current={p === st.mask} role="listitem">
               {#if st.found.includes(p)}
-                <span in:fly={{ y: -10, duration: 320 * m }}><MiniPattern mask={p} {bits} size="md" {digits} label={patternLabel(p)} /></span>
+                <span in:fly={{ y: -10, duration: 320 * m }}><MiniPattern mask={p} {bits} size={slots.length > 8 ? 'sm' : 'md'} {digits} label={patternLabel(p)} /></span>
               {:else}
                 <span class="niche-empty carved" aria-label="Nenalezeno">?</span>
               {/if}
@@ -235,6 +235,22 @@
       inset 0 3px 8px rgba(0, 0, 0, 0.7),
       inset 0 0 22px rgba(255, 200, 110, 0.4),
       0 0 0 1px rgba(255, 217, 138, 0.5);
+  }
+  /* Tichý krok: šestnáct výklenků ve dvou řadách */
+  .registry.dense {
+    grid-template-columns: repeat(8, minmax(0, 1fr));
+    gap: 6px;
+    padding: 8px;
+  }
+  .registry.dense .niche {
+    min-width: 0;
+    min-height: 46px;
+    padding: 5px 3px;
+  }
+  @media (max-width: 700px) {
+    .registry.dense {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
   }
   .niche-empty {
     font-family: var(--font-display);

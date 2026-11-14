@@ -33,10 +33,16 @@ function commonChecks(level: PuzzleLevel) {
   expect(level.echo.intro.length).toBeGreaterThan(0);
   if (!lastParts.has(partKey(level))) expect(level.echo.solved.length).toBeGreaterThan(0);
   if (level.kodex) expect(KODEX.some((e) => e.id === level.kodex)).toBe(true);
-  level.quiz?.forEach((q) => {
-    expect(q.correct).toBeGreaterThanOrEqual(0);
-    expect(q.correct).toBeLessThan(q.options.length);
-    expect(new Set(q.options).size).toBe(q.options.length);
+  level.quiz?.forEach((item) => {
+    // Otázky s losovanými čísly se zkoušejí na mnoha semínkách: vždy čtyři různé možnosti.
+    const samples = typeof item === 'function' ? Array.from({ length: 60 }, (_, s) => item(seeded(s + 1))) : [item];
+    for (const q of samples) {
+      expect(q.correct).toBeGreaterThanOrEqual(0);
+      expect(q.correct).toBeLessThan(q.options.length);
+      expect(new Set(q.options).size).toBe(q.options.length);
+      if (typeof item === 'function') expect(q.options).toHaveLength(4);
+      expect(q.question.length).toBeGreaterThan(0);
+    }
   });
 }
 
@@ -123,7 +129,8 @@ function cascadeChecks(level: CascadeLevel) {
         task.operands.forEach((o) => expect(o).toBeLessThan(2 ** bits));
       }
       if (task.op === 'sub') expect(task.operands[0]).toBeGreaterThanOrEqual(task.operands[1]);
-      if (task.op === 'add' && task.operands.length > 2) expect(cfg.carries).toBe('none');
+      // Tři řady potřebují přenos o dvě místa; jinak se tři řádky sčítají jen bez krystalů přenosu.
+      if (task.op === 'add' && task.operands.length > 2 && !cfg.farCarries) expect(cfg.carries).toBe('none');
       cascade.rows(task).forEach((r) => expect(r).toBeLessThan(2 ** cfg.width));
       const ans = cascade.answer(cfg, task);
       // Bez přepadu se výsledek musí vejít; krystal přenosu zapíše jen jedničku.
@@ -237,6 +244,7 @@ for (const act of ACTS) {
       const basic = act.levels.filter((l) => !isAdvanced(l.id));
       expect(basic.map((l) => l.id)).toEqual(Array.from({ length: GATE }, (_, k) => `${act.numeral}-${k + 1}`));
       const deep = act.levels.filter((l) => isAdvanced(l.id)).map((l) => roomNumber(l.id));
+      expect(deep).toEqual([8, 9, 10, 11, 12, 13, 14, 15]);
       deep.forEach((n, k) => {
         expect(n).toBeGreaterThan(GATE);
         expect(n).toBeLessThanOrEqual(15);
@@ -275,9 +283,11 @@ describe('celá observatoř', () => {
     expect(nextLevelId('I-7')).toBe('II-1');
     expect(nextLevelId('II-7')).toBeNull();
     expect(nextLevelId('I-8')).toBe('I-9');
-    expect(nextLevelId('I-10')).toBeNull();
-    expect(nextLevelId('II-10')).toBe('II-14');
-    expect(nextLevelId('II-14')).toBeNull();
+    expect(nextLevelId('I-10')).toBe('I-11');
+    expect(nextLevelId('I-15')).toBeNull();
+    expect(nextLevelId('II-10')).toBe('II-11');
+    expect(nextLevelId('II-14')).toBe('II-15');
+    expect(nextLevelId('II-15')).toBeNull();
     expect(BASIC_PATH.map((l) => l.id)).toHaveLength(14);
     expect(actOf('II-3').numeral).toBe('II');
     expect(ACTS[ACTS.length - 1].nextAct).toBeDefined();

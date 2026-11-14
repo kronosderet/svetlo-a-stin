@@ -18,6 +18,8 @@ export interface CascadeView {
   task: CascadeTask;
   result: number;
   carries: number;
+  far: number;
+  copies: number;
 }
 
 /** Reaktivní obal kolem Kaskády: počítání pod sebou s krystaly přenosu. */
@@ -45,7 +47,8 @@ export class CascadeGame extends BaseGame<CascadeLevel> {
   /** Co je právě na stěně: během pauzy přijatý výsledek, jinak rozpracovaná úloha. */
   get view(): CascadeView {
     if (this.holding && this.held) return this.held;
-    return { task: this.task, result: this.state.result, carries: this.state.carries };
+    const { result, carries, far, copies } = this.state;
+    return { task: this.task, result, carries, far, copies };
   }
 
   /** Úloha na stěně (po dokončení zůstane vidět ta poslední). */
@@ -78,7 +81,7 @@ export class CascadeGame extends BaseGame<CascadeLevel> {
     if (r.events.some((e) => e.type === 'step')) {
       this.history = [];
       this.hintLevel = 0;
-      this.held = { task: this.task, result: before.result, carries: before.carries };
+      this.held = { task: this.task, result: before.result, carries: before.carries, far: before.far, copies: before.copies };
       this.hold();
     }
     this.#apply(r.state, r.events);
@@ -89,7 +92,7 @@ export class CascadeGame extends BaseGame<CascadeLevel> {
     // Počet potvrzení a chyb zůstává: vrací se jen rozsvícení.
     const prev = this.history[this.history.length - 1];
     this.history = this.history.slice(0, -1);
-    this.state = { ...this.state, result: prev.result, carries: prev.carries, wrong: null };
+    this.state = { ...this.state, result: prev.result, carries: prev.carries, far: prev.far, copies: prev.copies, wrong: null };
   }
 
   #apply(state: CascadeState, events: CascadeEvent[]): void {

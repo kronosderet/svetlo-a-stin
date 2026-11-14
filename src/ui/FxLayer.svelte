@@ -213,7 +213,7 @@
 
   /** Obláček prachu v jednom místě (kámen o kámen). */
   export function puff(at: Point, count = 14) {
-    if (settings.reducedMotion) return;
+    if (settings.reducedMotion || settings.lite) return;
     for (let k = 0; k < Math.max(1, Math.round(count)); k++) {
       const a = rnd(Math.PI * 0.9, Math.PI * 2.1);
       const v = rnd(0.02, 0.09);
@@ -226,7 +226,7 @@
   export function fail(at: Point, area: Area) {
     const s = FX.fail;
     showFlash('fail', s);
-    if (settings.reducedMotion) return;
+    if (settings.reducedMotion || settings.lite) return;
     ceiling(area, Math.round(64 * s), Math.round(22 * s));
     add('ring', at.x, at.y, { life: 700, size: 150, tone: 0, amp: s });
     puff(at, 26 * s);
@@ -236,7 +236,7 @@
   /** Krok splněn: vlna světla, stoupající jiskry. */
   export function step(at: Point) {
     showFlash('step');
-    if (settings.reducedMotion) return;
+    if (settings.reducedMotion || settings.lite) return;
     add('ring', at.x, at.y, { life: 800, size: 220, tone: 1 });
     for (let k = 0; k < 26; k++) {
       add('mote', at.x + rnd(-90, 90), at.y + rnd(-20, 20), { vx: rnd(-0.02, 0.02), vy: rnd(-0.05, -0.12), life: rnd(1100, 2000), size: rnd(1.2, 2.6) });
@@ -253,7 +253,7 @@
   export function win(at: Point, area: Area) {
     const s = FX.win;
     showFlash('win', s);
-    if (settings.reducedMotion) return;
+    if (settings.reducedMotion || settings.lite) return;
     ceiling({ left: 0, right: w || window.innerWidth, top: 0 }, Math.round(90 * s), Math.round(26 * s));
     add('ring', at.x, at.y, { life: 1000, size: 300, tone: 1, amp: 0.6 });
     for (let k = 0; k < Math.round(70 * s); k++) {

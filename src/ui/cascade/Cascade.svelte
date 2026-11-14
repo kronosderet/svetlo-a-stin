@@ -8,7 +8,7 @@
   import CascadeLedger from './CascadeLedger.svelte';
   import Spark from './Spark.svelte';
   import { isBitSet, toBinaryString } from '../../core/bits';
-  import { carryColumns, liveInflow, rows, rowShifts } from '../../core/puzzles/cascade';
+  import { carryColumns, farColumns, liveInflow, wallRows, wallShifts } from '../../core/puzzles/cascade';
   import { settings } from '../../game/settings.svelte.ts';
   import type { CascadeGame } from '../../game/cascadeGame.svelte.ts';
 
@@ -24,10 +24,14 @@
   const bits = $derived(cfg.bits ?? cfg.width);
   const view = $derived(game.view);
   const task = $derived(view.task);
-  const lines = $derived(rows(task));
-  const shifts = $derived(rowShifts(task));
+  const lines = $derived(wallRows(cfg, task));
+  const shifts = $derived(wallShifts(cfg, task));
   const sub = $derived(task.op === 'sub');
+  /** Násobení s výběrem kopií: u každé nabízené kopie je vypínač. */
+  const pick = $derived(!!cfg.pickCopies && task.op === 'mul');
   const carryCols = $derived(carryColumns(cfg));
+  /** Tři řady: nad přenosy ještě řada přenosů o dvě místa. */
+  const farCols = $derived(sub ? [] : farColumns(cfg));
   const spout = $derived(!!cfg.overflow && cfg.carries === 'manual');
   const digits = $derived(pres.showDigits || settings.alwaysDigits);
   const weights = $derived(!!pres.showWeights || settings.alwaysWeights);
@@ -47,16 +51,18 @@
   const valueCol = $derived(cellStart + width);
   const carryTop = $derived(carryCols.length > 0 && !sub);
   const carryBelow = $derived(carryCols.length > 0 && sub);
+  const farTop = $derived(farCols.length > 0);
+  const rFar = $derived(farTop ? 1 : 0);
   /** Odčítání: nad horní řadou přistane půjčené světlo jako dva krystaly. */
   const rLoan = $derived(carryBelow ? 1 : 0);
-  const firstLine = $derived(carryTop || carryBelow ? 2 : 1);
-  const rCarry = $derived(carryTop ? 1 : carryBelow ? firstLine + lines.length : 0);
+  const firstLine = $derived((carryTop || carryBelow ? 2 : 1) + (farTop ? 1 : 0));
+  const rCarry = $derived(carryTop ? 1 + rFar : carryBelow ? firstLine + lines.length : 0);
   const afterLines = $derived(firstLine + lines.length + (carryBelow ? 1 : 0));
   const rCounts = $derived(counts ? afterLines : 0);
   const rRule = $derived(afterLines + (counts ? 1 : 0));
   const rResult = $derived(rRule + 1);
   const template = $derived(
-    `28px ${spout ? 'var(--cell) ' : ''}repeat(${width}, var(--cell))${values ? ' minmax(56px, auto)' : ''}`,
+    `${pick ? '48px' : '28px'} ${spout ? 'var(--cell) ' : ''}repeat(${width}, var(--cell))${values ? ' minmax(56px, auto)' : ''}`,
   );
 
   const colOf = (i: number): number => (i === width ? 2 : cellStart + (width - 1 - i));
@@ -72,6 +78,77 @@
     return `${task.operands[0]} × ${2 ** shifts[j]}`;
   }
 
+  /**
+   * Sčítání: co odteče do přenosu, ve sloupci pohasne. Krystal přenosu nad sloupcem i + 1 odnese
+   * ze sloupce i dvě světla (přenos o dvě místa čtyři), takže je vidět, že 1 + 1 = 10.
+   * Bere se shora: nejdřív krystaly řad, pak přenosy, které do sloupce samy přitekly.
+   */
+  const spent = $derived.by(() => {
+    const out = { lines: new Set<string>(), carry: new Set<number>(), far: new Set<number>() };
+    if (sub || cfg.carries !== 'manual') return out;
+    for (const i of columns) {
+      let need =
+        (carryCols.includes(i + 1) && isBitSet(view.carries, i + 1) ? 2 : 0) +
+        (farCols.includes(i + 2) && isBitSet(view.far, i + 2) ? 4 : 0);
+      for (let j = 0; j < lines.length && need > 0; j++) {
+        if (pick && !isBitSet(view.copies, j)) continue;
+        if (!shown(j, i) || !isBitSet(lines[j], i)) continue;
+        out.lines.add(`${j}:${i}`);
+        need--;
+      }
+      if (need > 0 && farCols.includes(i) && isBitSet(view.far, i)) {
+        out.far.add(i);
+        need--;
+      }
+      if (need > 0 && carryCols.includes(i) && isBitSet(view.carries, i)) out.carry.add(i);
+    }
+    return out;
+  });
+
+  let gridEl: HTMLElement | undefined = $state();
+  const ARROWS: Record<string, [number, number]> = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] };
+
+  /**
+   * Šipky na desce: fokus skočí na nejbližší krystal v daném směru (podle polohy na desce,
+   * takže funguje i pro řadu přenosů o dvě místa a vypínače kopií).
+   */
+  function onGridKey(e: KeyboardEvent) {
+    const dir = ARROWS[e.key];
+    const from = e.target;
+    if (!dir || !(from instanceof HTMLButtonElement) || !gridEl) return;
+    const centre = (el: Element) => {
+      const r = el.getBoundingClientRect();
+      return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+    };
+    const here = centre(from);
+    let best: HTMLButtonElement | null = null;
+    let bestScore = Infinity;
+    for (const b of gridEl.querySelectorAll<HTMLButtonElement>('button:not(:disabled)')) {
+      if (b === from) continue;
+      const c = centre(b);
+      const dx = c.x - here.x;
+      const dy = c.y - here.y;
+      const along = dx * dir[0] + dy * dir[1];
+      if (along <= 4) continue;
+      const score = along + 3 * Math.abs(dir[0] ? dy : dx);
+      if (score < bestScore) {
+        bestScore = score;
+        best = b;
+      }
+    }
+    if (best) {
+      e.preventDefault();
+      best.focus();
+    }
+  }
+
+  $effect(() => {
+    const el = gridEl;
+    if (!el) return;
+    el.addEventListener('keydown', onGridKey);
+    return () => el.removeEventListener('keydown', onGridKey);
+  });
+
   /** Sloupce, které dostaly půjčené světlo (jejich soused vlevo má krystal výpůjčky). */
   const loaned = $derived(carryBelow ? columns.filter((j) => isBitSet(view.carries, j + 1)) : []);
 
@@ -80,13 +157,24 @@
     return sub ? `Krystal výpůjčky ve sloupci ${i + 1} zprava` : `Krystal přenosu nad sloupcem ${i + 1} zprava`;
   }
 
+  function farLabel(i: number): string {
+    return `Krystal přenosu o dvě místa nad sloupcem ${i + 1} zprava`;
+  }
+
+  function copyLabel(j: number): string {
+    return `Kopie prvního činitele posunutá o ${j} ${j === 1 ? 'místo' : j >= 2 && j <= 4 ? 'místa' : 'míst'}, tedy krát ${2 ** j}`;
+  }
+
   function resultLabel(i: number): string {
     return `Výsledek, krystal ${i + 1} zprava${weights ? `, váha ${2 ** i}` : ''}`;
   }
 
   const description = $derived.by(() => {
     const parts = lines.map((l, j) => (j === 0 ? '' : `${SAY[task.op]} `) + toBinaryString(l, task.op === 'mul' ? width : bits));
-    const head = task.op === 'mul' ? `Násobení ${task.operands[0].toString(2)} krát ${task.operands[1].toString(2)}, kopie: ` : '';
+    const head =
+      task.op === 'mul'
+        ? `Násobení ${task.operands[0].toString(2)} krát ${task.operands[1].toString(2)}, ${pick ? 'nabízené kopie, rozsviť ty, které patří k jedničkám' : 'kopie'}: `
+        : '';
     return `Ve stěně: ${head}${parts.join(' ')}.`;
   });
 </script>
@@ -120,6 +208,8 @@
       <p class="visually-hidden" aria-live="polite">{description}</p>
       <div
         class="grid"
+        bind:this={gridEl}
+        class:tall={farTop || lines.length > 2}
         style:grid-template-columns={template}
         style:grid-template-rows="repeat({rResult}, auto)"
         style:--cols={width + (spout ? 1 : 0)}
@@ -130,13 +220,13 @@
           {#each columns as i (i)}
             <div
               class="strip"
-              class:wrong={wrong?.column === i}
+              class:wrong={wrong?.column === i && wrong.row !== 'copy'}
               class:flow={game.holding}
               style:grid-column={colOf(i)}
               style:grid-row="1 / {rResult + 1}"
               style:--d="{i * 110}ms"
             >
-              {#if wrong?.column === i}
+              {#if wrong?.column === i && wrong.row !== 'copy'}
                 <!-- Kámen žlabu praskne, mechanismus nepovolil. -->
                 <svg class="crack" viewBox="0 0 20 100" preserveAspectRatio="none" aria-hidden="true">
                   <path d="M11 0 L8 14 L13 26 L7 41 L12 55 L9 68 L14 80" />
@@ -179,10 +269,29 @@
           <!-- Výpůjčky se odečítají spolu se spodní řadou. -->
           <span class="sign carved" style:grid-column="1" style:grid-row={rCarry}>−</span>
         {/if}
+        {#each farCols as i (i)}
+          <div class="cell" style:grid-column={colOf(i)} style:grid-row={rFar}>
+            <Spark
+              on={isBitSet(view.far, i)}
+              spent={spent.far.has(i)}
+              tone="carry"
+              highlight={hint?.row === 'far' && hint.column === i}
+              wrong={wrong?.row === 'far' && wrong.column === i}
+              disabled={!game.playing}
+              label={farLabel(i)}
+              onToggle={() => game.toggle({ row: 'far', column: i })}
+            />
+          </div>
+        {/each}
+        {#if farTop}
+          <span class="sign carved far-mark" style:grid-column="1" style:grid-row={rFar} title="přenos o dvě místa">2</span>
+        {/if}
+
         {#each carryCols as i (i)}
           <div class="cell" style:grid-column={colOf(i)} style:grid-row={rCarry}>
             <Spark
               on={isBitSet(view.carries, i)}
+              spent={spent.carry.has(i)}
               tone={i === width ? 'spout' : 'carry'}
               highlight={hint?.row === 'carry' && hint.column === i}
               wrong={wrong?.row === 'carry' && wrong.column === i}
@@ -195,17 +304,39 @@
 
         {#key task}
           {#each lines as line, j (j)}
-            <span class="sign carved" style:grid-column="1" style:grid-row={lineRow(j)}>{j === 0 ? '' : SIGN[task.op]}</span>
+            {#if pick}
+              <!-- Vypínač kopie: rozsvítí ji, když k ní druhý činitel má jedničku. -->
+              <div class="cell switch" style:grid-column="1" style:grid-row={lineRow(j)}>
+                <Spark
+                  on={isBitSet(view.copies, j)}
+                  tone="carry"
+                  highlight={hint?.row === 'copy' && hint.column === j}
+                  wrong={wrong?.row === 'copy' && wrong.column === j}
+                  disabled={!game.playing}
+                  label={copyLabel(j)}
+                  onToggle={() => game.toggle({ row: 'copy', column: j })}
+                />
+              </div>
+            {:else}
+              <span class="sign carved" style:grid-column="1" style:grid-row={lineRow(j)}>{j === 0 ? '' : SIGN[task.op]}</span>
+            {/if}
             {#each columns as i (i)}
               {#if shown(j, i)}
+                {@const gone = spent.lines.has(`${j}:${i}`)}
                 <div
                   class="cell"
+                  class:spent={gone}
+                  class:off={pick && !isBitSet(view.copies, j)}
                   class:pad={task.op === 'mul' && i < shifts[j]}
                   style:grid-column={colOf(i)}
                   style:grid-row={lineRow(j)}
                   in:fly={{ y: -14, duration: 360 * m, delay: (j * 60 + (width - i) * 25) * m }}
                 >
                   <Gem on={isBitSet(line, i)} digit={digits} />
+                  {#if gone && m}
+                    <!-- Světlo odlétá do krystalu přenosu vlevo nahoře. -->
+                    <span class="wisp" aria-hidden="true"><Gem on={true} /></span>
+                  {/if}
                 </div>
               {/if}
             {/each}
@@ -218,7 +349,7 @@
         {#if counts}
           {#each columns as i (i)}
             {#if cfg.carries !== 'none' || i < bits}
-              {@const n = liveInflow(task, view.carries, i)}
+              {@const n = liveInflow(task, view.carries, i, { cfg, far: view.far, copies: view.copies })}
               <span class="count" class:zero={n === 0} style:grid-column={colOf(i)} style:grid-row={rCounts} title="světel ve sloupci">
                 {n}
               </span>
@@ -259,6 +390,7 @@
       <div class="actions">
         <button type="button" class="btn btn-primary btn-lg" onclick={() => game.confirm()} disabled={!game.playing}>Potvrdit</button>
       </div>
+      <p class="visually-hidden">Na desce se mezi krystaly pohybuješ šipkami a přepínáš je mezerníkem nebo klávesou Enter.</p>
       {#if cfg.carries === 'manual'}
         <p class="legend">
           <svg class="mini-gem" viewBox="0 0 20 32" aria-hidden="true" focusable="false">
@@ -266,6 +398,10 @@
           </svg>
           {#if sub}
             Krystal pod spodní řadou: výpůjčka. Tady se odečte a sousedovi vpravo přidá dva krystaly.
+          {:else if farTop}
+            Krystal nad sloupcem: světlo ze sloupce vpravo. Horní řada (2): přenos o dvě místa, když se ve sloupci slijí čtyři světla a víc.
+          {:else if pick}
+            Krystal u řady: tahle kopie se sčítá. Rozsviť kopie podle jedniček druhého činitele.
           {:else}
             Krystal nad sloupcem: světlo, které do něj přeteklo ze sloupce vpravo.
           {/if}
@@ -317,6 +453,44 @@
     color: var(--text-muted);
   }
 
+  /* Světlo, které odteklo do přenosu: krystal pohasne, číslice řádku zůstává. */
+  .cell.spent > :global(.gem svg) {
+    opacity: 0.22;
+    filter: grayscale(0.4);
+    transition:
+      opacity 420ms ease,
+      filter 420ms ease;
+  }
+  .wisp {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    pointer-events: none;
+    animation: wisp-out 640ms cubic-bezier(0.4, 0, 0.7, 1) forwards;
+    filter: drop-shadow(0 0 6px rgba(255, 210, 130, 0.8));
+  }
+  @keyframes wisp-out {
+    from {
+      transform: translateX(-50%);
+      opacity: 1;
+    }
+    to {
+      transform: translate(calc(-50% - var(--cell) * 0.85), calc(var(--cell) * -0.9)) scale(0.55);
+      opacity: 0;
+    }
+  }
+  .cell.off {
+    opacity: 0.28;
+    filter: grayscale(0.6);
+    transition:
+      opacity var(--t-med),
+      filter var(--t-med);
+  }
+  .far-mark {
+    font-family: var(--font-mono);
+    font-size: var(--fs-xs);
+    opacity: 0.8;
+  }
   .factors {
     display: flex;
     flex-wrap: wrap;
@@ -353,6 +527,10 @@
     justify-content: center;
     align-items: center;
     row-gap: 8px;
+  }
+  /* Víc řádků (tři řady, nabízené kopie): o něco menší buňky, ať se deska vejde na výšku. */
+  .grid.tall {
+    --cell: clamp(44px, min(calc((100cqi - 40px - var(--value-w)) / var(--cols)), 8.2vh), 70px);
   }
   .cell {
     position: relative;

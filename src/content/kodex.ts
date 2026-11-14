@@ -116,6 +116,52 @@ export const KODEX: KodexEntry[] = [
       'Tohle je celá abeceda počítačů. Stojí na ní sčítání, logika i paměť, které čekají v dalších patrech observatoře.',
   },
 
+  {
+    id: 'gray',
+    glyph: 0b0011,
+    ancientName: 'Tichý krok',
+    modernName: 'Grayův kód',
+    ancient: 'Každým krokem jediná změna a žádná kombinace dvakrát.',
+    modern:
+      'Grayův kód seřadí všech 2ⁿ kombinací tak, že se sousední liší v jediném bitu. Zrcadlová stavba: vezmi kód pro n − 1 bitů, připiš ho ještě jednou pozpátku, první polovině dej vlevo 0 a druhé 1.',
+    formula: '00 → 01 → 11 → 10',
+    today:
+      'Otočné snímače polohy (třeba v kolečku myši nebo v robotech) používají Grayův kód: když se mění jediný bit, nemůže čidlo při přechodu omylem přečíst úplně jinou hodnotu.',
+  },
+  {
+    id: 'glyf',
+    glyph: 0b1110,
+    ancientName: 'Čtveřicový glyf',
+    modernName: 'Šestnáctková číslice',
+    ancient: 'Čtyři strany, čtyři světla, šestnáct znaků.',
+    modern:
+      'Čtyři bity mají 16 kombinací, a to je přesně jedna číslice šestnáctkové soustavy: 0–9 a pro 10 až 15 písmena A–F. Každá čtveřice bitů se tak přepíše jediným znakem.',
+    formula: '1101₂ = 8 + 4 + 1 = 13 = D₁₆',
+    today: 'Programátoři píšou šestnáctkově adresy v paměti, kódy chyb i barvy na webu. Je to jen kratší zápis dvojkových čísel.',
+  },
+  {
+    id: 'dvojznak',
+    glyph: 0b0110,
+    ancientName: 'Dvojznak',
+    modernName: 'Bajt šestnáctkově',
+    ancient: 'Oktáva se dá napsat dvěma glyfy.',
+    modern:
+      'Bajt má osm bitů, tedy dvě čtveřice. Každá čtveřice je jedna šestnáctková číslice, takže se bajt zapíše dvěma znaky od 00 do FF. Levý znak váží šestnáctkrát víc než pravý.',
+    formula: '1011 0110₂ = B6₁₆ = 11 · 16 + 6 = 182',
+    today: 'Barva #FF8800 jsou tři bajty: červená FF = 255, zelená 88 = 136, modrá 00 = 0. Dohromady oranžová.',
+  },
+  {
+    id: 'predsin-hloub',
+    glyph: 0b0101,
+    ancientName: 'Hlubší zákony Předsíně',
+    modernName: 'Shrnutí Hlubších síní I',
+    ancient: 'Kdo prošel velkou bránou Předsíně, umí krystaly počítat, číst po oktávách i psát glyfy.',
+    modern:
+      'Přičtení jedničky je přenos zprava. Oktáva (bajt) nese čísla 0 až 255, n bitů nejvýš 2ⁿ − 1. Grayův kód projde všechny kombinace po jediné změně. Šestnáctková soustava zapíše každou čtveřici bitů jedním znakem.',
+    formula: '255 = 1111 1111₂ = FF₁₆',
+    today: 'Tím končí abeceda dat. Z bajtů a šestnáctkových zápisů se skládá všechno, co počítač uloží.',
+  },
+
   // Akt II, Síň Počtářů: glyfy mají rozsvícený střed.
   {
     id: 'soutok',
@@ -232,6 +278,50 @@ export const KODEX: KodexEntry[] = [
     formula: '0110₂ + 0111₂ = 1101₂   ·   0101₂ << 2 = 10100₂',
     today:
       'Tyhle operace umí aritmetická jednotka každého procesoru (ALU). Odčítání a násobení najdeš v Hlubších síních, a jak ALU poskládat z hradel, v dalších patrech observatoře.',
+  },
+  {
+    id: 'deleni',
+    glyph: 0b10100,
+    ancientName: 'Miska zbytku',
+    modernName: 'Dělení posunem',
+    ancient: 'Co spadne přes okraj, je zbytek.',
+    modern:
+      'Dělit číslem 2ᵏ znamená posunout o k míst vpravo. Na krystalech zůstane podíl a těch k bitů, které spadly přes okraj, je zbytek. Číslo jde vydělit 2ᵏ beze zbytku, právě když končí k nulami.',
+    formula: '45 : 4 = 11 zb. 1   ·   101101₂ >> 2 = 1011₂, spadlo 01₂',
+    today: 'Procesor dělí mocninami dvou posunem, protože je to mnohem rychlejší než obecné dělení. Překladače takové dělení samy nahrazují posunem.',
+  },
+  {
+    id: 'tri-rady',
+    glyph: 0b11100,
+    ancientName: 'Přenos o dvě místa',
+    modernName: 'Sčítání více čísel',
+    ancient: 'Čtyři světla ve sloupci putují o dvě místa.',
+    modern:
+      'Při sčítání tří čísel se ve sloupci sejde až pět jedniček. Počet se zapíše dvojkově: poslední bit zůstane ve sloupci, další jde o jedno místo, a je-li jich čtyři a víc, jeden bit o dvě místa.',
+    formula: '4 = 100₂ · 5 = 101₂   (1111 + 1111 + 1111 = 101101)',
+    today: 'Rychlé násobičky v procesorech sčítají mnoho čísel naráz pomocí sčítaček, které berou tři bity a vracejí dva (carry-save).',
+  },
+  {
+    id: 'doplnek',
+    glyph: 0b11010,
+    ancientName: 'Doplněk',
+    modernName: 'Dvojkový doplněk',
+    ancient: 'Odečíst znamená přičíst doplněk a zahodit, co přeteče.',
+    modern:
+      'Záporné číslo se v pevném počtu bitů zapisuje jako doplněk: převrať všechny bity a přičti 1. Pak a − b = a + doplněk(b) a přenos z nejvyššího bitu se zahodí. Nejvyšší bit zároveň říká znaménko.',
+    formula: '7 − 3 = 0111 + 1101 = (1)0100 = 4',
+    today: 'Takhle odčítá každý procesor. Stačí mu jedna sčítačka pro sčítání i odčítání a záporná čísla nepotřebují zvláštní znaménko.',
+  },
+  {
+    id: 'pocetari-hloub',
+    glyph: 0b10111,
+    ancientName: 'Hlubší zákony Síně',
+    modernName: 'Shrnutí Hlubších síní II',
+    ancient: 'Kdo prošel velkou bránou Síně, umí světla ubírat, násobit i dělit.',
+    modern:
+      'Odčítání s výpůjčkou, nebo přičtením doplňku. Násobení je součet posunutých kopií podle jedniček druhého činitele. Dělení mocninou dvou je posun vpravo a zbytek je to, co vypadne.',
+    formula: '101₂ · 110₂ = 1010₂ + 10100₂ = 11110₂   (5 · 6 = 30)',
+    today: 'To je celá aritmetická jednotka procesoru. V dalších patrech observatoře se dozvíš, jak ji postavit z hradel.',
   },
 ];
 

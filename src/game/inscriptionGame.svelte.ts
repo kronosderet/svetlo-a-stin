@@ -21,6 +21,8 @@ import { BaseGame, type GameEvent } from './baseGame.svelte.ts';
 export class InscriptionGame extends BaseGame<InscriptionLevel> {
   readonly kind = 'inscription';
   readonly wheels: number;
+  /** Soustava kotoučů: 10 = čísla, 16 = glyfy. */
+  readonly radix: 10 | 16;
 
   state: InscriptionState = $state(initInscription());
   /** Historie doteků v aktuální úloze zápisu (pro undo). */
@@ -28,7 +30,8 @@ export class InscriptionGame extends BaseGame<InscriptionLevel> {
 
   constructor(level: InscriptionLevel, emit: (e: GameEvent) => void) {
     super(level, computePar(level.config), emit);
-    this.wheels = dialWheels(level.config.bits);
+    this.radix = level.config.radix ?? 10;
+    this.wheels = dialWheels(level.config.bits, this.radix);
   }
 
   get moves(): number {
@@ -79,16 +82,17 @@ export class InscriptionGame extends BaseGame<InscriptionLevel> {
   }
 
   nudge(wheel: number, delta: number): void {
-    this.#setDial(nudgeDial(this.state.dial, wheel, delta, this.wheels));
+    this.#setDial(nudgeDial(this.state.dial, wheel, delta, this.wheels, this.radix));
   }
 
   typeDigit(digit: number): void {
-    this.#setDial(pushDigit(this.state.dial, digit, this.wheels));
+    if (digit >= this.radix) return;
+    this.#setDial(pushDigit(this.state.dial, digit, this.wheels, this.radix));
   }
 
   /** Smaže poslední napsanou číslici (Backspace). */
   eraseDigit(): void {
-    this.#setDial(Math.floor(this.state.dial / 10));
+    this.#setDial(Math.floor(this.state.dial / this.radix));
   }
 
   undo(): void {

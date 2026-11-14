@@ -2,7 +2,29 @@ import { describe, expect, it } from 'vitest';
 import { popcount } from '../core/bits';
 import { answer } from '../core/puzzles/cascade';
 import { distance } from '../core/puzzles/tide';
-import { genI5, genI6, genI7, genI8, genII10, genII14, genII2, genII3, genII4, genII5, genII7Cascade, genII7Tide, genII8, genII9 } from './generators';
+import {
+  genI13,
+  genI14,
+  genI5,
+  genI6,
+  genI7,
+  genI8,
+  genII10,
+  genII11,
+  genII12,
+  genII13Add,
+  genII13Negate,
+  genII14,
+  genII15Fate,
+  genII2,
+  genII3,
+  genII4,
+  genII5,
+  genII7Cascade,
+  genII7Tide,
+  genII8,
+  genII9,
+} from './generators';
 import { seeded } from './random';
 
 /** Echo komentuje konkrétní pozice úloh; vylosované úlohy proto musí tyhle podmínky splnit vždy. */
@@ -117,6 +139,60 @@ describe('losované úlohy sedí na repliky Echa', () => {
 
   it('II-10 začíná ukázkou 5 × 3', () => {
     forSeeds((s) => expect(genII10(seeded(s)).tasks[0].operands).toEqual([5, 3]));
+  });
+
+  it('I-13 a I-14: glyfy s písmeny A–F se objevují často', () => {
+    forSeeds((s) => {
+      expect(genI13(seeded(s)).tasks.filter((t) => t.value >= 10).length).toBeGreaterThanOrEqual(3);
+      const pairs = genI14(seeded(s)).tasks;
+      expect(pairs.filter((t) => t.value >> 4 >= 10 || (t.value & 15) >= 10).length).toBeGreaterThanOrEqual(3);
+    });
+  });
+
+  it('II-10 nechá kopie vybrat hráče', () => {
+    forSeeds((s) => expect(genII10(seeded(s)).pickCopies).toBe(true));
+  });
+
+  it('II-11: dělení 4, 8, 2 a 16; první zbytek nenulový, jedno dělení beze zbytku', () => {
+    forSeeds((s) => {
+      const cfg = genII11(seeded(s));
+      expect(cfg.tasks.map((t) => t.show)).toEqual(['÷ 4', '÷ 8', '÷ 2', '÷ 16']);
+      const rems = cfg.tasks.map((t, k) => t.start! % [4, 8, 2, 16][k]);
+      expect(rems[0]).not.toBe(0);
+      expect(rems.filter((r) => r === 0)).toHaveLength(1);
+      cfg.tasks.forEach((t, k) => expect(t.target).toBe(Math.floor(t.start! / [4, 8, 2, 16][k])));
+    });
+  });
+
+  it('II-12: druhá trojice pošle světlo o dvě místa, poslední je 15 + 15 + 15', () => {
+    forSeeds((s) => {
+      const cfg = genII12(seeded(s));
+      expect(answer(cfg, cfg.tasks[0]).far).toBe(0);
+      expect(answer(cfg, cfg.tasks[1]).far).not.toBe(0);
+      expect(cfg.tasks[2].operands).toEqual([15, 15, 15]);
+    });
+  });
+
+  it('II-13: doplněk je převrácení a jedna navíc, odčítání vždy přeteče do přepadu', () => {
+    forSeeds((s) => {
+      genII13Negate(seeded(s)).tasks.forEach((t) => {
+        expect((t.start! + t.target) % 16).toBe(0);
+        expect(t.show).toBe(`−${t.start}`);
+      });
+      const cfg = genII13Add(seeded(s));
+      cfg.tasks.forEach((t) => {
+        const ans = answer(cfg, t);
+        expect(ans.spilled).toBe(1);
+        expect(ans.result).toBe((t.operands[0] + t.operands[1]) % 16);
+      });
+    });
+  });
+
+  it('II-15: Váhy Osudu na tři a na čtyři tahy', () => {
+    forSeeds((s) => {
+      const cfg = genII15Fate(seeded(s));
+      expect(cfg.tasks.map((t) => distance(cfg, t.start!, t.target))).toEqual([3, 4]);
+    });
   });
 
   it('II-14: čtyři vyvážení na tři tahy a poslední na čtyři', () => {

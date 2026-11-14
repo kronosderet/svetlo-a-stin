@@ -5,6 +5,7 @@ import {
   par as computePar,
   pull as pullLever,
   taskLimit,
+  taskStart,
   type Spill,
   type TideOp,
   type TideState,
@@ -23,7 +24,7 @@ export class TideGame extends BaseGame<TideLevel> {
   /** Páky použité v každé splněné zkoušce (zápisník). */
   trails: TideOp[][] = $state([]);
   /** Dosažený cíl, který během pauzy zůstává na krystalech. */
-  held: { value: number; target: number } | null = $state(null);
+  held: { value: number; target: number; show?: string; start: number; trail: TideOp[] } | null = $state(null);
 
   constructor(level: TideLevel, emit: (e: GameEvent) => void) {
     super(level, computePar(level.config), emit);
@@ -46,6 +47,21 @@ export class TideGame extends BaseGame<TideLevel> {
   /** Požadovaná váha na kole či misce; null = všechno splněno. */
   get demand(): number | null {
     return this.holding && this.held ? this.held.target : this.target;
+  }
+
+  /** Co ukazuje kolo: vlastní nápis úlohy (÷ 8, −3), jinak cílová váha; null = hotovo. */
+  get demandShown(): number | string | null {
+    if (this.holding && this.held) return this.held.show ?? this.held.target;
+    const t = this.state.complete ? null : this.level.config.tasks[this.state.step];
+    return t ? (t.show ?? t.target) : null;
+  }
+
+  /** Miska zbytku: světla, která v aktuální zkoušce spadla přes pravý okraj (při samých posunech vpravo). */
+  get remainder(): { bits: number; value: number } {
+    const start = this.holding && this.held ? this.held.start : taskStart(this.level.config, this.state.step);
+    const trail = this.holding && this.held ? this.held.trail : this.state.trail;
+    const bits = trail.filter((o) => o === 'shr').length;
+    return { bits, value: start & ((1 << bits) - 1) };
   }
 
   get target(): number | null {
@@ -85,7 +101,13 @@ export class TideGame extends BaseGame<TideLevel> {
       if (e.type !== 'step') continue;
       this.hintLevel = 0;
       this.trails = [...this.trails, e.trail];
-      this.held = { value: e.target, target: e.target };
+      this.held = {
+        value: e.target,
+        target: e.target,
+        show: this.level.config.tasks[e.index].show,
+        start: taskStart(this.level.config, e.index),
+        trail: e.trail,
+      };
       this.hold();
     }
     this.state = state;

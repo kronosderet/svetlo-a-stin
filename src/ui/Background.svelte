@@ -16,7 +16,7 @@
 
   // Prach ve světle pochodní. Při omezených animacích se nevykresluje.
   $effect(() => {
-    if (settings.reducedMotion || !canvas) return;
+    if (settings.reducedMotion || settings.lite || !canvas) return;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
     const el = canvas;

@@ -3,9 +3,15 @@
  * ho zase načte. Čistá logika bez prohlížeče: zápis, kontrola a porovnání.
  */
 import { LAYOUT, migrateLevelIds } from './migrate';
-import type { LevelRecord, ProgressData } from './progress.svelte.ts';
+import type { LevelRecord, ProgressData, RoomStats } from './progress.svelte.ts';
 
 export const FILE_NAME = 'Svetlo-a-Stin-postup.json';
+
+/** Název souboru i se jménem hráče, ať se soubory od celé třídy nepletou. */
+export function fileNameFor(name: string): string {
+  const clean = name.replace(/[\\/:*?"<>|]+/g, '').trim().replace(/\s+/g, '-');
+  return clean ? `Svetlo-a-Stin-postup-${clean}.json` : FILE_NAME;
+}
 const FORMAT = 'svetlo-a-stin-postup';
 
 export function serializeProgress(p: ProgressData, now = new Date()): string {
@@ -13,7 +19,7 @@ export function serializeProgress(p: ProgressData, now = new Date()): string {
     format: FORMAT,
     verze: 2,
     ulozeno: now.toISOString(),
-    postup: { version: 1, layout: LAYOUT, levels: p.levels, kodex: p.kodex, seen: p.seen },
+    postup: { version: 1, layout: LAYOUT, name: p.name, levels: p.levels, stats: p.stats, kodex: p.kodex, seen: p.seen },
   };
   return JSON.stringify(file, null, 2);
 }
@@ -43,11 +49,28 @@ export function parseProgress(text: string, levelIds: string[], kodexIds: string
       levels[id] = { seals: { solved: true, skill: rec.seals.skill === true, pure: rec.seals.pure === true } };
     }
   }
+  const stats: Record<string, RoomStats> = {};
+  if (isRecord(src.stats)) {
+    const saved = src.layout === LAYOUT ? src.stats : migrateLevelIds(src.stats);
+    const count = (v: unknown) => (typeof v === 'number' && Number.isFinite(v) && v >= 0 ? Math.floor(v) : 0);
+    for (const [id, st] of Object.entries(saved)) {
+      if (!levelIds.includes(id) || !isRecord(st)) continue;
+      stats[id] = {
+        entered: count(st.entered),
+        solved: count(st.solved),
+        extra: count(st.extra),
+        hints: count(st.hints),
+        stepHints: count(st.stepHints),
+        quizMistakes: count(st.quizMistakes),
+      };
+    }
+  }
+  const name = typeof src.name === 'string' ? src.name.trim().slice(0, 40) : '';
   const known = (list: unknown, ids: string[]) =>
     Array.isArray(list) ? [...new Set(list.filter((k): k is string => typeof k === 'string' && ids.includes(k)))] : [];
   return {
     ok: true,
-    data: { version: 1, layout: LAYOUT, levels, kodex: known(src.kodex, kodexIds), seen: known(src.seen, kodexIds) },
+    data: { version: 1, layout: LAYOUT, levels, stats, name, kodex: known(src.kodex, kodexIds), seen: known(src.seen, kodexIds) },
   };
 }
 

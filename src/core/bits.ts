@@ -62,5 +62,14 @@ export function patternWords(mask: number, bits: number): string {
   return words.join(', ');
 }
 
+/** Šestnáctkový zápis velkými písmeny, doplněný nulami zleva (182, 2 → „B6“). */
+export const toHex = (value: number, digits = 1): string => value.toString(16).toUpperCase().padStart(digits, '0');
+
+/** Glyfy čtveřic od nejvyšší (182 na 8 bitech → [11, 6]). */
+export function nibbles(value: number, bits: number): number[] {
+  const n = Math.ceil(bits / 4);
+  return Array.from({ length: n }, (_, k) => (value >> (4 * (n - 1 - k))) & 15);
+}
+
 /** Grayův kód: sousední hodnoty se liší právě v jednom bitu. */
 export const gray = (i: number): number => (i ^ (i >>> 1)) >>> 0;

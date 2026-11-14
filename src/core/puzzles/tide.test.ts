@@ -99,3 +99,15 @@ describe('Příliv: Váhy Osudu', () => {
     expect(st.resets).toBe(0);
   });
 });
+
+describe('Příliv: převrácení (doplněk)', () => {
+  it('převrátí všechna světla v řadě', () => {
+    expect(applyOp('not', 0b0011, 4)).toEqual({ value: 0b1100, spill: null });
+  });
+
+  it('záporné číslo: převrátit a přidat jednu', () => {
+    const cfg: TideConfig = { bits: 4, ops: ['not', 'inc'], tasks: [{ start: 3, target: 13, show: '−3' }] };
+    expect(distance(cfg, 3, 13)).toBe(2);
+    expect(bestOp(cfg, initTide(cfg))).toBe('not');
+  });
+});

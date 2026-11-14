@@ -125,3 +125,24 @@ describe('nápis: ideální počet tahů', () => {
     expect(par(mixed)).toBe(2 + 1);
   });
 });
+
+describe('nápis: glyfy (šestnáctkové kotouče)', () => {
+  const hex: InscriptionConfig = { bits: 8, radix: 16, tasks: [{ dir: 'read', value: 0xb6 }] };
+
+  it('na každou čtveřici krystalů je jeden kotouč', () => {
+    expect(dialWheels(4, 16)).toBe(1);
+    expect(dialWheels(8, 16)).toBe(2);
+  });
+
+  it('kotouč se točí od 0 do F a zase na 0', () => {
+    expect(nudgeDial(0xf0, 0, 1, 2, 16)).toBe(0x00);
+    expect(nudgeDial(0x0a, 1, -1, 2, 16)).toBe(0x09);
+    expect(pushDigit(0x0b, 6, 2, 16)).toBe(0xb6);
+  });
+
+  it('přečtený dvojznak se přijme', () => {
+    const st = setDial(hex, initInscription(), 0xb6);
+    expect(confirm(hex, st).state.complete).toBe(true);
+    expect(setDial(hex, initInscription(), 999).dial).toBe(255);
+  });
+});

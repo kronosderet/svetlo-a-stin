@@ -3,12 +3,13 @@
 Didaktická hra o binární matematice, logice a výpočtech v atmosféře zapomenuté civilizace.
 Cílová skupina: sexta gymnázia. Herní design a plán vývoje jsou v [PLAN.md](PLAN.md).
 
-**Stav:** prototyp, Akty I a II, 21 komnat. Každé patro má základní cestu 1–7 (komnata 7 je
-brána) a nepovinné Hlubší síně 8–15; ty, které ještě nejsou hotové, jsou na mapě zapečetěné.
+**Stav:** prototyp, Akty I a II, 30 komnat. Každé patro má základní cestu 1–7 (komnata 7 je
+brána) a nepovinné Hlubší síně 8–15 (komnata 15 je velká brána).
 Akt I, Předsíň Prvního Světla: základ (bit, kombinace 2ⁿ, poziční hodnota, převody oběma
-směry), Hlubší síně (pátý krystal, přenos, bajt). Akt II, Síň Počtářů: základ (sčítání
-s přenosem, přetečení, posuny ×2 a ÷2, smíšená brána), Hlubší síně (odčítání s výpůjčkou,
-stavba čísla, násobení, Váhy Osudu). Archetypy Oltář, Nápis (kotouče),
+směry), Hlubší síně (pátý krystal, přenos, bajt, Grayův kód, šestnáctková soustava a glyfy).
+Akt II, Síň Počtářů: základ (sčítání s přenosem, přetečení, posuny ×2 a ÷2, smíšená brána),
+Hlubší síně (odčítání s výpůjčkou, stavba čísla, násobení s výběrem kopií, dělení posunem se
+zbytkem, tři řady, dvojkový doplněk, Váhy Osudu). Archetypy Oltář, Nápis (kotouče),
 Počítadlo, Kaskáda (počítání pod sebou) a Příliv (páky posunu). Komnaty na procvičování
 a zkoušky losují úlohy při každém vstupu (`src/content/generators.ts`).
 
@@ -40,6 +41,13 @@ a otevřít dvojklikem v prohlížeči (Edge, Chrome). Nepotřebuje server ani p
   doplňuje. Jinde se soubor stáhne. Na jiném počítači ho načte tlačítkem Načíst postup ze souboru
   na úvodní obrazovce (nebo v Nastavení) a v Edge a Chrome může zapnout průběžné ukládání do téhož
   souboru. Spojení se souborem platí do zavření stránky a smazání postupu ho zruší.
+- **Jméno pro učitele:** v Nastavení si hráč může vyplnit jméno. Uloží se do souboru s postupem
+  a soubor se podle něj i jmenuje, takže se soubory od celé třídy nepletou.
+- **Učitelský režim:** v Nastavení po zadání PINu. Otevře všechna patra a komnaty
+  (ukázky na projektoru) a zpřístupní **Přehled třídy**: přetáhněte do něj soubory s postupem od
+  studentů a uvidíte, kdo je kde a ve kterých komnatách se třída zasekává. Nic se neodesílá.
+- **Shrnutí patra** (tlačítko na mapě) vytiskne přeložené zákony patra na jednu stránku.
+- **Úsporná grafika** (Nastavení) vypne rozostření a částice. Když se hra trhá, zapne se sama.
 - Po každé úpravě hry soubor vytvořte znovu stejným příkazem.
 
 ## Struktura

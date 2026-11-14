@@ -1,16 +1,19 @@
 <script lang="ts">
   import { fade } from 'svelte/transition';
+  import Glyph from './Glyph.svelte';
   import { settings } from '../game/settings.svelte.ts';
 
   interface Props {
-    /** Požadované číslo; null = hotovo (✓). */
-    value: number | null;
+    /** Požadované číslo (nebo nápis jako „÷ 8“); null = hotovo (✓). */
+    value: number | string | null;
     /** Pootočení kamenného kola ve stupních. */
     turn?: number;
     label: string;
+    /** Řeč glyfů: číslo se ukáže jako glyfy čtveřic (s šestnáctkovým zápisem pod nimi). */
+    glyphs?: number[] | null;
   }
 
-  let { value, turn = 0, label }: Props = $props();
+  let { value, turn = 0, label, glyphs = null }: Props = $props();
 
   const m = $derived(settings.reducedMotion ? 0 : 1);
   const ticks = Array.from({ length: 24 }, (_, k) => k * 15);
@@ -58,8 +61,11 @@
     </svg>
     <span class="disc-face stone-inset">
       {#key value}
-        <span class="value inlaid" class:long={value !== null && value >= 100} in:fade={{ duration: 300 * m, delay: 250 * m }}>
-          {#if value === null}<svg class="check" viewBox="0 0 24 24" aria-label="hotovo" role="img"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>{:else}{value}{/if}
+        <span class="value inlaid" class:long={value !== null && String(value).length >= 3} in:fade={{ duration: 300 * m, delay: 250 * m }}>
+          {#if value === null}<svg class="check" viewBox="0 0 24 24" aria-label="hotovo" role="img"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>{:else if glyphs}<span class="glyph-value" aria-label={String(value)}>
+              <span class="glyph-row">{#each glyphs as g, k (k)}<Glyph value={g} size={glyphs.length > 1 ? 30 : 40} />{/each}</span>
+              <span class="glyph-text">{value}</span>
+            </span>{:else}{value}{/if}
         </span>
       {/key}
     </span>
@@ -167,6 +173,20 @@
     stroke-linecap: round;
     stroke-linejoin: round;
     vertical-align: -0.1em;
+  }
+  .glyph-value {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+  }
+  .glyph-row {
+    display: flex;
+    gap: 6px;
+  }
+  .glyph-text {
+    font-family: var(--font-mono);
+    font-size: var(--fs-base);
   }
   .value.long {
     font-size: min(clamp(1.7rem, 4.4vw, 2.5rem), 4.2vh);

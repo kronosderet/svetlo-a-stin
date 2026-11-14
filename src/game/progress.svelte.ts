@@ -1,5 +1,7 @@
 import { BASIC_PATH, actOf, advancedRooms, gateOf, isAdvanced } from '../content/levels';
 import { LAYOUT, migrateLevelIds } from './migrate';
+import { settings } from './settings.svelte.ts';
+import { emptyStats, type RoomStats } from './roomStats';
 
 const KEY = 'svetlo-stin.progress.v1';
 /** Klíč z doby, kdy se hra jmenovala Lumen & Umbra; postup se z něj převezme. */
@@ -15,11 +17,17 @@ export interface LevelRecord {
   seals: Seals;
 }
 
+export { emptyStats, type RoomStats } from './roomStats';
+
 export interface ProgressData {
   version: 1;
   /** Číslování komnat (viz migrate.ts). */
   layout: number;
   levels: Record<string, LevelRecord>;
+  /** Statistiky komnat (i těch rozehraných). */
+  stats: Record<string, RoomStats>;
+  /** Jméno, pod kterým postup uvidí učitel v přehledu třídy (nepovinné). */
+  name: string;
   /** Přeložené (odemčené) záznamy Kodexu. */
   kodex: string[];
   /** Záznamy, které hráč už v Kodexu viděl. */
@@ -27,7 +35,7 @@ export interface ProgressData {
 }
 
 function empty(): ProgressData {
-  return { version: 1, layout: LAYOUT, levels: {}, kodex: [], seen: [] };
+  return { version: 1, layout: LAYOUT, levels: {}, stats: {}, name: '', kodex: [], seen: [] };
 }
 
 function load(): ProgressData {
@@ -76,12 +84,50 @@ export function progressSnapshot(): ProgressData {
 /** Nahradí postup v prohlížeči jiným (načteným ze souboru). */
 export function replaceProgress(data: ProgressData): void {
   progress.levels = data.levels;
+  progress.stats = data.stats;
+  progress.name = data.name;
   progress.kodex = data.kodex;
   progress.seen = data.seen;
   save();
 }
 
-export function recordResult(levelId: string, result: { seals: Seals }, kodexId?: string): void {
+/** Jméno pro přehled třídy. */
+export function setName(name: string): void {
+  progress.name = name.trim().slice(0, 40);
+  save();
+}
+
+/** Hráč vstoupil do komnaty (přehled třídy pak ukáže, kde se zasekl). */
+export function recordEntry(levelId: string): void {
+  const st = progress.stats[levelId] ?? emptyStats();
+  progress.stats[levelId] = { ...st, entered: st.entered + 1 };
+  save();
+}
+
+/** Nápověda se zapíše hned: přehled třídy pak ukáže i nápovědy těch, kdo komnatu nedokončili. */
+export function recordHint(levelId: string, step: boolean): void {
+  const st = progress.stats[levelId] ?? emptyStats();
+  progress.stats[levelId] = { ...st, hints: st.hints + 1, stepHints: st.stepHints + (step ? 1 : 0) };
+  save();
+}
+
+export interface ResultForRecord {
+  seals: Seals;
+  moves?: number;
+  par?: number;
+  hintsUsed?: number;
+  stepHints?: number;
+  quizMistakes?: number;
+}
+
+export function recordResult(levelId: string, result: ResultForRecord, kodexId?: string): void {
+  const st = progress.stats[levelId] ?? emptyStats();
+  progress.stats[levelId] = {
+    ...st,
+    solved: st.solved + 1,
+    extra: st.extra + Math.max(0, (result.moves ?? 0) - (result.par ?? 0)),
+    quizMistakes: st.quizMistakes + (result.quizMistakes ?? 0),
+  };
   const prev = progress.levels[levelId];
   progress.levels[levelId] = {
     seals: {
@@ -103,7 +149,8 @@ export function isCompleted(id: string): boolean {
  * Hlubší síně patra se otevřou po jeho bráně a pak zase po jedné. Hotová komnata je vždy otevřená.
  */
 export function isUnlocked(id: string): boolean {
-  if (isCompleted(id)) return true;
+  // Učitelský režim (PIN v Nastavení) otevře všechno, ať jde ukázat kterákoli komnata.
+  if (settings.teacher || isCompleted(id)) return true;
   if (isAdvanced(id)) {
     const act = actOf(id);
     if (!isCompleted(gateOf(act))) return false;
@@ -140,6 +187,8 @@ export function markKodexSeen(): void {
 export function resetProgress(): void {
   const e = empty();
   progress.levels = e.levels;
+  progress.stats = e.stats;
+  progress.name = e.name;
   progress.kodex = e.kodex;
   progress.seen = e.seen;
   save();

@@ -8,7 +8,8 @@
   import Scale from './Scale.svelte';
   import TideLedger from './TideLedger.svelte';
   import { GATE, GREAT_GATE, roomNumber } from '../../content/levels';
-  import { isBitSet } from '../../core/bits';
+  import { isBitSet, toBinaryString } from '../../core/bits';
+  import MiniPattern from '../MiniPattern.svelte';
   import type { TideOp } from '../../core/puzzles/tide';
   import { settings } from '../../game/settings.svelte.ts';
   import type { TideGame } from '../../game/tideGame.svelte.ts';
@@ -27,6 +28,7 @@
     shr: { math: '÷2', shift: '→', caption: 'posun vpravo', key: '→', name: 'Posun vpravo' },
     inc: { math: '+1', shift: '+1', caption: 'přidej jednu', key: '+', name: 'Přidej jednu' },
     dec: { math: '−1', shift: '−1', caption: 'uber jednu', key: '−', name: 'Uber jednu' },
+    not: { math: '¬', shift: '¬', caption: 'převrať', key: 'N', name: 'Převrať všechna světla' },
   };
 
   let registerEl: HTMLElement | undefined = $state();
@@ -78,7 +80,7 @@
         {#if pres.scale}
           <Scale target={game.demand} {value} />
         {:else}
-          <Disc value={game.demand} turn={game.state.step * 60} label={[GATE, GREAT_GATE].includes(roomNumber(game.level.id)) ? 'Brána žádá' : 'Oltář žádá'} />
+          <Disc value={game.demandShown} turn={game.state.step * 60} label={[GATE, GREAT_GATE].includes(roomNumber(game.level.id)) ? 'Brána žádá' : 'Oltář žádá'} />
         {/if}
       </div>
       {#if cfg.tasks.length > 1}
@@ -119,12 +121,27 @@
         <Quiz {game} />
       {/key}
     {:else if game.phase === 'play'}
+      <div class="readouts">
       {#if pres.showSum}
         <div class="sum stone-inset">
           <span>Světlo váží</span>
           <strong class="sum-value">{value}</strong>
         </div>
       {/if}
+      {#if pres.remainder}
+        {@const rem = game.remainder}
+        <!-- Co spadne přes pravý okraj, chytí miska: to je zbytek po dělení. -->
+        <div class="remainder stone-inset" role="status" aria-label="Miska zbytku: {rem.bits ? `${toBinaryString(rem.value, rem.bits)}, tedy ${rem.value}` : 'prázdná'}">
+          <span class="rem-label carved">Zbytek</span>
+          {#if rem.bits}
+            <MiniPattern mask={rem.value} bits={rem.bits} size="sm" {digits} />
+            <strong class="rem-value">{rem.value}</strong>
+          {:else}
+            <span class="rem-empty">miska je zatím prázdná</span>
+          {/if}
+        </div>
+      {/if}
+      </div>
 
       <div class="levers" role="group" aria-label="Páky" style:--n={cfg.ops.length}>
         {#each cfg.ops as op (op)}
@@ -261,6 +278,41 @@
     font-family: var(--font-display);
     font-size: var(--fs-2xl);
     color: var(--text);
+  }
+  .readouts {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    gap: 10px 14px;
+    margin-bottom: 8px;
+  }
+  .readouts:empty {
+    display: none;
+  }
+  .remainder {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-height: 48px;
+    padding: 6px 16px;
+    color: var(--text-muted);
+  }
+  .rem-label {
+    font-family: var(--font-display);
+    font-size: var(--fs-xs);
+    font-weight: 700;
+    letter-spacing: var(--ls-label);
+    text-transform: uppercase;
+  }
+  .rem-value {
+    font-family: var(--font-display);
+    font-size: var(--fs-xl);
+    color: var(--text);
+  }
+  .rem-empty {
+    font-style: italic;
+    font-size: var(--fs-sm);
   }
   .levers {
     display: flex;

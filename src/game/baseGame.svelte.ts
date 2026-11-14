@@ -9,8 +9,25 @@ import { settings } from './settings.svelte.ts';
 export interface LevelResult {
   moves: number;
   par: number;
+  /** Všechny nápovědy (i obecné náznaky 1. a 2. stupně). */
   hintsUsed: number;
+  /** Nápovědy 3. stupně, které ukázaly konkrétní krok. Jen ty berou pečeť odvahy. */
+  stepHints: number;
+  /** Špatné odpovědi v kvízu. Pečeť přesnosti chce kvíz napoprvé. */
+  quizMistakes: number;
   seals: { solved: boolean; skill: boolean; pure: boolean };
+}
+
+/** Pečetě: přesnost = ideální počet tahů a kvíz napoprvé, odvaha = žádná ukázka kroku. */
+export function sealsOf(r: Omit<LevelResult, 'seals'>): LevelResult['seals'] {
+  return { solved: true, skill: r.moves <= r.par && r.quizMistakes === 0, pure: r.stepHints === 0 };
+}
+
+/** Výsledek celé komnaty: u smíšené brány součet všech částí. */
+export function combineResults(results: LevelResult[]): LevelResult {
+  const sum = (key: 'moves' | 'par' | 'hintsUsed' | 'stepHints' | 'quizMistakes') => results.reduce((s, r) => s + r[key], 0);
+  const base = { moves: sum('moves'), par: sum('par'), hintsUsed: sum('hintsUsed'), stepHints: sum('stepHints'), quizMistakes: sum('quizMistakes') };
+  return { ...base, seals: sealsOf(base) };
 }
 
 export type GameEvent =
@@ -34,8 +51,12 @@ export abstract class BaseGame<L extends PuzzleLevel = PuzzleLevel> {
 
   /** Stupeň nápovědy pro aktuální cíl (po splnění cíle se nuluje). */
   hintLevel = $state(0);
-  /** Celkový počet použitých nápověd v komnatě (pro pečeť odvahy). */
+  /** Celkový počet použitých nápověd v komnatě. */
   hintsUsed = $state(0);
+  /** Kolikrát nápověda ukázala konkrétní krok (3. stupeň); jen to bere pečeť odvahy. */
+  stepHints = $state(0);
+  /** Špatné odpovědi v kvízu (berou pečeť přesnosti). */
+  quizMistakes = $state(0);
   phase: Phase = $state('play');
   quizIndex = $state(0);
   quizWrong: number[] = $state([]);
@@ -54,7 +75,7 @@ export abstract class BaseGame<L extends PuzzleLevel = PuzzleLevel> {
     this.level = level;
     this.par = par;
     this.emit = emit;
-    this.quiz = (level.quiz ?? []).map((q) => shuffleOptions(q));
+    this.quiz = (level.quiz ?? []).map((q) => shuffleOptions(typeof q === 'function' ? q(Math.random) : q));
   }
 
   abstract get moves(): number;
@@ -69,6 +90,7 @@ export abstract class BaseGame<L extends PuzzleLevel = PuzzleLevel> {
     if (this.phase !== 'play' || this.hintLevel >= 3) return;
     this.hintLevel += 1;
     this.hintsUsed += 1;
+    if (this.hintLevel >= 3) this.stepHints += 1;
     this.emit({ kind: 'hint', level: this.hintLevel });
   }
 
@@ -77,7 +99,10 @@ export abstract class BaseGame<L extends PuzzleLevel = PuzzleLevel> {
     if (!q || this.quizAnswered || this.quizWrong.includes(option)) return;
     const correct = option === q.correct;
     if (correct) this.quizAnswered = true;
-    else this.quizWrong = [...this.quizWrong, option];
+    else {
+      this.quizWrong = [...this.quizWrong, option];
+      this.quizMistakes += 1;
+    }
     this.emit({ kind: 'quiz', correct, question: this.quizIndex });
   }
 
@@ -106,13 +131,14 @@ export abstract class BaseGame<L extends PuzzleLevel = PuzzleLevel> {
   }
 
   #finish(): void {
-    const moves = this.moves;
-    const result: LevelResult = {
-      moves,
+    const base = {
+      moves: this.moves,
       par: this.par,
       hintsUsed: this.hintsUsed,
-      seals: { solved: true, skill: moves <= this.par, pure: this.hintsUsed === 0 },
+      stepHints: this.stepHints,
+      quizMistakes: this.quizMistakes,
     };
+    const result: LevelResult = { ...base, seals: sealsOf(base) };
     this.result = result;
     this.phase = 'solved';
     this.emit({ kind: 'solved', result });

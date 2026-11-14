@@ -8,7 +8,7 @@
   import Pips from '../Pips.svelte';
   import Quiz from '../altar/Quiz.svelte';
   import Dial from './Dial.svelte';
-  import { isBitSet, maxValue, patternWords, toBinaryString } from '../../core/bits';
+  import { isBitSet, maxValue, nibbles, patternWords, toBinaryString, toHex } from '../../core/bits';
   import { FX } from '../../game/fx.svelte.ts';
   import { settings } from '../../game/settings.svelte.ts';
   import type { InscriptionGame } from '../../game/inscriptionGame.svelte.ts';
@@ -26,6 +26,9 @@
   const reading = $derived(shownTask.dir === 'read');
   const digits = $derived(level.presentation.showDigits || settings.alwaysDigits);
   const solvedValues = $derived(cfg.tasks.slice(0, st.step).map((t) => t.value));
+  /** Řeč glyfů: kotouče a brána mluví šestnáctkovými glyfy. */
+  const hex = $derived(cfg.radix === 16);
+  const fmt = (v: number): string => (hex ? toHex(v, game.wheels) : String(v));
   const taskText = $derived(reading ? level.presentation.task : (level.presentation.writeTask ?? level.presentation.task));
   const m = $derived(settings.reducedMotion ? 0 : 1);
 
@@ -77,7 +80,12 @@
       <p class="task-text carved">{taskText}</p>
       {#if !reading}
         <div class="side">
-          <Disc value={task?.value ?? null} turn={st.step * 60} label="Brána žádá" />
+          <Disc
+            value={task ? fmt(task.value) : null}
+            glyphs={task && hex ? nibbles(task.value, bits) : null}
+            turn={st.step * 60}
+            label="Brána žádá"
+          />
         </div>
       {/if}
       {#if cfg.tasks.length > 1}
@@ -109,10 +117,14 @@
       {/key}
     {:else if game.reading}
       <div class="reader side" bind:this={readerEl}>
-        <Dial value={st.dial} wheels={game.wheels} {onNudge} />
+        <Dial value={st.dial} wheels={game.wheels} radix={game.radix} {onNudge} />
         <button type="button" class="btn btn-primary btn-lg" onclick={() => game.confirm()}>Potvrdit</button>
       </div>
-      <p class="keys hide-narrow">Číslo můžeš i napsat na klávesnici a potvrdit klávesou Enter.</p>
+      <p class="keys hide-narrow">
+        {hex
+          ? 'Glyf můžeš vybrat i na klávesnici (0–9 a A–F) a potvrdit klávesou Enter.'
+          : 'Číslo můžeš i napsat na klávesnici a potvrdit klávesou Enter.'}
+      </p>
 
       {#if st.lastGuess !== null && task}
         {#key st.moves}
@@ -124,8 +136,8 @@
               <div class="cmp-grid">
                 <span class="cmp-name">nápis</span>
                 <MiniPattern mask={task.value} {bits} size="md" {digits} label="Nápis: {words(task.value)}" />
-                <span class="cmp-name">{st.lastGuess}</span>
-                <MiniPattern mask={st.lastGuess} {bits} size="md" {digits} label="{st.lastGuess} by svítilo: {words(st.lastGuess)}" />
+                <span class="cmp-name">{fmt(st.lastGuess)}</span>
+                <MiniPattern mask={st.lastGuess} {bits} size="md" {digits} label="{fmt(st.lastGuess)} by svítilo: {words(st.lastGuess)}" />
               </div>
             {/if}
           </div>
@@ -138,6 +150,7 @@
     <Ledger
       values={solvedValues}
       {bits}
+      mode={hex ? 'hex' : 'sum'}
       empty={cfg.tasks.some((t) => t.dir === 'write')
         ? 'Zatím prázdný. Každou splněnou zkoušku si sem zapíšeš.'
         : 'Zatím prázdný. Každý přečtený nápis si sem zapíšeš.'}

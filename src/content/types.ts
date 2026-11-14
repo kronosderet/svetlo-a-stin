@@ -15,6 +15,9 @@ export interface QuizQuestion {
   explain: string;
 }
 
+/** Otázka kvízu, nebo generátor, který vylosuje čísla (src/content/quizzes.ts). */
+export type QuizItem = QuizQuestion | ((rng: Rng) => QuizQuestion);
+
 export interface Presentation {
   task: string;
   /** Zadání pro zápis (jen u Nápisu, který střídá čtení a zápis). */
@@ -39,6 +42,8 @@ export interface Presentation {
   levers?: 'shift' | 'math';
   /** Příliv: místo kamenného kola dvě misky vah (Váhy Osudu). */
   scale?: boolean;
+  /** Příliv: světla, která spadnou přes pravý okraj, se chytají do misky zbytku (dělení posunem). */
+  remainder?: boolean;
 }
 
 interface LevelBase {
@@ -67,7 +72,8 @@ interface LevelBase {
     /** Přidá se po vyřešení v ideálním počtu tahů. */
     skill?: string;
   };
-  quiz?: QuizQuestion[];
+  /** Závěrečný kvíz; otázky s čísly jsou generátory, které čísla při každém vstupu vylosují. */
+  quiz?: QuizItem[];
   /** Záznam Kodexu, který level odemyká („přeloží“). */
   kodex?: string;
 }

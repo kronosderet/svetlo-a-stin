@@ -1,4 +1,5 @@
-import { genI5, genI6, genI7, genI8 } from './generators';
+import { genI12, genI13, genI14, genI15Glyphs, genI15Octave, genI5, genI6, genI7, genI8 } from './generators';
+import { qBitsFor, qByteHex, qCombosNext, qCombosOf, qFlips, qGlyphOf, qGlyphWeight, qGrayMoves, qGrayPair, qMaxValue, qNextCount } from './quizzes';
 import type { ActDef, LevelDef } from './types';
 
 const levels: LevelDef[] = [
@@ -79,20 +80,8 @@ const levels: LevelDef[] = [
       skill: 'Sedm doteků na osm kombinací, pokaždé jediná změna. Tenhle postup má i moderní jméno: Grayův kód.',
     },
     quiz: [
-      {
-        question: 'Tři krystaly dávají 8 kombinací. Kolik kombinací dají čtyři krystaly?',
-        options: ['8', '12', '16', '32'],
-        correct: 2,
-        hint: 'Přidej v duchu čtvrtý krystal. Každá z osmi kombinací ho teď může mít zhasnutý, nebo rozsvícený.',
-        explain: 'Každý nový krystal zdvojí počet kombinací: 8 · 2 = 16.',
-      },
-      {
-        question: 'A osm krystalů, celá oktáva?',
-        options: ['64', '128', '256', '512'],
-        correct: 2,
-        hint: 'Začni u jednoho krystalu (2 kombinace) a sedmkrát zdvojnásob.',
-        explain: '2 · 2 · 2 · 2 · 2 · 2 · 2 · 2 = 2⁸ = 256. Obecně: n krystalů má 2ⁿ kombinací.',
-      },
+      qCombosNext,
+      qCombosOf,
     ],
     kodex: 'podoby',
   },
@@ -314,20 +303,8 @@ const levels: LevelDef[] = [
       skill: 'Žádný zbytečný dotek. Předání ovládáš.',
     },
     quiz: [
-      {
-        question: 'Jaká kombinace následuje po 1011?',
-        options: ['1100', '1010', '1111', '0100'],
-        correct: 0,
-        hint: 'Zprava: svítící krystaly zhasni, první zhasnutý rozsviť.',
-        explain: '1011 + 1 = 1100. Dvě jedničky vpravo zhasly a přenos rozsvítil třetí krystal: 11 + 1 = 12.',
-      },
-      {
-        question: 'Kolik krystalů se změní, když k 0111 1111 přičteš jedničku?',
-        options: ['1', '2', '7', '8'],
-        correct: 3,
-        hint: 'Předání běží zprava přes všechny jedničky, dokud nenarazí na nulu.',
-        explain: 'Sedm jedniček zhasne a nula vlevo se rozsvítí: 0111 1111 + 1 = 1000 0000, tedy 127 + 1 = 128.',
-      },
+      qNextCount,
+      qFlips,
     ],
     kodex: 'preliti',
   },
@@ -360,22 +337,281 @@ const levels: LevelDef[] = [
       skill: 'Ani jeden zbytečný dotek, a to na osmi krystalech.',
     },
     quiz: [
-      {
-        question: 'Jaké je největší číslo, které zapíšeš šesti krystaly?',
-        options: ['32', '36', '63', '64'],
-        correct: 2,
-        hint: 'Rozsviť v duchu všech šest: 32 + 16 + 8 + 4 + 2 + 1.',
-        explain: '111111₂ = 2⁶ − 1 = 63. Na číslo 64 už je potřeba sedmý krystal.',
-      },
-      {
-        question: 'Kolik krystalů je potřeba na zápis čísla 1000?',
-        options: ['8', '9', '10', '11'],
-        correct: 2,
-        hint: 'Hledej nejmenší počet krystalů, který unese aspoň 1000. Pomůže řada 256, 512, 1024.',
-        explain: 'Devět krystalů unese nejvýš 2⁹ − 1 = 511, deset už 1023. Na 1000 je tedy potřeba 10 krystalů.',
-      },
+      qMaxValue,
+      qBitsFor,
     ],
     kodex: 'venec',
+  },
+  {
+    id: 'I-11',
+    title: 'Tichý krok',
+    kind: 'altar',
+    config: { bits: 4, goal: { kind: 'all' }, reveal: 'never', strict: true },
+    presentation: {
+      task: 'Projdi všech šestnáct kombinací. Každým dotekem jediná změna a žádná kombinace dvakrát.',
+      showDigits: true,
+      showSum: false,
+      sizes: 'equal',
+      ledger: false,
+    },
+    hints: [
+      'Vzpomeň si na Kolik kombinací: tři krystaly šly projít tak, že se pokaždé změnil jediný.',
+      'Zrcadlo: projdi osm kombinací tří pravých krystalů, pak rozsviť levý a projdi těch osm pozpátku.',
+      'Zvýrazněný krystal vede cestou, která neskončí ve slepé uličce.',
+    ],
+    echo: {
+      intro: [
+        'Tichý krok. Tudy Lumenité chodili po špičkách: každým krokem jediná změna.',
+        'Šestnáct kombinací a ani jedna dvakrát. Kdo se vrátí, začíná znovu.',
+      ],
+      reset: 'Tuhle kombinaci deska už znala. Tichý krok se přerušil, začni znovu.',
+      found: { 8: 'Polovina cesty. Teď přijde zrcadlo.', 15: 'Poslední krok.' },
+      complete: 'Šestnáct kombinací, patnáct kroků. Ani jeden navíc.',
+      solved: ['Tichý krok má i moderní jméno: Grayův kód.', 'Polovina cesty, zrcadlo a druhá polovina pozpátku.'],
+      skill: 'Celá cesta napoprvé.',
+    },
+    quiz: [
+      qGrayMoves,
+      qGrayPair,
+    ],
+    kodex: 'gray',
+  },
+  {
+    id: 'I-12',
+    title: 'Velký nápis',
+    kind: 'inscription',
+    config: {
+      bits: 8,
+      tasks: [
+        { dir: 'write', value: 75 },
+        { dir: 'read', value: 0b10110100 },
+        { dir: 'write', value: 201 },
+        { dir: 'read', value: 0b01011011 },
+        { dir: 'write', value: 166 },
+      ],
+    },
+    generate: genI12,
+    presentation: {
+      task: 'Přečti nápis a nastav jeho váhu na kotoučích.',
+      writeTask: 'Rozsviť krystaly tak, aby světlo vážilo, kolik žádá brána.',
+      showDigits: true,
+      showSum: false,
+      sizes: 'equal',
+      ledger: true,
+    },
+    hints: [
+      'Oktáva váží zprava 1, 2, 4, 8, 16, 32, 64, 128.',
+      'Čtení: sečti váhy svítících krystalů. Zápis: začni u 128 a ber každou váhu, která se ještě vejde.',
+      'Brána ukazuje krok: při psaní zvýrazní krystal, při čtení odhalí váhy.',
+    ],
+    echo: {
+      intro: ['Velký nápis. Celá oktáva v jediném slově.', 'Tři kotouče, osm krystalů. Váhy už znáš až po sto dvacet osm.'],
+      step: { 0: 'Zapsáno. Teď čti.', 3: 'Poslední zkouška.' },
+      wrong: 'Kotouče nezapadly. Porovnej obě kombinace.',
+      solved: ['Oktáva unese čísla od nuly do dvě stě padesáti pěti.', 'A každé z nich teď umíš přečíst i zapsat.'],
+      skill: 'Celá oktáva bez chyby a bez zbytečného doteku.',
+    },
+  },
+  {
+    id: 'I-13',
+    title: 'Řeč glyfů',
+    kind: 'inscription',
+    config: {
+      bits: 4,
+      radix: 16,
+      tasks: [
+        { dir: 'read', value: 0b1010 },
+        { dir: 'read', value: 0b0111 },
+        { dir: 'write', value: 0b1100 },
+        { dir: 'read', value: 0b1111 },
+        { dir: 'write', value: 0b1001 },
+        { dir: 'read', value: 0b1110 },
+      ],
+    },
+    generate: genI13,
+    presentation: {
+      task: 'Přečti čtveřici krystalů a nastav na kotouči její glyf.',
+      writeTask: 'Rozsviť krystaly podle glyfu, který žádá brána.',
+      showDigits: true,
+      showSum: false,
+      sizes: 'equal',
+      ledger: true,
+    },
+    hints: [
+      'Podívej se na glyf na kotouči: čtyři strany, čtyři krystaly.',
+      'Glyf čti po směru hodinových ručiček od horní strany: horní váží 8, pravá 4, dolní 2, levá 1. Krystaly zleva taky 8, 4, 2, 1.',
+      'Brána ukazuje krok: při psaní zvýrazní krystal, při čtení odhalí váhy.',
+    ],
+    echo: {
+      intro: [
+        'Řeč glyfů. Podívej se na dveře komnat: čtyři strany, čtyři světla.',
+        'Každá čtveřice krystalů má svůj glyf. Šestnáct kombinací, šestnáct znaků.',
+      ],
+      step: { 0: 'Kotouč zapadl. Glyf sedí.', 1: 'Teď opačně: z glyfu rozsviť krystaly.' },
+      wrong: 'Kotouč nezapadl. Porovnej obě kombinace.',
+      solved: [
+        'Glyfy Lumenitů jsou šestnáctková soustava. Moderně se píšou 0 až 9 a A až F.',
+        'Číslo komnaty na dveřích teď přečteš sám.',
+      ],
+      skill: 'Každý glyf napoprvé.',
+    },
+    quiz: [
+      qGlyphOf,
+      qGlyphWeight,
+    ],
+    kodex: 'glyf',
+  },
+  {
+    id: 'I-14',
+    title: 'Dvojznak',
+    kind: 'inscription',
+    config: {
+      bits: 8,
+      radix: 16,
+      tasks: [
+        { dir: 'read', value: 0x3c },
+        { dir: 'write', value: 0xa5 },
+        { dir: 'read', value: 0xf0 },
+        { dir: 'write', value: 0x7e },
+        { dir: 'read', value: 0xb6 },
+      ],
+    },
+    generate: genI14,
+    presentation: {
+      task: 'Přečti oktávu jako dva glyfy a nastav je na kotoučích.',
+      writeTask: 'Rozsviť oktávu podle dvou glyfů, které žádá brána.',
+      showDigits: true,
+      showSum: false,
+      sizes: 'equal',
+      ledger: true,
+    },
+    hints: [
+      'Rozděl oktávu na dvě čtveřice. Každá je jeden glyf.',
+      'Levá čtveřice patří na levý kotouč, pravá na pravý. Každou čti zvlášť: 8, 4, 2, 1.',
+      'Brána ukazuje krok: při psaní zvýrazní krystal, při čtení odhalí váhy.',
+    ],
+    echo: {
+      intro: ['Dvojznak. Celá oktáva se dá napsat dvěma glyfy.', 'Levá čtveřice, pravá čtveřice. Dva znaky místo osmi světel.'],
+      step: { 0: 'Dva glyfy, jedna oktáva.', 3: 'Poslední dvojznak.' },
+      wrong: 'Kotouče nezapadly. Porovnej obě kombinace.',
+      solved: ['Dva glyfy unesou celou oktávu, od 00 do FF.', 'Tak se dodnes zapisují bajty: krátce a bez chyb.'],
+      skill: 'Každý dvojznak napoprvé.',
+    },
+    quiz: [
+      qByteHex,
+      {
+        question: 'Barva #FF8800 má tři bajty: červený, zelený a modrý. Kolik váží zelený?',
+        options: ['136', '88', '255', '8'],
+        correct: 0,
+        hint: 'Zelený je prostřední dvojznak 88. Levý glyf váží šestnáctkrát víc než pravý.',
+        explain: '88₁₆ = 8 · 16 + 8 = 136. Červený FF = 255, modrý 00 = 0, a proto je barva oranžová.',
+      },
+    ],
+    kodex: 'dvojznak',
+  },
+  {
+    id: 'I-15',
+    title: 'Velká brána Předsíně',
+    kind: 'mixed',
+    echo: {
+      intro: ['Velká brána Předsíně. Tudy prošli jen ti nejzvídavější z Lumenitů.', 'Tři zkoušky: tichý krok, oktáva a glyfy.'],
+      solved: [
+        'Velká brána Předsíně se otevírá. Na dveřích svítí celý glyf.',
+        'Umíš chodit tichým krokem, číst oktávu a psát ji glyfy.',
+      ],
+      skill: 'Celá velká brána bez jediného zbytečného kroku.',
+    },
+    parts: [
+      {
+        id: 'I-15',
+        title: 'Tichý krok',
+        kind: 'altar',
+        config: { bits: 3, goal: { kind: 'all' }, reveal: 'never', strict: true },
+        presentation: {
+          task: 'První zkouška: projdi všech osm kombinací. Každým dotekem jediná změna a žádná dvakrát.',
+          showDigits: true,
+          showSum: false,
+          sizes: 'equal',
+          ledger: false,
+        },
+        hints: [
+          'Každým dotekem se smí změnit jediný krystal a deska nesmí nic dostat dvakrát.',
+          'Zrcadlo: projdi čtyři kombinace dvou pravých krystalů, rozsviť levý a projdi je pozpátku.',
+          'Zvýrazněný krystal vede cestou, která neskončí ve slepé uličce.',
+        ],
+        echo: {
+          intro: ['První zkouška: tichý krok přes osm kombinací.'],
+          reset: 'Tuhle kombinaci deska už znala. Začni znovu.',
+          solved: ['Tichý krok zvládnutý. Teď oktáva.'],
+        },
+      },
+      {
+        id: 'I-15',
+        title: 'Oktáva',
+        kind: 'inscription',
+        config: {
+          bits: 8,
+          tasks: [
+            { dir: 'write', value: 109 },
+            { dir: 'read', value: 0b11010110 },
+            { dir: 'write', value: 187 },
+          ],
+        },
+        generate: genI15Octave,
+        presentation: {
+          task: 'Druhá zkouška: přečti nápis a nastav jeho váhu na kotoučích.',
+          writeTask: 'Druhá zkouška: rozsviť oktávu tak, aby vážila, kolik žádá brána.',
+          showDigits: true,
+          showSum: false,
+          sizes: 'equal',
+          ledger: true,
+        },
+        hints: [
+          'Oktáva váží zprava 1, 2, 4, 8, 16, 32, 64, 128.',
+          'Čtení: sečti váhy svítících krystalů. Zápis: začni u 128 a ber každou váhu, která se ještě vejde.',
+          'Brána ukazuje krok: při psaní zvýrazní krystal, při čtení odhalí váhy.',
+        ],
+        echo: {
+          intro: ['Druhá zkouška: oktáva, čísla až do 255.'],
+          wrong: 'Kotouče nezapadly. Porovnej obě kombinace.',
+          solved: ['Oktáva přečtená. Teď glyfy.'],
+        },
+      },
+      {
+        id: 'I-15',
+        title: 'Glyfy',
+        kind: 'inscription',
+        config: {
+          bits: 8,
+          radix: 16,
+          tasks: [
+            { dir: 'read', value: 0x9d },
+            { dir: 'write', value: 0x5b },
+            { dir: 'read', value: 0xe7 },
+          ],
+        },
+        generate: genI15Glyphs,
+        presentation: {
+          task: 'Třetí zkouška: přečti oktávu jako dva glyfy.',
+          writeTask: 'Třetí zkouška: rozsviť oktávu podle dvou glyfů.',
+          showDigits: true,
+          showSum: false,
+          sizes: 'equal',
+          ledger: true,
+        },
+        hints: [
+          'Rozděl oktávu na dvě čtveřice. Každá je jeden glyf.',
+          'Levá čtveřice patří na levý kotouč, pravá na pravý. Každou čti zvlášť: 8, 4, 2, 1.',
+          'Brána ukazuje krok: při psaní zvýrazní krystal, při čtení odhalí váhy.',
+        ],
+        echo: {
+          intro: ['Třetí zkouška: oktáva dvěma glyfy.'],
+          wrong: 'Kotouče nezapadly. Porovnej obě kombinace.',
+          solved: [],
+        },
+      },
+    ],
+    kodex: 'predsin-hloub',
   },
 ];
 

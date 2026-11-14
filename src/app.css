@@ -439,3 +439,23 @@ sub {
     display: none !important;
   }
 }
+
+/* Tisk (shrnutí patra, přehled třídy): bez tmavého chrámu, jen papír. */
+@media print {
+  body {
+    background: #fff !important;
+    color: #000;
+  }
+  .bg,
+  .no-print {
+    display: none !important;
+  }
+}
+
+/* Úsporná grafika pro pomalé počítače: bez rozostření pozadí a bez drahých stínů. */
+:root[data-lite='on'] * {
+  backdrop-filter: none !important;
+}
+:root[data-lite='on'] .bg .wheel {
+  display: none;
+}

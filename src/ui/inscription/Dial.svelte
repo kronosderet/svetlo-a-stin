@@ -1,18 +1,23 @@
 <script lang="ts">
   import { fly } from 'svelte/transition';
+  import Glyph from '../Glyph.svelte';
   import Icon from '../Icon.svelte';
+  import { toHex } from '../../core/bits';
   import { settings } from '../../game/settings.svelte.ts';
 
   interface Props {
     value: number;
     wheels: number;
     disabled?: boolean;
+    /** 10 = číslice, 16 = glyfy (každý kotouč nese jednu čtveřici krystalů). */
+    radix?: 10 | 16;
     onNudge: (wheel: number, delta: number) => void;
   }
 
-  let { value, wheels, disabled = false, onNudge }: Props = $props();
+  let { value, wheels, disabled = false, radix = 10, onNudge }: Props = $props();
 
   const PLACES = ['jednotky', 'desítky', 'stovky'];
+  const QUARTETS = ['pravá čtveřice', 'levá čtveřice'];
 
   const m = $derived(settings.reducedMotion ? 0 : 1);
   const order = $derived(Array.from({ length: wheels }, (_, w) => w));
@@ -20,12 +25,15 @@
   let dirs: number[] = $state([]);
 
   function digitAt(w: number): number {
-    return Math.floor(value / 10 ** (wheels - 1 - w)) % 10;
+    return Math.floor(value / radix ** (wheels - 1 - w)) % radix;
   }
 
   function place(w: number): string {
+    if (radix === 16) return wheels === 1 ? 'glyf' : (QUARTETS[wheels - 1 - w] ?? `glyf ${w + 1}`);
     return PLACES[wheels - 1 - w] ?? `řád ${wheels - w}`;
   }
+
+  const face = (d: number): string => (radix === 16 ? toHex(d) : String(d));
 
   function nudge(w: number, delta: number) {
     if (disabled) return;
@@ -42,7 +50,7 @@
 </script>
 
 <!-- Kamenné kotouče s vykládanými číslicemi, jako zámek s heslem. -->
-<div class="dial stone" role="group" aria-label="Kotouče, nastaveno {value}">
+<div class="dial stone" class:glyphs={radix === 16} role="group" aria-label="Kotouče, nastaveno {radix === 16 ? toHex(value, wheels) : value}">
   {#each order as w (w)}
     {@const d = digitAt(w)}
     {@const dir = dirs[w] ?? 1}
@@ -56,19 +64,24 @@
         tabindex={disabled ? -1 : 0}
         aria-label="Kotouč: {place(w)}"
         aria-valuenow={d}
+        aria-valuetext={face(d)}
         aria-valuemin={0}
-        aria-valuemax={9}
+        aria-valuemax={radix - 1}
         onkeydown={(e) => onKey(e, w)}
       >
-        <span class="ghost above" aria-hidden="true">{(d + 9) % 10}</span>
+        <span class="ghost above" aria-hidden="true">{face((d + radix - 1) % radix)}</span>
         {#key d}
           <span
             class="digit inlaid"
             in:fly={{ y: 30 * dir, duration: 260 * m }}
             out:fly={{ y: -30 * dir, duration: 260 * m }}
-          >{d}</span>
+          >
+            {#if radix === 16}
+              <span class="glyph-face"><Glyph value={d} size={42} /><span class="hexch">{face(d)}</span></span>
+            {:else}{d}{/if}
+          </span>
         {/key}
-        <span class="ghost below" aria-hidden="true">{(d + 1) % 10}</span>
+        <span class="ghost below" aria-hidden="true">{face((d + 1) % radix)}</span>
       </div>
       <button type="button" class="nudge" {disabled} aria-label="{place(w)} o jedna méně" onclick={() => nudge(w, -1)}>
         <Icon name="down" size={22} />
@@ -138,6 +151,24 @@
     font-size: var(--fs-3xl);
     font-weight: 700;
     line-height: 1;
+  }
+  .glyph-face {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+  }
+  .hexch {
+    font-family: var(--font-mono);
+    font-size: var(--fs-base);
+    font-weight: 700;
+  }
+  .glyphs .drum {
+    width: 76px;
+    height: 124px;
+  }
+  .glyphs .nudge {
+    width: 76px;
   }
   .ghost {
     position: absolute;

@@ -12,6 +12,8 @@ export type InscriptionTask = { dir: 'read'; value: number } | { dir: 'write'; v
 export interface InscriptionConfig {
   bits: number;
   tasks: InscriptionTask[];
+  /** Soustava kotoučů: 10 = desítková čísla, 16 = glyfy (každý kotouč je jedna čtveřice krystalů). */
+  radix?: 10 | 16;
 }
 
 export interface InscriptionState {
@@ -35,8 +37,9 @@ export type InscriptionEvent =
 
 type Result = { state: InscriptionState; events: InscriptionEvent[] };
 
-/** Počet kotoučů: kolik desítkových číslic má největší hodnota (15 → 2, 255 → 3). */
-export const dialWheels = (bits: number): number => String(maxValue(bits)).length;
+/** Počet kotoučů: kolik číslic má největší hodnota (desítkově 15 → 2, 255 → 3; glyfů na čtveřici jeden). */
+export const dialWheels = (bits: number, radix: 10 | 16 = 10): number =>
+  radix === 16 ? Math.ceil(bits / 4) : String(maxValue(bits)).length;
 
 export function initInscription(): InscriptionState {
   return { step: 0, mask: 0, dial: 0, moves: 0, mistakes: 0, lastGuess: null, complete: false };
@@ -80,7 +83,8 @@ export function toggle(cfg: InscriptionConfig, st: InscriptionState, bit: number
 export function setDial(cfg: InscriptionConfig, st: InscriptionState, value: number): InscriptionState {
   const task = currentTask(cfg, st);
   if (!task || task.dir !== 'read') return st;
-  const limit = 10 ** dialWheels(cfg.bits) - 1;
+  const radix = cfg.radix ?? 10;
+  const limit = radix ** dialWheels(cfg.bits, radix) - 1;
   return { ...st, dial: Math.max(0, Math.min(limit, Math.trunc(value))) };
 }
 
@@ -95,17 +99,17 @@ export function confirm(cfg: InscriptionConfig, st: InscriptionState): Result {
   };
 }
 
-/** Pootočí jedním kotoučem (wheel 0 = nejlevější) o delta s přetočením 9 → 0. */
-export function nudgeDial(value: number, wheel: number, delta: number, wheels: number): number {
-  const place = 10 ** (wheels - 1 - wheel);
-  const digit = Math.floor(value / place) % 10;
-  const next = (((digit + delta) % 10) + 10) % 10;
+/** Pootočí jedním kotoučem (wheel 0 = nejlevější) o delta s přetočením 9 → 0 (u glyfů F → 0). */
+export function nudgeDial(value: number, wheel: number, delta: number, wheels: number, radix = 10): number {
+  const place = radix ** (wheels - 1 - wheel);
+  const digit = Math.floor(value / place) % radix;
+  const next = (((digit + delta) % radix) + radix) % radix;
   return value + (next - digit) * place;
 }
 
 /** Napsaná číslice se přidá zprava, nejlevější kotouč se uvolní (jako na kalkulačce). */
-export function pushDigit(value: number, digit: number, wheels: number): number {
-  return (value * 10 + digit) % 10 ** wheels;
+export function pushDigit(value: number, digit: number, wheels: number, radix = 10): number {
+  return (value * radix + digit) % radix ** wheels;
 }
 
 /** Nejmenší možný počet tahů: jedno potvrzení na nápis, jeden dotek na každý krystal zápisu. */

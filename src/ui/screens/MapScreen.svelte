@@ -7,6 +7,8 @@
   import { go, openKodex, ui } from '../../game/nav.svelte.ts';
   import { isUnlocked, progress, sealCount, unseenKodex } from '../../game/progress.svelte.ts';
   import { settings } from '../../game/settings.svelte.ts';
+  import { fileLink } from '../../game/progressLink.svelte.ts';
+  import { toHex } from '../../core/bits';
 
   const SEALS = ['solved', 'skill', 'pure'] as const;
 
@@ -38,6 +40,8 @@
   /** Jak daleko vede červená trasa (podíl výšky cesty). */
   const routeShare = $derived(Math.min(1, (done + (actNext ? 0.5 : 0)) / Math.max(1, stops - 1)));
   const m = $derived(settings.reducedMotion ? 0 : 1);
+  /** Po Řeči glyfů umí hráč číslo komnaty přečíst i šestnáctkově. */
+  const hexKnown = $derived(progress.kodex.includes('glyf'));
 
   function floorOpen(k: number): boolean {
     return isUnlocked(ACTS[k].levels[0].id);
@@ -59,6 +63,23 @@
     </button>
     <span class="place carved">Observatoř Světla a Stínu</span>
     <div class="tools">
+      {#if settings.teacher}
+        <button type="button" class="icon-btn" onclick={() => go({ name: 'teacher' })} aria-label="Přehled třídy" title="Přehled třídy">
+          <Icon name="teacher" />
+        </button>
+      {/if}
+      <!-- Značka ukládání: zelená = postup se průběžně ukládá do souboru, okrová = jen v prohlížeči. -->
+      <button
+        type="button"
+        class="icon-btn save-state"
+        class:linked={!!fileLink.name}
+        onclick={() => (ui.settingsOpen = true)}
+        aria-label={fileLink.name ? `Postup se ukládá do souboru ${fileLink.name}` : 'Postup je jen v tomto prohlížeči. Ulož si ho do souboru.'}
+        title={fileLink.name ? `Ukládá se do souboru ${fileLink.name}` : 'Postup je jen v tomto prohlížeči'}
+      >
+        <Icon name="save" />
+        <span class="state-dot" aria-hidden="true"></span>
+      </button>
       <button type="button" class="icon-btn" onclick={() => (ui.settingsOpen = true)} aria-label="Nastavení" title="Nastavení">
         <Icon name="settings" />
       </button>
@@ -111,6 +132,9 @@
           <span aria-hidden="true">·</span>
           <span>{sealCount(roomIds)} / {roomIds.length * 3} pečetí</span>
         </p>
+        <button type="button" class="summary-btn" onclick={() => go({ name: 'summary', act: shown })}>
+          <Icon name="print" size={16} /> Shrnutí patra
+        </button>
       </section>
 
       <ol class="path" style:--route={routeShare}>
@@ -128,6 +152,7 @@
               <span class="medallion">
                 {#if unlocked}
                   <Glyph value={act.glyphBase + roomNumber(l.id)} size={32} />
+                  {#if hexKnown}<span class="hex" aria-hidden="true">{toHex(roomNumber(l.id))}</span>{/if}
                 {:else}
                   <Icon name="lock" size={20} />
                 {/if}
@@ -209,6 +234,7 @@
                   <span class="medallion">
                     {#if unlocked}
                       <Glyph value={act.glyphBase + slot.n} size={26} />
+                      {#if hexKnown}<span class="hex" aria-hidden="true">{toHex(slot.n)}</span>{/if}
                     {:else}
                       <Icon name="lock" size={17} />
                     {/if}
@@ -263,6 +289,60 @@
   .kodex-btn {
     position: relative;
     padding: 0 14px;
+  }
+  .save-state {
+    position: relative;
+  }
+  .state-dot {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--warn);
+    box-shadow: 0 0 6px rgba(240, 149, 122, 0.6);
+  }
+  .save-state.linked .state-dot {
+    background: var(--ok);
+    box-shadow: 0 0 6px rgba(127, 207, 180, 0.6);
+  }
+  .summary-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 10px;
+    padding: 4px 12px;
+    border: 1.5px solid var(--ink-muted);
+    border-radius: 4px;
+    background: transparent;
+    font-family: var(--font-body);
+    font-size: var(--fs-sm);
+    font-weight: 700;
+    color: var(--ink-muted);
+    cursor: pointer;
+  }
+  .summary-btn:hover {
+    border-color: var(--ink-red);
+    color: var(--ink-red);
+  }
+  /* Šestnáctkový znak komnaty (po Řeči glyfů) */
+  .hex {
+    position: absolute;
+    right: -4px;
+    bottom: -4px;
+    display: grid;
+    place-items: center;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 4px;
+    border-radius: 10px;
+    background: var(--parchment);
+    border: 1.5px solid #5c4214;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 700;
+    color: #2e1f06;
   }
   .kodex-btn .new-dot {
     position: absolute;

@@ -1,4 +1,23 @@
-import { genII10, genII14, genII2, genII3, genII4, genII5, genII7Cascade, genII7Tide, genII8, genII9 } from './generators';
+import {
+  genII10,
+  genII11,
+  genII12,
+  genII13Add,
+  genII13Negate,
+  genII14,
+  genII15Fate,
+  genII15Mul,
+  genII15Sub,
+  genII2,
+  genII3,
+  genII4,
+  genII5,
+  genII7Cascade,
+  genII7Tide,
+  genII8,
+  genII9,
+} from './generators';
+import { qComplementSum, qCopies, qDivisible, qFastMul, qHalve, qHorner, qNegative, qOverflow, qPowerSteps, qRemainder, qShiftLeft, qShiftMul, qSubtract, qSumBits } from './quizzes';
 import type { ActDef, LevelDef } from './types';
 
 const CELL_HINT = 'Zvýrazněný krystal je potřeba přepnout.';
@@ -198,14 +217,7 @@ const levels: LevelDef[] = [
       skill: 'Celá kaskáda bez jediného zaváhání.',
     },
     quiz: [
-      {
-        question: 'Kolik krystalů nejvýš potřebuje součet dvou šestimístných dvojkových čísel?',
-        options: ['6', '7', '8', '12'],
-        correct: 1,
-        hint: 'Největší součet je 63 + 63. Kolik krystalů unese 126?',
-        explain:
-          'Součet dvou n-bitových čísel má nejvýš n + 1 bitů: 63 + 63 = 126 = 1111110₂ se vejde do sedmi krystalů.',
-      },
+      qSumBits,
     ],
     kodex: 'kaskada',
   },
@@ -314,20 +326,8 @@ const levels: LevelDef[] = [
       skill: 'Ani jeden zbytečný tah pákou.',
     },
     quiz: [
-      {
-        question: 'Světla 0011 0100 (52) posuneš o jedno místo vpravo. Kolik budou vážit?',
-        options: ['26', '104', '25', '13'],
-        correct: 0,
-        hint: 'Posun vpravo rozpůlí.',
-        explain: '0011 0100 → 0001 1010 = 26. Nejpravější krystal byl ve stínu, takže se nic neztratilo.',
-      },
-      {
-        question: 'Co udělá posun o dvě místa vlevo?',
-        options: ['přičte 2', 'vynásobí 4', 'vynásobí 2', 'přičte 4'],
-        correct: 1,
-        hint: 'Jeden posun zdvojí. A druhý?',
-        explain: 'Každý posun vlevo násobí dvěma: 2 · 2 = 4. Obecně posun o k míst násobí 2ᵏ.',
-      },
+      qHalve,
+      qShiftMul,
     ],
     kodex: 'priliv',
   },
@@ -408,20 +408,8 @@ const levels: LevelDef[] = [
           solved: [],
         },
         quiz: [
-          {
-            question: 'Nádoba unese čtyři krystaly. Co v ní zůstane po 1100 + 0110 (12 + 6)?',
-            options: ['0010', '10010', '1111', '0110'],
-            correct: 0,
-            hint: 'Sečti a podívej se, jestli se výsledek vejde do čtyř krystalů.',
-            explain: '12 + 6 = 18 = 10010₂. Páté světlo (16) se do nádoby nevejde a vyteče, zůstane 0010 = 2.',
-          },
-          {
-            question: 'Světla 0000 0110 (6) posuneš o tři místa vlevo. Kolik budou vážit?',
-            options: ['48', '18', '9', '24'],
-            correct: 0,
-            hint: 'Každý posun vlevo zdvojí.',
-            explain: '6 · 2 · 2 · 2 = 48 = 0011 0000₂. Posun o tři místa násobí 2³ = 8.',
-          },
+          qOverflow,
+          qShiftLeft,
         ],
       },
     ],
@@ -512,20 +500,8 @@ const levels: LevelDef[] = [
       skill: 'Každé číslo nejkratší cestou.',
     },
     quiz: [
-      {
-        question: 'Jakými tahy dostaneš z 1 číslo 13 (1101)?',
-        options: ['×2, +1, ×2, ×2, +1', '×2, ×2, +1, ×2, +1', '+1, ×2, +1, ×2, ×2', '×2, +1, ×2, +1, ×2'],
-        correct: 0,
-        hint: 'Čti 1101 zleva. První jednička je start, za každou další číslici zdvoj a u jedničky přidej jednu.',
-        explain: '1 → 11 → 110 → 1101: ×2 +1, ×2, ×2 +1. Tahy kopírují číslice zápisu.',
-      },
-      {
-        question: 'Kolik tahů nejméně potřebuješ z 1 na 16?',
-        options: ['4', '5', '8', '15'],
-        correct: 0,
-        hint: '16 = 10000₂.',
-        explain: 'Čtyřikrát zdvojit: 1 → 2 → 4 → 8 → 16. Za každou nulu jeden tah ×2.',
-      },
+      qHorner,
+      qPowerSteps,
     ],
     kodex: 'zdvojeni',
   },
@@ -537,6 +513,7 @@ const levels: LevelDef[] = [
       width: 6,
       bits: 3,
       carries: 'manual',
+      pickCopies: true,
       tasks: [
         { op: 'mul', operands: [0b101, 0b11] },
         { op: 'mul', operands: [0b111, 0b101] },
@@ -545,7 +522,7 @@ const levels: LevelDef[] = [
     },
     generate: genII10,
     presentation: {
-      task: 'Násob po lumenitsku: posunuté kopie prvního čísla sečti.',
+      task: 'Násob po lumenitsku: rozsviť kopie prvního čísla podle jedniček druhého a sečti je.',
       showDigits: true,
       showSum: false,
       sizes: 'equal',
@@ -553,17 +530,17 @@ const levels: LevelDef[] = [
       showValues: true,
     },
     hints: [
-      'Každá jednička druhého čísla přinesla jednu kopii prvního. Proč je kopie posunutá?',
-      'Posun vlevo zdvojuje. Kopie pod jedničkou s váhou 2 je posunutá o jedno místo, pod váhou 4 o dvě. Teď kopie sečti jako obvykle.',
+      'Podívej se na druhé číslo. Které jeho krystaly svítí? A co znamená kopie posunutá o jedno místo?',
+      'Posun vlevo zdvojuje: kopie ×1 není posunutá, ×2 o jedno místo, ×4 o dvě. Rozsviť kopie, které patří k jedničkám druhého čísla, a sečti je jako obvykle.',
       CELL_HINT,
     ],
     echo: {
       intro: [
         'Násobení po lumenitsku. Násobilku tu nikdo neznal, a přesto násobili.',
-        'Stačil jim posun a sčítání.',
+        'Stěna nabízí kopie prvního čísla, každou posunutou jinak. Které z nich se sčítají, rozhodneš ty.',
       ],
       step: {
-        0: 'Pětkrát tři: pětka a k ní zdvojená pětka. Patnáct.',
+        0: 'Pětkrát tři: tři je 11, takže pětka a k ní zdvojená pětka. Patnáct.',
         1: 'Každá jednička druhého čísla přinesla jednu posunutou kopii.',
       },
       complete: 'Žádná násobilka. Jen posun a sčítání.',
@@ -574,15 +551,188 @@ const levels: LevelDef[] = [
       skill: 'Tři součiny bez chyby.',
     },
     quiz: [
-      {
-        question: 'Kolik kopií prvního čísla sčítáš při násobení číslem 1011?',
-        options: ['2', '3', '4', '11'],
-        correct: 1,
-        hint: 'Kopie přibude za každou jedničku.',
-        explain: '1011 má tři jedničky: kopie posunuté o 0, 1 a 3 místa (×1, ×2, ×8). 1 + 2 + 8 = 11.',
-      },
+      qCopies,
     ],
     kodex: 'nasobeni',
+  },
+  {
+    id: 'II-11',
+    title: 'Dělení posunem',
+    kind: 'tide',
+    config: {
+      bits: 6,
+      ops: ['shr'],
+      tasks: [
+        { start: 45, target: 11, show: '÷ 4' },
+        { start: 50, target: 6, show: '÷ 8' },
+        { start: 38, target: 19, show: '÷ 2' },
+        { start: 61, target: 3, show: '÷ 16' },
+      ],
+    },
+    generate: genII11,
+    presentation: {
+      task: 'Vyděl světlo číslem na kole. Co spadne přes okraj, chytí miska zbytku.',
+      showDigits: true,
+      showSum: true,
+      sizes: 'equal',
+      ledger: true,
+      levers: 'math',
+      remainder: true,
+    },
+    hints: [
+      'Kolikrát musíš rozpůlit, abys dělil čtyřmi? A kolikrát pro osm?',
+      'Dělit 2ᵏ znamená posunout k-krát vpravo. Co spadne přes okraj, je zbytek: přesně těch k krystalů vpravo.',
+      'Zvýrazněná páka vede nejkratší cestou.',
+    ],
+    echo: {
+      intro: ['Dělení posunem. Tady Lumenité dělili, a zbytek jim padal do misky.', 'Jediná páka: rozpůlit. Kolikrát za ni zatáhneš?'],
+      spill: 'Světlo spadlo do misky. To je zbytek, který se do podílu nevešel.',
+      step: { 0: 'Podíl je na krystalech, zbytek v misce.' },
+      complete: 'Poslední podíl. Zbytek zůstal v misce.',
+      solved: [
+        'Dělit dvěma, čtyřmi nebo osmi znamená posouvat vpravo.',
+        'Co spadne přes okraj, je zbytek: krystaly, které stály úplně vpravo.',
+      ],
+      skill: 'Ani jeden posun navíc.',
+    },
+    quiz: [
+      qRemainder,
+      qDivisible,
+    ],
+    kodex: 'deleni',
+  },
+  {
+    id: 'II-12',
+    title: 'Tři řady',
+    kind: 'cascade',
+    config: {
+      width: 6,
+      bits: 4,
+      carries: 'manual',
+      farCarries: true,
+      tasks: [
+        { op: 'add', operands: [0b0110, 0b0101, 0b0011] },
+        { op: 'add', operands: [0b1011, 0b0110, 0b1101] },
+        { op: 'add', operands: [0b1111, 0b1111, 0b1111] },
+      ],
+    },
+    generate: genII12,
+    presentation: {
+      task: 'Sečti tři řady. Kde se slijí čtyři světla, putuje jedno o dvě místa.',
+      showDigits: true,
+      showSum: false,
+      sizes: 'equal',
+      ledger: true,
+    },
+    hints: [
+      'Spočítej ve sloupci všechna světla, i ta, která do něj přitekla shora.',
+      'Dvě světla = 10, tři = 11, čtyři = 100, pět = 101. Poslední číslice zůstane dole, prostřední jde do sousedního sloupce, první o dvě místa do horní řady.',
+      CELL_HINT,
+    ],
+    echo: {
+      intro: ['Tři řady. Sem Lumenité nosili velké sbírky světla.', 'Ve sloupci se teď může slít víc světel než kdy dřív.'],
+      step: { 0: 'Sečteno. Tři řady jdou stejně jako dvě.', 1: 'Zbývá poslední: tři patnáctky.' },
+      complete: 'Tři patnáctky: 45. V nejtěžším sloupci se slilo pět světel.',
+      solved: ['Čtyři světla jsou 100: dole nic, vedle nic, o dvě místa dál jedno.', 'Proto má horní řada krystaly přenosu o dvě místa.'],
+      skill: 'Všechny tři součty napoprvé.',
+    },
+    quiz: [
+      {
+        question: 'Ve sloupci se slilo pět světel. Co zůstane dole a kam poputuje zbytek?',
+        options: ['dole 1, o dvě místa 1', 'dole 1, vedle 2', 'dole 5', 'dole 0, vedle 1, o dvě místa 1'],
+        correct: 0,
+        hint: 'Pět je 101₂.',
+        explain: '5 = 101₂: poslední jednička zůstane dole, prostřední nula nepošle nic vedle a první jednička putuje o dvě místa.',
+      },
+    ],
+    kodex: 'tri-rady',
+  },
+  {
+    id: 'II-13',
+    title: 'Doplněk',
+    kind: 'mixed',
+    echo: {
+      intro: ['Doplněk. Tady Lumenité odčítali, a přitom si nic nepůjčovali.', 'Nejdřív se naučíš psát záporná čísla. Pak jimi budeš odčítat.'],
+      solved: [
+        'Odečíst znamená přičíst doplněk a zahodit, co přeteče.',
+        'Proto procesoru stačí jedna sčítačka na sčítání i odčítání.',
+      ],
+      skill: 'Doplněk bez jediného zbytečného kroku.',
+    },
+    parts: [
+      {
+        id: 'II-13',
+        title: 'Záporná čísla',
+        kind: 'tide',
+        config: {
+          bits: 4,
+          ops: ['not', 'inc'],
+          tasks: [
+            { start: 3, target: 13, show: '−3' },
+            { start: 5, target: 11, show: '−5' },
+            { start: 1, target: 15, show: '−1' },
+          ],
+        },
+        generate: genII13Negate,
+        presentation: {
+          task: 'První zkouška: zapiš záporné číslo. Převrať všechna světla a přidej jednu.',
+          showDigits: true,
+          showSum: false,
+          sizes: 'equal',
+          ledger: true,
+          levers: 'math',
+        },
+        hints: [
+          'Záporné číslo se v nádobě se čtyřmi krystaly píše jako doplněk. Zkus páku převrať.',
+          'Doplněk: převrať všechna světla a přidej jednu. Třeba 3 = 0011, převrácené 1100, plus jedna 1101 = −3.',
+          'Zvýrazněná páka vede nejkratší cestou.',
+        ],
+        echo: {
+          intro: ['První zkouška: na krystalech je číslo, kolo žádá jeho zápornou podobu.'],
+          step: { 0: 'Takhle vypadá záporné číslo. Přičti k němu to původní a nádoba přeteče na nulu.' },
+          solved: ['Záporná čísla umíš napsat. Teď jimi odečítej.'],
+        },
+      },
+      {
+        id: 'II-13',
+        title: 'Odčítání sčítáním',
+        kind: 'cascade',
+        config: {
+          width: 4,
+          carries: 'manual',
+          overflow: true,
+          tasks: [
+            { op: 'add', operands: [0b0111, 0b1101] },
+            { op: 'add', operands: [0b1100, 0b1011] },
+            { op: 'add', operands: [0b1001, 0b1110] },
+          ],
+        },
+        generate: genII13Add,
+        presentation: {
+          task: 'Druhá zkouška: spodní řada je doplněk, tedy záporné číslo. Sečti a co přeteče, pošli do přepadu.',
+          showDigits: true,
+          showSum: false,
+          sizes: 'equal',
+          ledger: true,
+        },
+        hints: [
+          'Sečti obě řady jako obvykle, zprava a s přenosy.',
+          'Přenos z nejlevějšího sloupce patří do přepadu. To, co v nádobě zbude, je rozdíl.',
+          CELL_HINT,
+        ],
+        echo: {
+          intro: ['Druhá zkouška: horní řada je číslo, spodní doplněk toho, co se odečítá.'],
+          step: { 0: 'Přetečení spadlo do přepadu a v nádobě zbyl rozdíl.' },
+          complete: 'Žádná výpůjčka, jen sčítání a přepad.',
+          solved: [],
+        },
+        quiz: [
+          qNegative,
+          qComplementSum,
+        ],
+      },
+    ],
+    kodex: 'doplnek',
   },
   {
     id: 'II-14',
@@ -630,21 +780,121 @@ const levels: LevelDef[] = [
       skill: 'Misky se ani jednou nevrátily.',
     },
     quiz: [
+      qSubtract,
+      qFastMul,
+    ],
+  },
+  {
+    id: 'II-15',
+    title: 'Velká brána Síně',
+    kind: 'mixed',
+    echo: {
+      intro: ['Velká brána Síně Počtářů. Neprojde nikdo, kdo jen hádá.', 'Tři zkoušky: odliv, násobení a Váhy Osudu.'],
+      solved: [
+        'Velká brána Síně se otevírá. Na dveřích svítí celý glyf.',
+        'Sčítat, odčítat, násobit i dělit umíš jen se světlem a posunem.',
+      ],
+      skill: 'Celá velká brána bez jediného zbytečného kroku.',
+    },
+    parts: [
       {
-        question: 'Kolik je 1010 − 0011?',
-        options: ['0111', '1001', '0101', '1101'],
-        correct: 0,
-        hint: 'Vpravo je 0 − 1: půjč si od souseda.',
-        explain: '1010 − 0011 = 0111, tedy 10 − 3 = 7.',
+        id: 'II-15',
+        title: 'Odliv',
+        kind: 'cascade',
+        config: {
+          width: 5,
+          carries: 'manual',
+          tasks: [
+            { op: 'sub', operands: [0b10010, 0b00111] },
+            { op: 'sub', operands: [0b11000, 0b01011] },
+          ],
+        },
+        generate: genII15Sub,
+        presentation: {
+          task: 'První zkouška: odečti spodní řadu od horní. Kde nemáš z čeho brát, půjč si.',
+          showDigits: true,
+          showSum: false,
+          sizes: 'equal',
+          ledger: true,
+        },
+        hints: [
+          'Začni vpravo. Jde v tomhle sloupci odečítat? Když ne, kdo ti může půjčit?',
+          'Půjčené světlo má ve sloupci váhu dvou: 0 − 1 s výpůjčkou je 10 − 1 = 1. Výpůjčku zapiš krystalem pod spodní řadu ve sloupci vlevo.',
+          CELL_HINT,
+        ],
+        echo: {
+          intro: ['První zkouška: odliv, pět krystalů v řadě.'],
+          solved: ['Odliv zvládnutý. Teď násobení.'],
+        },
       },
       {
-        question: 'Jak nejrychleji spočítáš 0101 × 4?',
-        options: ['posunem o dvě místa vlevo', 'čtyřmi sčítáními', 'posunem o čtyři místa vlevo', 'přičtením 100'],
-        correct: 0,
-        hint: '4 = 100₂.',
-        explain: 'Násobit čtyřmi znamená dvakrát zdvojit, tedy posunout o dvě místa: 0101 → 10100 = 20.',
+        id: 'II-15',
+        title: 'Násobení',
+        kind: 'cascade',
+        config: {
+          width: 6,
+          bits: 3,
+          carries: 'manual',
+          pickCopies: true,
+          tasks: [
+            { op: 'mul', operands: [0b111, 0b11] },
+            { op: 'mul', operands: [0b101, 0b110] },
+          ],
+        },
+        generate: genII15Mul,
+        presentation: {
+          task: 'Druhá zkouška: rozsviť kopie prvního činitele podle jedniček druhého a sečti je.',
+          showDigits: true,
+          showSum: false,
+          sizes: 'equal',
+          ledger: true,
+        },
+        hints: [
+          'Které krystaly druhého činitele svítí?',
+          'Za každou jedničku druhého činitele rozsviť kopii prvního posunutou na její místo, pak kopie sečti s přenosy.',
+          CELL_HINT,
+        ],
+        echo: {
+          intro: ['Druhá zkouška: násobení. Kopie si vyber sám.'],
+          solved: ['Součiny sedí. Zbývají Váhy Osudu.'],
+        },
+      },
+      {
+        id: 'II-15',
+        title: 'Váhy Osudu',
+        kind: 'tide',
+        config: {
+          bits: 6,
+          ops: ['shl', 'shr', 'inc', 'dec'],
+          strict: true,
+          tasks: [
+            { start: 9, target: 37 },
+            { start: 44, target: 21 },
+          ],
+        },
+        generate: genII15Fate,
+        presentation: {
+          task: 'Třetí zkouška: vyrovnej misky. Osud dovolí jen tolik tahů, kolik je nezbytně potřeba.',
+          showDigits: true,
+          showSum: false,
+          sizes: 'equal',
+          ledger: true,
+          levers: 'math',
+          scale: true,
+        },
+        hints: [
+          'Porovnej obě váhy ve dvojkovém zápisu. Které krystaly se liší?',
+          'Zdvojení posune světla vlevo, půlení vpravo, páky ±1 doladí konec. Někdy je kratší přestřelit a pak ubrat.',
+          'Zvýrazněná páka vede nejkratší cestou.',
+        ],
+        echo: {
+          intro: ['Třetí zkouška: Váhy Osudu. Kdo přečerpá tahy, začíná znovu.'],
+          reset: 'Tahy došly a misky se vrátily. Promysli cestu dřív, než zatáhneš.',
+          solved: [],
+        },
       },
     ],
+    kodex: 'pocetari-hloub',
   },
 ];
 

@@ -136,3 +136,32 @@ describe('oltář: pořadí nápovědy', () => {
     expect(hintBit(cfg, st)).toBe(0);
   });
 });
+
+describe('oltář: tichý krok (Grayův kód)', () => {
+  const cfg: AltarConfig = { bits: 3, goal: { kind: 'all' }, reveal: 'never', strict: true };
+
+  it('návrat na známou kombinaci cestu přeruší a vrátí krystaly na začátek', () => {
+    const r = toggle(cfg, play(cfg, [0]), 0);
+    expect(r.events.map((e) => e.type)).toEqual(['toggle', 'repeat', 'reset']);
+    expect(r.state.mask).toBe(0);
+    expect(r.state.found).toEqual([0]);
+    expect(r.state.moves).toBe(2);
+  });
+
+  it('nápověda vede cestou bez slepé uličky', () => {
+    for (const bits of [3, 4]) {
+      const c: AltarConfig = { ...cfg, bits };
+      let st = initAltar(c);
+      while (!st.complete) st = toggle(c, st, hintBit(c, st)!).state;
+      expect(st.moves).toBe(par(c));
+    }
+  });
+
+  it('i z rozjeté cesty nápověda dojde do konce', () => {
+    const c: AltarConfig = { ...cfg, bits: 4 };
+    let st = play(c, [0, 1, 0]);
+    let guard = 0;
+    while (!st.complete && guard++ < 40) st = toggle(c, st, hintBit(c, st)!).state;
+    expect(st.complete).toBe(true);
+  });
+});

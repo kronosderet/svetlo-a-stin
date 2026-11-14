@@ -17,8 +17,8 @@
 
   const m = $derived(settings.reducedMotion ? 0 : 1);
   const MARK: Record<'shift' | 'math', Record<TideOp, string>> = {
-    shift: { shl: '←', shr: '→', inc: '+1', dec: '−1' },
-    math: { shl: '×2', shr: '÷2', inc: '+1', dec: '−1' },
+    shift: { shl: '←', shr: '→', inc: '+1', dec: '−1', not: '¬' },
+    math: { shl: '×2', shr: '÷2', inc: '+1', dec: '−1', not: '¬' },
   };
 </script>
 

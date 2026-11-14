@@ -81,9 +81,12 @@
   .byte .crystals > :global(:nth-child(5)) {
     margin-left: min(28px, 3cqi);
   }
-  @container (max-width: 620px) {
+  /* Osm krystalů v řadě se vejde i vedle kotoučů; po čtveřicích pod sebou až na úzkém místě. */
+  @container (max-width: 480px) {
     .byte .crystals {
       --per-row: 4;
+      /* Dvě čtveřice pod sebou: menší krystaly, aby se řady vešly i na nízkou obrazovku. */
+      --crystal-w: min(104px, calc(70cqi / 4), 7.5vh);
     }
     .byte .crystals > :global(:nth-child(5)) {
       margin-left: 0;

@@ -11,23 +11,25 @@
   import { GATE, actOf, getLevel, instantiate, nextLevelId, partsOf, roomNumber } from '../../content/levels';
   import type { PuzzleLevel } from '../../content/types';
   import { kodexById } from '../../content/kodex';
-  import { maxValue, patternWords, toBinaryString } from '../../core/bits';
-  import type { AltarEvent, AltarState } from '../../core/puzzles/altar';
-  import type { CascadeEvent, CascadeState } from '../../core/puzzles/cascade';
-  import type { InscriptionEvent, InscriptionState } from '../../core/puzzles/inscription';
-  import type { TideEvent, TideOp, TideState } from '../../core/puzzles/tide';
+  import { patternWords, toBinaryString } from '../../core/bits';
   import { AltarGame } from '../../game/altarGame.svelte.ts';
-  import type { GameEvent, LevelResult } from '../../game/baseGame.svelte.ts';
+  import { combineResults, type GameEvent, type LevelResult } from '../../game/baseGame.svelte.ts';
   import { CascadeGame } from '../../game/cascadeGame.svelte.ts';
   import { InscriptionGame } from '../../game/inscriptionGame.svelte.ts';
   import { TideGame } from '../../game/tideGame.svelte.ts';
   import { Echo } from '../../game/echo.svelte.ts';
   import { FX, fxState } from '../../game/fx.svelte.ts';
   import { go, openKodex, ui } from '../../game/nav.svelte.ts';
-  import { recordResult, unseenKodex } from '../../game/progress.svelte.ts';
+  import { recordEntry, recordHint, recordResult, unseenKodex } from '../../game/progress.svelte.ts';
   import { saveSettings, settings } from '../../game/settings.svelte.ts';
   import { plainText } from '../../game/text';
   import * as sound from '../../audio/sound';
+  import { freshFlags, type LevelCtx } from './level/context';
+  import { onAltar } from './level/altarEvents';
+  import { onInscription } from './level/inscriptionEvents';
+  import { onCascade } from './level/cascadeEvents';
+  import { onTide } from './level/tideEvents';
+  import { puzzleKey } from './level/keys';
 
   let { id }: { id: string } = $props();
 
@@ -50,7 +52,36 @@
   /** Výsledek celé komnaty (u smíšené součet všech částí). */
   let result: LevelResult | null = $state(null);
 
+  let announcement = $state('');
+  let pulse = $state(0);
+  let showComplete = $state(false);
+  let solvedLines: string[] = $state([]);
+  let fx: FxLayer | undefined = $state();
+  let stageEl: HTMLElement | undefined = $state();
+  /** Roste s každým chybným potvrzením Kaskády (otřese sloupcem). */
+  let wobble = $state(0);
+  let completeTimer: ReturnType<typeof setTimeout> | undefined;
+  let partTimer: ReturnType<typeof setTimeout> | undefined;
+
   const echo = new Echo();
+
+  /** Co potřebuje obsluha událostí jednotlivých archetypů (src/ui/screens/level). */
+  const ctx: LevelCtx = {
+    level: () => level,
+    bits: () => bits,
+    echo,
+    announce,
+    words,
+    failFx,
+    stepFx,
+    puff: (at, amount) => fx?.puff(at, amount),
+    centerOf,
+    stage: () => stageEl,
+    pulse: () => (pulse += 1),
+    wobble: () => (wobble += 1),
+    said: freshFlags(),
+  };
+
   let game = $state.raw(createGame());
 
   function createGame() {
@@ -66,36 +97,8 @@
     }
   }
 
-  /** Repliky po dalších chybných čteních (první říká level.echo.wrong). */
-  const WRONG_AGAIN = ['Ještě ne. Který krystal nesedí?', 'Porovnej obě kombinace krystal po krystalu.'];
-  /** Sloupce Kaskády: v … sloupci, nad … sloupcem, do … sloupce. */
-  const LOC = ['prvním', 'druhém', 'třetím', 'čtvrtém', 'pátém', 'šestém', 'sedmém', 'osmém'];
-  const INS = ['prvním', 'druhým', 'třetím', 'čtvrtým', 'pátým', 'šestým', 'sedmým', 'osmým'];
-  const GEN = ['prvního', 'druhého', 'třetího', 'čtvrtého', 'pátého', 'šestého', 'sedmého', 'osmého'];
-  const FLOW = ['žádné světlo', 'jedno světlo', 'dvě světla', 'tři světla'];
-  const LEVER_NAME: Record<TideOp, string> = {
-    shl: 'Posun vlevo',
-    shr: 'Posun vpravo',
-    inc: 'Přidána jedna',
-    dec: 'Ubrána jedna',
-  };
-
-  let announcement = $state('');
-  let pulse = $state(0);
-  let showComplete = $state(false);
-  let solvedLines: string[] = $state([]);
-  let firstRevealSaid = false;
-  let repeatSaid = false;
-  let wrongCount = 0;
-  let fx: FxLayer | undefined = $state();
-  let stageEl: HTMLElement | undefined = $state();
-  let spillSaid = false;
-  /** Roste s každým chybným potvrzením Kaskády (otřese sloupcem). */
-  let wobble = $state(0);
-  let completeTimer: ReturnType<typeof setTimeout> | undefined;
-  let partTimer: ReturnType<typeof setTimeout> | undefined;
-
   echo.say(room.kind === 'mixed' ? [...room.echo.intro, ...level.echo.intro] : level.echo.intro);
+  recordEntry(room.id);
 
   $effect(() => () => {
     clearTimeout(completeTimer);
@@ -115,10 +118,7 @@
         partIndex += 1;
         level = parts[partIndex];
         bits = bitsOf(level);
-        firstRevealSaid = false;
-        repeatSaid = false;
-        wrongCount = 0;
-        spillSaid = false;
+        ctx.said = freshFlags();
         game = createGame();
         echo.say(level.echo.intro);
         announce(`Část ${partIndex + 1} z ${parts.length}: ${level.title}. ${level.presentation.task}`);
@@ -127,16 +127,8 @@
     );
   }
 
-  /** Pečetě za celou komnatu: tahy a nápovědy všech částí dohromady. */
-  function combine(results: LevelResult[]): LevelResult {
-    const moves = results.reduce((sum, r) => sum + r.moves, 0);
-    const par = results.reduce((sum, r) => sum + r.par, 0);
-    const hintsUsed = results.reduce((sum, r) => sum + r.hintsUsed, 0);
-    return { moves, par, hintsUsed, seals: { solved: true, skill: moves <= par, pure: hintsUsed === 0 } };
-  }
-
   function announce(text: string) {
-    announcement = announcement === text ? `${text} ` : text;
+    announcement = announcement === text ? `${text} ` : text;
   }
 
   function words(mask: number): string {
@@ -200,19 +192,20 @@
   function handle(e: GameEvent) {
     switch (e.kind) {
       case 'altar':
-        onAltar(e.event, e.state);
+        onAltar(ctx, e.event, e.state);
         break;
       case 'inscription':
-        onInscription(e.event, e.state);
+        onInscription(ctx, e.event, e.state);
         break;
       case 'cascade':
-        onCascade(e.event, e.state);
+        onCascade(ctx, e.event, e.state);
         break;
       case 'tide':
-        onTide(e.event, e.state);
+        onTide(ctx, e.event, e.state);
         break;
       case 'hint': {
         const text = level.hints[e.level - 1];
+        recordHint(room.id, e.level >= 3);
         echo.say([text], 'hint');
         announce(`Nápověda ${e.level}: ${text}`);
         break;
@@ -236,7 +229,7 @@
           nextPart();
           break;
         }
-        const total = combine(partResults);
+        const total = combineResults(partResults);
         result = total;
         const lines = room.echo;
         sound.playSolved(bits);
@@ -256,193 +249,6 @@
         }, settings.reducedMotion ? 250 : 1300);
         break;
       }
-    }
-  }
-
-  function onAltar(ev: AltarEvent, state: AltarState) {
-    if (level.kind !== 'altar') return;
-    const cfg = level.config;
-    const counter = !!level.presentation.counter;
-    if (ev.type === 'toggle') {
-      sound.playBit(ev.bit, ev.on);
-      let msg = `Krystal ${bits - ev.bit} zleva ${ev.on ? 'rozsvícen' : 'zhasnut'}.`;
-      if (level.presentation.showSum) msg += ` Světlo váží ${state.mask}.`;
-      announce(msg);
-    } else if (ev.type === 'reveal') {
-      sound.playReveal();
-      if (ev.allRevealed && level.echo.allRevealed) echo.say([level.echo.allRevealed]);
-      else if (!firstRevealSaid && level.echo.firstReveal) {
-        echo.say([level.echo.firstReveal]);
-        firstRevealSaid = true;
-      }
-    } else if (ev.type === 'found') {
-      sound.playChord(ev.pattern, bits, 0.08);
-      stepFx('.niche.current', '.row');
-      const line = level.echo.found?.[ev.count];
-      if (line) echo.say([line]);
-      announce(`Nová kombinace. Nalezeno ${ev.count} z ${2 ** bits}.`);
-    } else if (ev.type === 'repeat') {
-      sound.playSoft();
-      fx?.puff(centerOf('.niche.current', '.row'), 10);
-      if (!repeatSaid && level.echo.repeat) {
-        echo.say([level.echo.repeat]);
-        repeatSaid = true;
-      }
-    } else if (ev.type === 'step') {
-      sound.playChord(ev.target, bits, 0.1);
-      if (counter) sound.playCarve();
-      else if (cfg.goal.kind === 'value') sound.playGrind();
-      pulse += 1;
-      stepFx('.row');
-      const line = level.echo.step?.[ev.index];
-      if (line) echo.say([line]);
-      const targets = cfg.goal.kind === 'all' ? [] : cfg.goal.targets;
-      const upcoming = targets[state.step];
-      if (upcoming === undefined) announce('Přijato.');
-      else if (counter) announce(`Přijato. Poutníků: ${ev.target}. Přichází další.`);
-      else announce(`Přijato. Oltář žádá ${upcoming}.`);
-    } else if (ev.type === 'complete') {
-      if (level.quiz?.length && level.echo.complete) echo.say([level.echo.complete]);
-    }
-  }
-
-  function onInscription(ev: InscriptionEvent, state: InscriptionState) {
-    if (level.kind !== 'inscription') return;
-    const cfg = level.config;
-    if (ev.type === 'toggle') {
-      sound.playBit(ev.bit, ev.on);
-      announce(`Krystal ${bits - ev.bit} zleva ${ev.on ? 'rozsvícen' : 'zhasnut'}.`);
-    } else if (ev.type === 'wrong') {
-      failFx('.dial', '.wall');
-      wrongCount++;
-      if (ev.guess > maxValue(bits)) echo.say([`Tolik se do ${bits} krystalů nevejde. Nejvíc je ${maxValue(bits)}.`]);
-      else if (wrongCount === 1 && level.echo.wrong) echo.say([level.echo.wrong]);
-      else echo.say([WRONG_AGAIN[wrongCount % WRONG_AGAIN.length]]);
-      announce(`Kotouče ukazují ${ev.guess}. Nápis váží jinak.`);
-    } else if (ev.type === 'step') {
-      sound.playChord(ev.task.value, bits, 0.1);
-      sound.playGrind(ev.task.dir === 'read' ? 0.6 : 0.9);
-      pulse += 1;
-      stepFx('.wall');
-      const line = level.echo.step?.[ev.index];
-      if (line) echo.say([line]);
-      const upcoming = cfg.tasks[state.step];
-      if (!upcoming) announce('Správně.');
-      else if (upcoming.dir === 'read') announce(`Správně. Další nápis: ${words(upcoming.value)}.`);
-      else announce(`Správně. Brána žádá ${upcoming.value}.`);
-    } else if (ev.type === 'complete') {
-      if (level.quiz?.length && level.echo.complete) echo.say([level.echo.complete]);
-    }
-  }
-
-  /** Proč Kaskáda výsledek nepřijala: vysvětlí první sloupec zprava, který nesedí. */
-  function cascadeWhy(ev: Extract<CascadeEvent, { type: 'wrong' }>, state: CascadeState): string {
-    if (level.kind !== 'cascade') return '';
-    const cfg = level.config;
-    const task = cfg.tasks[state.step];
-    const sub = task.op === 'sub';
-    const c = ev.cell.column;
-    if (ev.cell.row === 'carry') {
-      if (c === cfg.width) {
-        return ev.expected ? 'Nejlevější sloupec přetekl. To světlo patří do přepadu.' : 'Nic nepřeteklo. Přepad má zůstat suchý.';
-      }
-      if (sub) {
-        return ev.expected
-          ? `Ve sloupci vpravo nebylo z čeho brát. Výpůjčku zapiš krystalem pod spodní řadu v ${LOC[c]} sloupci zprava.`
-          : `Sloupec vpravo si nepůjčoval. V ${LOC[c]} sloupci zprava výpůjčka být nemá.`;
-      }
-      return ev.expected
-        ? `Ve sloupci vpravo se slila ${FLOW[ev.inflow]} a jedno přeteklo. Nad ${INS[c]} sloupcem zprava chybí krystal přenosu.`
-        : `Nad ${INS[c]} sloupcem zprava svítí krystal přenosu, ale sloupec vpravo nepřetekl.`;
-    }
-    if (sub) {
-      if (ev.inflow < 0) {
-        return `V ${LOC[c]} sloupci zprava nemáš z čeho brát. Půjčené světlo tu váží dvě: ${ev.inflow === -1 ? '10 − 1 = 1' : '10 − 1 − 1 = 0'}.`;
-      }
-      return `V ${LOC[c]} sloupci zprava ${ev.inflow === 1 ? 'zbude jedno světlo' : 'nezbude nic'}.`;
-    }
-    const bitsInWall = cfg.bits ?? cfg.width;
-    if (cfg.carries === 'none' && c >= bitsInWall) {
-      return `Do ${GEN[c]} sloupce zprava přeteklo světlo ze sousedního sloupce. Rozsviť ho tam.`;
-    }
-    if (ev.inflow >= 2) {
-      return `V ${LOC[c]} sloupci zprava se slévají ${FLOW[ev.inflow]}. Do jednoho krystalu se nevejdou: co zůstane dole a co přeteče?`;
-    }
-    return ev.inflow === 1
-      ? `V ${LOC[c]} sloupci zprava je jedno světlo. Nikam nepřetéká, zůstane dole.`
-      : `V ${LOC[c]} sloupci zprava není žádné světlo. Krystal dole má zůstat zhasnutý.`;
-  }
-
-  function onCascade(ev: CascadeEvent, state: CascadeState) {
-    if (level.kind !== 'cascade') return;
-    const cfg = level.config;
-    if (ev.type === 'toggle') {
-      const { row, column } = ev.cell;
-      if (row === 'result') sound.playBit(column, ev.on);
-      else sound.playSpark(ev.on);
-      const what =
-        row === 'result'
-          ? `Krystal výsledku ${column + 1} zprava`
-          : column === cfg.width
-            ? 'Přepad'
-            : cfg.tasks[state.step]?.op === 'sub'
-              ? `Krystal výpůjčky ve sloupci ${column + 1} zprava`
-              : `Krystal přenosu nad sloupcem ${column + 1} zprava`;
-      announce(`${what}: ${ev.on ? 'světlo' : 'stín'}.`);
-    } else if (ev.type === 'wrong') {
-      failFx('.strip.wrong', '.chute.wrong', '.board');
-      wobble += 1;
-      const why = cascadeWhy(ev, state);
-      echo.say([why]);
-      announce(`Výsledek nepřijat. ${why}`);
-    } else if (ev.type === 'step') {
-      sound.playCascade(cfg.width);
-      sound.playGrind(0.7);
-      pulse += 1;
-      stepFx('.board');
-      const line = level.echo.step?.[ev.index];
-      if (line) echo.say([line]);
-      announce(state.complete ? 'Správně.' : 'Správně. Ve stěně je další úloha.');
-    } else if (ev.type === 'complete') {
-      if (level.quiz?.length && level.echo.complete) echo.say([level.echo.complete]);
-    }
-  }
-
-  function onTide(ev: TideEvent, state: TideState) {
-    if (level.kind !== 'tide') return;
-    const cfg = level.config;
-    if (ev.type === 'pull') {
-      sound.playShift();
-      sound.playChord(ev.to, bits, 0.06);
-      const lost = ev.spill === 'left' || ev.spill === 'right';
-      if (ev.spill) sound.playSpill();
-      // Kamenná řada se posune a na okraji se zvíří prach.
-      const reg = stageEl?.querySelector('.register .crystals')?.getBoundingClientRect();
-      if (reg && (ev.op === 'shl' || ev.op === 'shr' || lost)) {
-        const leftEdge = ev.op === 'shl' || ev.spill === 'left';
-        fx?.puff({ x: leftEdge ? reg.left + 10 : reg.right - 10, y: reg.bottom - 30 }, lost ? 18 : 8);
-      }
-      if (lost && !spillSaid && level.echo.spill) {
-        echo.say([level.echo.spill]);
-        spillSaid = true;
-      }
-      announce(`${LEVER_NAME[ev.op]}. Světlo váží ${ev.to}.${lost ? ' Jedno světlo spadlo přes okraj.' : ''}`);
-    } else if (ev.type === 'reset') {
-      failFx('.register');
-      sound.playGrind(0.6);
-      if (level.echo.reset) echo.say([level.echo.reset]);
-      announce(`Tahy došly. Světlo se vrátilo na ${ev.to}.`);
-    } else if (ev.type === 'step') {
-      sound.playChord(ev.target, bits, 0.1);
-      sound.playGrind(0.8);
-      pulse += 1;
-      stepFx('.register');
-      const line = level.echo.step?.[ev.index];
-      if (line) echo.say([line]);
-      const upcoming = cfg.tasks[state.step];
-      announce(upcoming && !state.complete ? `Správně. Teď z ${state.value} na ${upcoming.target}.` : 'Správně.');
-    } else if (ev.type === 'complete') {
-      if (level.quiz?.length && level.echo.complete) echo.say([level.echo.complete]);
     }
   }
 
@@ -467,48 +273,11 @@
 
   function onKey(ev: KeyboardEvent) {
     if (ui.kodexOpen || ui.settingsOpen || showComplete) return;
+    if (puzzleKey(game, ev)) {
+      ev.preventDefault();
+      return;
+    }
     const plain = !ev.ctrlKey && !ev.metaKey && !ev.altKey;
-    if (game.kind === 'inscription' && game.reading && plain) {
-      // Kotouče jdou nastavit i z klávesnice: číslice se přidávají zprava.
-      if (/^[0-9]$/.test(ev.key)) {
-        ev.preventDefault();
-        game.typeDigit(Number(ev.key));
-        sound.playTick();
-        return;
-      }
-      if (ev.key === 'Backspace') {
-        ev.preventDefault();
-        game.eraseDigit();
-        sound.playTick();
-        return;
-      }
-      // Enter potvrdí kotouče i po kliknutí na šipku; jiná tlačítka (Potvrdit, Nápověda…) stiskne normálně.
-      const target = ev.target as HTMLElement | null;
-      const otherButton = target instanceof HTMLButtonElement && !target.closest('.dial');
-      if (ev.key === 'Enter' && !otherButton) {
-        ev.preventDefault();
-        game.confirm();
-        return;
-      }
-    }
-    if (game.kind === 'cascade' && game.playing && plain && ev.key === 'Enter') {
-      // Buňku vybranou klávesnicí přepne Enter sám; po kliknutí myší Enter výsledek potvrdí.
-      const keyboardFocus = ev.target instanceof HTMLButtonElement && ev.target.matches(':focus-visible');
-      if (!keyboardFocus) {
-        ev.preventDefault();
-        game.confirm();
-        return;
-      }
-    }
-    if (game.kind === 'tide' && game.playing && plain) {
-      const keys: Record<string, TideOp> = { ArrowLeft: 'shl', ArrowRight: 'shr', '+': 'inc', '-': 'dec', '−': 'dec' };
-      const op = keys[ev.key];
-      if (op && game.level.config.ops.includes(op)) {
-        ev.preventDefault();
-        game.pull(op);
-        return;
-      }
-    }
     if ((ev.ctrlKey || ev.metaKey) && ev.key.toLowerCase() === 'z') {
       ev.preventDefault();
       game.undo();

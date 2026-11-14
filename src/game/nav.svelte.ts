@@ -1,5 +1,12 @@
 /** run: nový pokus o stejnou komnatu (komnata se vytvoří znovu a vylosuje nové úlohy). */
-export type Screen = { name: 'title' } | { name: 'map' } | { name: 'level'; id: string; run?: number };
+export type Screen =
+  | { name: 'title' }
+  | { name: 'map' }
+  | { name: 'level'; id: string; run?: number }
+  /** Přehled třídy z přetažených souborů s postupem (učitelský režim). */
+  | { name: 'teacher' }
+  /** Shrnutí patra k tisku (act = index patra v ACTS). */
+  | { name: 'summary'; act: number };
 
 export const nav: { screen: Screen } = $state({ screen: { name: 'title' } });
 

@@ -9,7 +9,18 @@ export interface Settings {
   /** Ukazovat váhy i v komnatách, kde už zmizely (od I-6). */
   alwaysWeights: boolean;
   reducedMotion: boolean;
+  /** Učitelský režim (zapíná se PINem v Nastavení): všechny komnaty jsou otevřené. */
+  teacher: boolean;
+  /** Úsporná grafika: bez rozostření a částic, pro pomalé školní počítače. */
+  lite: boolean;
+  /** Úspornou grafiku zapnula hra sama, protože se trhala. */
+  liteAuto: boolean;
+  /** Hráč úspornou grafiku přepnul sám: hra ji pak už sama nezapíná. */
+  liteSet: boolean;
 }
+
+/** PIN učitelského režimu. Není to zabezpečení, jen pojistka proti náhodnému zapnutí. */
+export const TEACHER_PIN = '????';
 
 function defaults(): Settings {
   let reduced = false;
@@ -18,7 +29,7 @@ function defaults(): Settings {
   } catch {
     /* prostředí bez matchMedia */
   }
-  return { sound: true, alwaysDigits: false, alwaysWeights: false, reducedMotion: reduced };
+  return { sound: true, alwaysDigits: false, alwaysWeights: false, reducedMotion: reduced, teacher: false, lite: false, liteAuto: false, liteSet: false };
 }
 
 function load(): Settings {

@@ -178,7 +178,8 @@ Každý level má sadu pomůcek, které se v dalších levelech postupně vypín
 2. **Strategie:** „Začni zleva. Rozsviť největší váhu, která se ještě vejde.“
 3. **Ukázka kroku:** hra zvýrazní konkrétní krystal nebo spoj, který je potřeba změnit.
 
-Nápověda je vždy dostupná a nic nestojí. Jen třetí pečeť levelu (viz 3.6) vyžaduje řešení bez ní.
+Nápověda je vždy dostupná a nic nestojí. Náznaky 1. a 2. stupně neberou nic; pečeť odvahy (viz 3.6)
+bere jen ukázka kroku (3. stupeň). Studenti si tak nebojí pomoct obecnou radou.
 
 ### 3.4 Zpětná vazba na chyby
 
@@ -196,8 +197,8 @@ Tón je vždy neutrální až povzbudivý, bez červených křížků a rušivý
 
 - Každý akt znovu používá látku z předchozích (Akt IV staví sčítačku, kterou hráč v Aktu II
   počítal ručně).
-- **Losované úlohy:** komnaty na procvičování a zkoušky (I-5 až I-8, II-2 až II-5,
-  II-7 až II-10 a II-14) vylosují příklady při každém vstupu i po „Znovu“, takže se nedají naučit
+- **Losované úlohy:** komnaty na procvičování a zkoušky (I-5 až I-8, I-12 až I-15, II-2 až II-5
+  a II-7 až II-15) vylosují příklady při každém vstupu i po „Znovu“, takže se nedají naučit
   nazpaměť ani napovědět sousedovi. Generátory drží stejné podmínky jako ručně vybrané úlohy
   (třeba aspoň jedna výpůjčka v Odlivu, ve Vahách Osudu nikdy cesta přes přetočení) a ukázková
   úloha na začátku nebo závěrečná zkouška, kterou Echo komentuje, zůstává pevná. Objevné komnaty
@@ -209,12 +210,14 @@ Tón je vždy neutrální až povzbudivý, bez červených křížků a rušivý
 ### 3.6 Mistrovství: tři pečetě za level
 
 1. **Pečeť brány:** level je vyřešen. Jen tato je nutná k postupu.
-2. **Pečeť přesnosti:** vyřešeno v optimálním počtu tahů nebo hradel (spočítá validátor).
-3. **Pečeť odvahy:** vyřešeno bez nápovědy.
+2. **Pečeť přesnosti:** vyřešeno v optimálním počtu tahů nebo hradel (spočítá validátor)
+   a kvíz napoprvé, bez jediné špatné odpovědi.
+3. **Pečeť odvahy:** vyřešeno bez ukázky kroku (nápovědy 3. stupně). Náznaky ji neberou.
 
 „Zpět“ vrací krystaly, ne počet tahů: vrácený tah se do pečeti přesnosti počítá dál. Smíšená brána
 sčítá tahy, pokusy i nápovědy všech svých částí. Možnosti v kvízech mají pro každého hráče jiné
-pořadí, takže se nedá napovědět „ta první“.
+pořadí a otázky s čísly si čísla losují (`src/content/quizzes.ts`), takže se nedá napovědět
+„ta první“ ani „šestnáct“.
 
 Pečetě jsou volitelné. Odemykají kosmetiku (barvy krystalů, motivy) a skryté střepy,
 nikdy povinný obsah.
@@ -226,13 +229,19 @@ Herní encyklopedie, která se plní objevy:
 - Každá stránka má **lumenitskou část** (glyf, citát, lore) a **moderní část** (definice,
   zápis, interaktivní mini-příklad, „kde se to používá dnes“).
 - Stránky jde kdykoli otevřít i během levelu (boční panel, hra se nezastaví).
-- Na konci každého aktu je „Shrnutí patra“ na jednu obrazovku, vhodné pro učitele i pro tisk.
+- „Shrnutí patra“ (tlačítko na mapě) dá přeložené zákony patra na jednu stránku k tisku, rozdělené
+  na základ a Hlubší síně. V učitelském režimu ukáže všechny zákony patra.
 
 ### 3.8 Měření učení
 
 - **Zkouška zasvěcení:** volitelný krátký test na začátku (10 úloh) a stejný typ úloh na konci.
   Hráč vidí svůj posun, my vidíme, jestli hra učí.
-- Lokální metriky levelů (viz kap. 14) pro ladění obtížnosti.
+- Lokální metriky levelů (viz kap. 14) pro ladění obtížnosti. Postup u každé komnaty ukládá, kolikrát
+  ji hráč otevřel a dokončil, tahy nad ideál, nápovědy, ukázky kroku a chyby v kvízu.
+- **Přehled třídy** (učitelský režim): učitel přetáhne soubory s postupem od studentů a vidí tabulku
+  studentů (patra, pečetě, kde kdo je) a komnat (kolik prošlo, kolik se zaseklo, průměr ukázek kroku,
+  tahů navíc a chyb v kvízu). Komnaty, kde se zasekla víc než třetina nebo kde v průměru potřebovali
+  ukázat krok, jsou zvýrazněné. Nic se neodesílá, data zůstávají v okně prohlížeče.
 
 ---
 
@@ -254,11 +263,11 @@ Díky tomu je přidávání levelů rychlé a datově řízené.
 
 | Archetyp | Interakce | Co učí | Od |
 |---|---|---|---|
-| **Oltář** | klikáním přepínáš krystaly, abys dosáhl cílové hodnoty | bit → číslo, poziční hodnota | I |
-| **Nápis** | chrám rozsvítí kombinaci, na kamenných kotoučích (desítky, jednotky) nastavíš její hodnotu; pro závěrečné zkoušky umí i opačný směr | binární → desítkové | I |
+| **Oltář** | klikáním přepínáš krystaly, abys dosáhl cílové hodnoty; v přísném režimu (Tichý krok) projdeš všechny kombinace bez opakování, jinak se cesta přeruší | bit → číslo, poziční hodnota, Grayův kód | I |
+| **Nápis** | chrám rozsvítí kombinaci, na kamenných kotoučích (desítky, jednotky) nastavíš její hodnotu; umí i opačný směr a kotouče s glyfy 0–F (jeden na každou čtveřici krystalů) | binární → desítkové, šestnáctková soustava | I |
 | **Počítadlo** | poutníci přibývají jako čárky a ty nastavuješ „další“ číslo; zápisník červeně ukáže změněné krystaly (technicky Oltář s cíli n + 1) | inkrementace, přenos | I |
-| **Kaskáda** | počítání pod sebou: ve stěně svítí řádky, hráč rozsvěcí krystaly výsledku a krystaly přenosu nad sloupci a výsledek potvrdí. Chyba otřese prvním špatným sloupcem zprava a Echo řekne proč (kolik světel se v něm slévá, který přenos chybí). Umí sčítání, pevnou nádobu s přepadem, odčítání s výpůjčkami i násobení jako součet posunutých kopií | aritmetika | II |
-| **Příliv** | páky posouvají celou řadu (vlevo = ×2, vpravo = ÷2, co přeteče přes okraj, je ztracené), další páky přidají nebo uberou jedničku. Cíl co nejméně tahy; ve Vahách Osudu dovolí každá zkouška jen ideální počet tahů a pak se vrátí na začátek | posuny, ×2, ÷2 | II |
+| **Kaskáda** | počítání pod sebou: ve stěně svítí řádky, hráč rozsvěcí krystaly výsledku a krystaly přenosu nad sloupci a výsledek potvrdí. Chyba otřese prvním špatným sloupcem zprava a Echo řekne proč (kolik světel se v něm slévá, který přenos chybí). Umí sčítání, pevnou nádobu s přepadem, odčítání s výpůjčkami, tři řady s přenosem o dvě místa i násobení, ve kterém hráč sám vybírá posunuté kopie | aritmetika | II |
+| **Příliv** | páky posouvají celou řadu (vlevo = ×2, vpravo = ÷2, co přeteče přes okraj, je ztracené), další páky přidají nebo uberou jedničku. Cíl co nejméně tahy; ve Vahách Osudu dovolí každá zkouška jen ideální počet tahů a pak se vrátí na začátek. Páka „převrať“ (doplněk), miska zbytku (dělení) a kolo může místo čísla ukázat „÷ 8“ nebo „−3“ | posuny, ×2, ÷2, doplněk | II |
 | **Smíšená komnata** | brána patra: několik hádanek různých archetypů za sebou (třeba Kaskáda a pak Příliv), nad scénou ukazatel zkoušek; tahy, pokusy i nápovědy se pro pečetě sčítají za celou komnatu | syntéza patra | II |
 | **Brána** | do slotů v hotovém obvodu vkládáš runy hradel | hradla | III |
 | **Deska zákona** | doplňuješ nebo určuješ pravdivostní tabulku | tabulky, ekvivalence | III |
@@ -279,9 +288,9 @@ a komnata 7 je brána patra, která otevře schody dál. Základ stačí na celo
 vejde zhruba do jedné vyučovací hodiny. **Hlubší síně** 8–15 mají rozsvícenou i horní stranu glyfu,
 jsou nepovinné a otevírají se po bráně patra, pak po jedné. Patří do nich látka, kterou sexta
 nutně nepotřebuje, ale je škoda o ni přijít (odčítání, násobení, dělení, šestnáctková soustava).
-Komnata 15 (glyf 1111) je velká brána patra. Akty I a II už jsou rozdělené takto; Akty III–V
-zatím drží původní osnovu po deseti levelech a rozdělí se, až na ně přijde řada. Komnaty
-označené *(plán)* jsou na mapě zatím zapečetěné. Sloupec *Nové* označuje jediný nový koncept levelu.
+Komnata 15 (glyf 1111) je velká brána patra. Akty I a II jsou rozdělené takto a mají všech
+15 komnat; Akty III–V zatím drží původní osnovu po deseti levelech a rozdělí se, až na ně přijde
+řada (chybějící komnaty jsou na mapě zapečetěné). Sloupec *Nové* označuje jediný nový koncept levelu.
 
 ### Akt I — Předsíň Prvního Světla (bit a počítání)
 
@@ -298,11 +307,11 @@ označené *(plán)* jsou na mapě zatím zapečetěné. Sloupec *Nové* označu
 | I-8 | Skryté váhy | Oltář | zvnitřnění | Váhy zmizí a krystaly jsou stejně velké. Pátý krystal (16) si hráč odvodí ze zákona. Cíle 11, 6, 13, 20, 27, součet ještě svítí. |
 | I-9 | Počítadlo poutníků | Počítadlo | přenos | Čísla 1 až 8, poutníci jako čárky na desce. Hráč objeví „předání“ (0011 → 0100, 0111 → 1000), kvíz ho zobecní. |
 | I-10 | Nejvyšší světlo | Oltář | 2ⁿ − 1, bajt | Oktáva krystalů, cíle 31, 32, 63, 255 bez vah i součtu. Kvíz: největší číslo z 6 krystalů, kolik krystalů na 1000. |
-| I-11 | *Tichý krok* (plán) | Oltář | Grayův kód | Všech 16 kombinací čtyř krystalů, každým dotekem jediná změna. |
-| I-12 | *Velký nápis* (plán) | Nápis | oktáva | Čtení a psaní celé oktávy (8 bitů). |
-| I-13 | *Řeč glyfů* (plán) | Nápis s glyfy | šestnáctková číslice | Čtyři krystaly tvoří jeden glyf. Glyfy na dveřích komnat jsou ve skutečnosti šestnáctková soustava (0–F). |
-| I-14 | *Dvojznak* (plán) | Nápis s glyfy | bajt v šestnáctkové soustavě | Oktáva zapsaná dvěma glyfy, třeba barvy #FF8800. |
-| I-15 | ***Velká brána Předsíně*** (plán) | smíšená | syntéza | Oktáva, předání a glyfy dohromady. |
+| I-11 | Tichý krok | Oltář (přísný) | Grayův kód | Všech 16 kombinací čtyř krystalů, každým dotekem jediná změna. Návrat na kombinaci, kterou deska už zná, cestu přeruší a začíná se znovu. Nápověda: zrcadlo (osm kombinací tří krystalů, levý krystal, pozpátku). |
+| I-12 | Velký nápis | Nápis | oktáva | Losovaná oktáva střídavě ke čtení a k zápisu, tři kotouče (stovky, desítky, jednotky). |
+| I-13 | Řeč glyfů | Nápis s glyfy | šestnáctková číslice | Kotouč nese glyfy 0–F (glyf a pod ním šestnáctkový znak). Čtveřice krystalů se čte jako glyf a brána naopak žádá glyf. Glyfy na dveřích komnat jsou šestnáctková soustava. |
+| I-14 | Dvojznak | Nápis s glyfy | bajt šestnáctkově | Oktáva na dvou glyfových kotoučích, čtení i zápis. Kvíz: F0 a barva #FF8800. |
+| I-15 | **Velká brána Předsíně** | smíšená | syntéza | Tichý krok přes tři krystaly, oktáva desítkově a oktáva dvěma glyfy. Odemyká „Hlubší zákony Předsíně“. |
 
 ### Akt II — Síň Počtářů (aritmetika)
 
@@ -318,12 +327,12 @@ označené *(plán)* jsou na mapě zatím zapečetěné. Sloupec *Nové* označu
 | | *Hlubší síně* | | | *Nepovinné, otevřou se po bráně patra.* |
 | II-8 | Odliv | Kaskáda | odčítání, výpůjčka | Odčítání s výpůjčkami: krystal výpůjčky se zapisuje pod spodní řadu, takže je vidět, že se ve sloupci odečítají dva krystaly od jednoho (8 − 1 projde třemi sloupci). |
 | II-9 | Zdvojení | Příliv | stavba čísla | Z 1 dosáhni 6, 11, 21, 27 jen pákami ×2 a +1. Pointa: posloupnost tahů kopíruje dvojkový zápis cíle (Hornerovo schéma z I-6 jako stavební návod). |
-| II-10 | Násobení po lumenitsku | Kaskáda | posun + sčítání | 5 × 3, 7 × 5, 6 × 6: ve stěně jsou kopie prvního činitele posunuté pod jedničky druhého (s doplněnými nulami), hráč je sečte s přenosy. Ve fázi 2 bude kopie skládat hráč sám podle jedniček druhého činitele. |
-| II-11 | *Dělení posunem* (plán) | Příliv | ÷ 2ᵏ se zbytkem | Co spadne přes pravý okraj, je zbytek. |
-| II-12 | *Tři řady* (plán) | Kaskáda | přenos o dvě místa | Tři sčítance: ve sloupci se může slít až pět světel. |
-| II-13 | *Doplněk* (plán) | smíšená | dvojkový doplněk | Odčítání sčítáním, jak to dělá procesor: převrať, přičti jedna, sečti a zahoď přetečení. |
+| II-10 | Násobení po lumenitsku | Kaskáda (výběr kopií) | posun + sčítání | Stěna nabídne kopii prvního činitele pro každé místo druhého (×1, ×2, ×4). Hráč rozsvítí ty, které patří k jedničkám druhého činitele, a sečte je s přenosy. Špatně zvolenou kopii kontrola najde jako první. |
+| II-11 | Dělení posunem | Příliv s miskou zbytku | ÷ 2ᵏ se zbytkem | Kolo ukáže „÷ 4“, „÷ 8“, „÷ 2“, „÷ 16“ a jediná páka půlí. Co spadne přes pravý okraj, chytí miska zbytku. Kvíz: zbytek 109 : 16, co jde dělit osmi beze zbytku. |
+| II-12 | Tři řady | Kaskáda s přenosem o dvě místa | přenos o dvě místa | Tři sčítance. Nad přenosy je druhá řada krystalů pro přenos o dvě místa (čtyři světla ve sloupci = 100). Na konci 15 + 15 + 15, kde se ve sloupci slije pět světel. |
+| II-13 | Doplněk | smíšená (Příliv + Kaskáda) | dvojkový doplněk | Nejdřív záporná čísla: kolo žádá „−3“ a páky „převrať“ a „+1“ ho zapíšou. Pak odčítání sčítáním doplňku v nádobě se čtyřmi krystaly, přetečení do přepadu. |
 | II-14 | **Váhy Osudu** | Příliv (přísný) | syntéza | Dvě misky vah, páky ×2, ÷2, +1, −1 a jen ideální počet tahů na zkoušku (7 → 30, 12 → 47 přestřelením a ubráním…). Po vyčerpání tahů se misky vrátí. Kvíz míchá odčítání a posun. |
-| II-15 | ***Velká brána Síně*** (plán) | smíšená | syntéza | Odčítání, násobení a vyvážení. |
+| II-15 | **Velká brána Síně** | smíšená | syntéza | Odliv na pěti krystalech, násobení s výběrem kopií a Váhy Osudu na tři a čtyři tahy. Odemyká „Hlubší zákony Síně“. |
 
 ### Akt III — Zahrada Bran (logika)
 
@@ -418,7 +427,7 @@ Kodex se vysouvá zprava jako panel a hra zůstává vidět i ovladatelná.
 
 | Akce | Myš | Dotyk | Klávesnice (alternativa) |
 |---|---|---|---|
-| přepnout krystal | klik | ťuk | Tab + mezerník |
+| přepnout krystal | klik | ťuk | Tab + mezerník; na desce Kaskády šipky mezi krystaly |
 | zvolit číslo | klik na šipky kotouče / kolečko myši | ťuk na šipky | ↑ ↓ / číslice |
 | vložit runu do slotu | klik na slot → kruhová nabídka run / přetažení z palety | ťuk → nabídka | Enter → šipky |
 | propojit vodič | klik na výstup → klik na vstup | ťuk, ťuk | Enter, Enter |
@@ -816,7 +825,9 @@ osnovy nejde naučit těmi stávajícími.
 
 - **Akt VI: Zpěvy Srdce** — jednoduchý asemblerový jazyk, smyčky, podmínky, mini-programování.
 - **Editor levelů pro učitele a komunitu**, sdílení levelů kódem.
-- **Učitelský režim:** odemčení všech levelů, tisknutelné pracovní listy, přehled třídy (vyžaduje backend).
+- **Učitelský režim:** ✓ zapíná se PINem v Nastavení, odemkne všechna patra a přehled třídy
+  ze souborů s postupem (bez serveru). Zbývá: tisknutelné pracovní listy, sdílený přehled bez
+  ručního sbírání souborů (vyžaduje backend).
 - Další témata: desetinná čísla, komprese, základy kryptografie.
 - Mobilní vydání (Capacitor/Tauri mobile), Steam (Tauri).
 
@@ -843,6 +854,18 @@ osnovy nejde naučit těmi stávajícími.
     Fáze 1 ✓: mapa se dvěma řadami a zapečetěnými místy, nové číslování s převodem uloženého
     postupu i souborů s postupem, smíšená komnata (brána Síně: Kaskáda a Příliv), brána
     Předsíně na čtyřech krystalech, „Zpět“ nevrací tahy, kvízy se míchají.
-    Fáze 2: devět nových pokročilých komnat (I-11 až I-15, II-11 až II-13, II-15) a v násobení
-    II-10 skládá posunuté kopie hráč sám.
-11. Akt III, Zahrada Bran: archetypy Brána a Deska zákona.
+    Fáze 2 ✓: devět nových pokročilých komnat (I-11 až I-15, II-11 až II-13, II-15), v násobení
+    II-10 vybírá posunuté kopie hráč sám. Nové mechaniky: přísný Oltář (Grayův kód), kotouče
+    s glyfy, přenos o dvě místa, páka převrácení, miska zbytku. Obě patra mají všech 15 komnat.
+11. **Příprava na playtest a Akt III ✓:**
+    - učitelský režim na PIN (všechny komnaty otevřené) a přehled třídy ze souborů s postupem,
+    - statistiky komnat a jméno hráče v souboru s postupem (název souboru nese jméno),
+    - připomínka uložení po komnatě a značka na mapě (zelená = ukládá se do souboru),
+    - kvízy s losovanými čísly, správná odpověď napoprvé do pečeti přesnosti,
+    - pečeť odvahy bere jen ukázka kroku,
+    - šipky na desce Kaskády, šestnáctkový znak komnaty na mapě po Řeči glyfů,
+    - shrnutí patra k tisku,
+    - obsluha komnaty rozdělená podle archetypů (`src/ui/screens/level/`),
+    - úsporná grafika, kterou hra zapne sama, když se trhá (méně než 24 snímků za vteřinu).
+    Zbývá vyzkoušet na skutečném školním počítači.
+12. Akt III, Zahrada Bran: archetypy Brána a Deska zákona.

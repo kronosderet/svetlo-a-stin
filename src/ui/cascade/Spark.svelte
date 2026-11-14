@@ -5,12 +5,14 @@
     tone: 'carry' | 'spout';
     highlight?: boolean;
     wrong?: boolean;
+    /** Světlo z tohoto přenosu odteklo dál (do dalšího přenosu): krystal pohasne, ale zůstává rozsvícený. */
+    spent?: boolean;
     disabled?: boolean;
     label: string;
     onToggle: () => void;
   }
 
-  let { on, tone, highlight = false, wrong = false, disabled = false, label, onToggle }: Props = $props();
+  let { on, tone, highlight = false, wrong = false, spent = false, disabled = false, label, onToggle }: Props = $props();
 </script>
 
 <!-- Krystal přenosu: světlo, které přeteklo ze sloupce vpravo, dosedne do kamenné misky nad sloupcem. -->
@@ -19,6 +21,7 @@
   class="spark {tone}"
   class:on
   class:wrong
+  class:spent
   aria-pressed={on}
   aria-label={label}
   {disabled}
@@ -96,6 +99,11 @@
     transform: none;
     opacity: 1;
     filter: drop-shadow(0 0 5px rgba(255, 210, 130, 0.85)) drop-shadow(0 0 12px rgba(242, 170, 70, 0.45));
+  }
+  .on.spent .gem {
+    opacity: 0.32;
+    filter: none;
+    transition: opacity 420ms ease;
   }
   .spout .cup {
     border-radius: 40% 40% 50% 50%;

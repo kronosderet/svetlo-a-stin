@@ -2,10 +2,12 @@
   import { fade, fly } from 'svelte/transition';
   import Arrow from '../Arrow.svelte';
   import Glyph from '../Glyph.svelte';
+  import Icon from '../Icon.svelte';
   import Rich from '../Rich.svelte';
   import Seal from '../Seal.svelte';
   import { autofocus } from '../actions';
   import { openKodex } from '../../game/nav.svelte.ts';
+  import { fileLink, saveToFile } from '../../game/progressLink.svelte.ts';
   import { plural } from '../../game/text';
   import { settings } from '../../game/settings.svelte.ts';
   import type { KodexEntry, LevelDef } from '../../content/types';
@@ -39,7 +41,17 @@
         ? plural(result.moves, 'pokus', 'pokusy', 'pokusů')
         : plural(result.moves, 'tah', 'tahy', 'tahů'),
   );
-  const movesText = $derived(`${result.moves} ${unit} · ideál ${result.par}`);
+  const movesText = $derived(
+    `${result.moves} ${unit} · ideál ${result.par}${result.quizMistakes ? ` · kvíz ${result.quizMistakes}× vedle` : ''}`,
+  );
+  /** Pečeť odvahy bere jen nápověda, která ukázala konkrétní krok; obecné náznaky ne. */
+  const courageText = $derived(
+    result.stepHints
+      ? `ukázka kroku ${result.stepHints}×`
+      : result.hintsUsed
+        ? `jen ${plural(result.hintsUsed, 'náznak', 'náznaky', 'náznaků')}, bez ukázky`
+        : 'bez nápovědy',
+  );
 </script>
 
 <div class="wrap" transition:fade={{ duration: 200 * m }}>
@@ -75,7 +87,7 @@
       <Seal
         earned={result.seals.pure}
         title="Pečeť odvahy"
-        caption={result.hintsUsed ? `nápověda ${result.hintsUsed}×` : 'bez nápovědy'}
+        caption={courageText}
         icon="drop"
       />
     </div>
@@ -102,6 +114,17 @@
         <button type="button" class="btn btn-primary" onclick={onMap} use:autofocus>Zpět na mapu</button>
       {/if}
     </div>
+
+    <!-- Připomínka: postup v prohlížeči školního počítače se po odhlášení ztratí. -->
+    {#if fileLink.name}
+      <p class="save-note saved"><Icon name="check" size={16} /> Postup se průběžně ukládá do souboru {fileLink.name}.</p>
+    {:else}
+      <p class="save-note">
+        Postup je zatím jen v tomto prohlížeči.
+        <button type="button" class="link-btn" onclick={() => saveToFile()}><Icon name="save" size={16} /> Ulož si ho do souboru</button>
+      </p>
+    {/if}
+    {#if fileLink.message && !fileLink.name}<p class="save-note" class:err={fileLink.error} role="status">{fileLink.message}</p>{/if}
 
     {#if floorDone && hasNext}
       <p class="proto">
@@ -266,6 +289,38 @@
     flex-wrap: wrap;
     justify-content: center;
     gap: 10px;
+  }
+  .save-note {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 4px 10px;
+    margin: 14px 0 0;
+    font-size: var(--fs-sm);
+    color: var(--text-muted);
+  }
+  .save-note.saved {
+    color: var(--ok);
+  }
+  .save-note.err {
+    color: var(--warn);
+  }
+  .link-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border: 1px solid var(--lumen);
+    border-radius: 4px;
+    background: transparent;
+    font: inherit;
+    font-weight: 700;
+    color: var(--lumen);
+    cursor: pointer;
+  }
+  .link-btn:hover {
+    background: rgba(255, 217, 138, 0.1);
   }
   .proto {
     margin: 16px 0 0;

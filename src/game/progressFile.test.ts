@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { covers, parseProgress, roomCount, serializeProgress } from './progressFile';
+import { covers, fileNameFor, parseProgress, roomCount, serializeProgress } from './progressFile';
 import type { ProgressData } from './progress.svelte.ts';
 
 const LEVELS = ['I-1', 'I-2', 'I-3', 'I-6', 'I-7', 'I-8', 'II-6', 'II-14'];
@@ -8,6 +8,8 @@ const KODEX = ['jiskra', 'svit-stin', 'podoby'];
 const sample: ProgressData = {
   version: 1,
   layout: 2,
+  name: 'Jana',
+  stats: { 'I-1': { entered: 2, solved: 1, extra: 0, hints: 1, stepHints: 0, quizMistakes: 0 } },
   levels: {
     'I-1': { seals: { solved: true, skill: true, pure: true } },
     'I-2': { seals: { solved: true, skill: false, pure: true } },
@@ -43,6 +45,8 @@ describe('soubor s postupem', () => {
     expect(r.ok && r.data).toEqual({
       version: 1,
       layout: 2,
+      name: '',
+      stats: {},
       levels: { 'I-1': { seals: { solved: true, skill: false, pure: true } } },
       kodex: ['jiskra'],
       seen: [],
@@ -70,5 +74,23 @@ describe('soubor s postupem', () => {
     const worse: ProgressData = { ...sample, levels: { ...sample.levels, 'I-1': { ...sample.levels['I-1'], seals: { solved: true, skill: false, pure: true } } } };
     expect(covers(worse, sample)).toBe(false);
     expect(roomCount(more)).toBe(3);
+  });
+});
+
+describe('soubor s postupem: jméno a statistiky', () => {
+  it('název souboru nese jméno hráče bez zakázaných znaků', () => {
+    expect(fileNameFor('')).toBe('Svetlo-a-Stin-postup.json');
+    expect(fileNameFor('Jana Nová')).toBe('Svetlo-a-Stin-postup-Jana-Nová.json');
+    expect(fileNameFor('a/b:c')).toBe('Svetlo-a-Stin-postup-abc.json');
+  });
+
+  it('statistiky z cizího souboru projdou jen jako nezáporná celá čísla', () => {
+    const text = JSON.stringify({
+      format: 'svetlo-a-stin-postup',
+      postup: { layout: 2, name: '  Petr  ', levels: {}, stats: { 'I-1': { entered: 3.7, solved: -1, extra: 'x' }, 'IX-1': { entered: 1 } } },
+    });
+    const r = parseProgress(text, LEVELS, KODEX);
+    expect(r.ok && r.data.name).toBe('Petr');
+    expect(r.ok && r.data.stats).toEqual({ 'I-1': { entered: 3, solved: 0, extra: 0, hints: 0, stepHints: 0, quizMistakes: 0 } });
   });
 });

@@ -5,8 +5,8 @@
  */
 import { KODEX } from '../content/kodex';
 import { LEVELS } from '../content/levels';
-import { FILE_NAME, covers, parseProgress, roomCount, serializeProgress } from './progressFile';
-import { onProgressSaved, progressSnapshot, replaceProgress, type ProgressData } from './progress.svelte.ts';
+import { covers, fileNameFor, parseProgress, roomCount, serializeProgress } from './progressFile';
+import { onProgressSaved, progress, progressSnapshot, replaceProgress, type ProgressData } from './progress.svelte.ts';
 import { plural } from './text';
 
 interface Writable {
@@ -83,7 +83,7 @@ export async function saveToFile(): Promise<void> {
   const showSave = pickers().showSaveFilePicker;
   if (typeof showSave === 'function') {
     try {
-      const h = await showSave.call(window, { suggestedName: FILE_NAME, types: TYPES });
+      const h = await showSave.call(window, { suggestedName: fileNameFor(progress.name), types: TYPES });
       await writeTo(h);
       link(h);
       say(`Uloženo do souboru ${h.name}. Po každé komnatě se postup do souboru doplní sám.`);
@@ -95,12 +95,12 @@ export async function saveToFile(): Promise<void> {
   const url = URL.createObjectURL(new Blob([serializeProgress(progressSnapshot())], { type: 'application/json' }));
   const a = document.createElement('a');
   a.href = url;
-  a.download = FILE_NAME;
+  a.download = fileNameFor(progress.name);
   document.body.append(a);
   a.click();
   a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 2000);
-  say(`Soubor ${FILE_NAME} se stáhl. Ulož si ho do svého OneDrive nebo na Disk Google.`);
+  say(`Soubor ${fileNameFor(progress.name)} se stáhl. Ulož si ho do svého OneDrive nebo na Disk Google.`);
 }
 
 /** Otevře okno pro výběr souboru. Vrací false, když to prohlížeč neumí (pak poslouží <input type="file">). */

@@ -12,6 +12,7 @@ import {
   toggle,
   type CascadeConfig,
   type CascadeState,
+  wallRows,
 } from './cascade';
 
 /** Rozsvítí výsledek a přenosy podle masek (pomůcka pro testy). */
@@ -139,5 +140,53 @@ describe('Kaskáda: násobení', () => {
     const a = answer(cfg, cfg.tasks[0]);
     expect(a.result).toBe(35);
     expect(a.maxCarry).toBe(1);
+  });
+});
+
+describe('Kaskáda: násobení s výběrem kopií', () => {
+  const cfg: CascadeConfig = { width: 6, bits: 3, carries: 'manual', pickCopies: true, tasks: [{ op: 'mul', operands: [5, 3] }] };
+
+  it('stěna nabídne kopii pro každé místo druhého činitele', () => {
+    expect(wallRows(cfg, cfg.tasks[0])).toEqual([5, 10, 20]);
+  });
+
+  it('nejdřív se kontrolují kopie: patří k jedničkám druhého činitele', () => {
+    let st = initCascade();
+    expect(firstWrong(cfg, st)).toEqual({ row: 'copy', column: 0 });
+    st = toggle(cfg, st, { row: 'copy', column: 0 }).state;
+    st = toggle(cfg, st, { row: 'copy', column: 2 }).state;
+    expect(firstWrong(cfg, st)).toEqual({ row: 'copy', column: 1 });
+    const r = confirm(cfg, st);
+    expect(r.events[0]).toMatchObject({ type: 'wrong', cell: { row: 'copy', column: 1 }, expected: true });
+  });
+
+  it('se správnými kopiemi se sčítá jako obvykle', () => {
+    let st = initCascade();
+    st = toggle(cfg, st, { row: 'copy', column: 0 }).state;
+    st = toggle(cfg, st, { row: 'copy', column: 1 }).state;
+    // Živé počty sčítají jen rozsvícené kopie: 5 a 20 mají světlo ve třetím sloupci, 10 ne.
+    expect(liveInflow(cfg.tasks[0], 0, 2, { cfg, copies: 0b101 })).toBe(2);
+    expect(liveInflow(cfg.tasks[0], 0, 2, { cfg, copies: st.copies })).toBe(1);
+    const ans = answer(cfg, cfg.tasks[0]);
+    st = fill(cfg, st, ans.result, ans.carries);
+    expect(confirm(cfg, st).state.complete).toBe(true);
+  });
+});
+
+describe('Kaskáda: tři řady a přenos o dvě místa', () => {
+  const cfg: CascadeConfig = { width: 6, bits: 4, carries: 'manual', farCarries: true, tasks: [{ op: 'add', operands: [15, 15, 15] }] };
+
+  it('čtyři a pět světel ve sloupci posílají světlo o dvě místa', () => {
+    const ans = answer(cfg, cfg.tasks[0]);
+    expect(ans.result).toBe(45);
+    expect(ans.inflow.slice(0, 4)).toEqual([3, 4, 3, 5]);
+    expect(ans.far).toBe((1 << 3) | (1 << 5));
+    expect(ans.carries).toBe((1 << 1) | (1 << 3));
+  });
+
+  it('chybějící přenos o dvě místa najde kontrola dřív než výsledek ve stejném sloupci', () => {
+    const ans = answer(cfg, cfg.tasks[0]);
+    const st = fill(cfg, initCascade(), ans.result, ans.carries);
+    expect(firstWrong(cfg, st)).toEqual({ row: 'far', column: 3 });
   });
 });

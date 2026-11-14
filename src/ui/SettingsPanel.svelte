@@ -3,14 +3,38 @@
   import Icon from './Icon.svelte';
   import ProgressFile from './ProgressFile.svelte';
   import { autofocus } from './actions';
-  import { ui } from '../game/nav.svelte.ts';
-  import { resetProgress } from '../game/progress.svelte.ts';
+  import { go, ui } from '../game/nav.svelte.ts';
+  import { progress, resetProgress, setName } from '../game/progress.svelte.ts';
   import { unlinkFile } from '../game/progressLink.svelte.ts';
-  import { saveSettings, settings, type Settings } from '../game/settings.svelte.ts';
+  import { TEACHER_PIN, saveSettings, settings, type Settings } from '../game/settings.svelte.ts';
   import { unlock } from '../audio/sound';
 
   let confirmReset = $state(false);
   let resetDone = $state(false);
+  let pin = $state('');
+  let pinWrong = $state(false);
+
+  function teacherOn(e: SubmitEvent) {
+    e.preventDefault();
+    if (pin.trim() !== TEACHER_PIN) {
+      pinWrong = true;
+      return;
+    }
+    settings.teacher = true;
+    saveSettings();
+    pin = '';
+    pinWrong = false;
+  }
+
+  function teacherOff() {
+    settings.teacher = false;
+    saveSettings();
+  }
+
+  function openOverview() {
+    close();
+    go({ name: 'teacher' });
+  }
 
   const m = $derived(settings.reducedMotion ? 0 : 1);
 
@@ -20,8 +44,13 @@
     resetDone = false;
   }
 
-  function flip(key: keyof Settings) {
+  function flip(key: 'sound' | 'alwaysDigits' | 'alwaysWeights' | 'reducedMotion' | 'lite') {
     settings[key] = !settings[key];
+    // Kdo úspornou grafiku přepne sám, tomu ji hra už sama nezapne.
+    if (key === 'lite') {
+      settings.liteAuto = false;
+      settings.liteSet = true;
+    }
     saveSettings();
     if (key === 'sound' && settings.sound) unlock();
   }
@@ -45,7 +74,7 @@
 
 <svelte:window onkeydown={onKey} />
 
-{#snippet toggle(key: keyof Settings, label: string, desc: string)}
+{#snippet toggle(key: 'sound' | 'alwaysDigits' | 'alwaysWeights' | 'reducedMotion' | 'lite', label: string, desc: string)}
   <div class="row">
     <div class="row-text">
       <p class="label" id="lbl-{key}">{label}</p>
@@ -80,10 +109,61 @@
       {@render toggle('alwaysDigits', 'Vždy ukazovat 0 a 1', 'Číslice pod krystaly i v komnatách, kde je Kodex ještě nepřeložil.')}
       {@render toggle('alwaysWeights', 'Vždy ukazovat váhy', 'Váhy krystalů i v komnatách, kde už zmizely. Opora pro ty, kdo si řadu 1, 2, 4, 8… ještě nepamatují.')}
       {@render toggle('reducedMotion', 'Omezit animace', 'Vypne pohyb pozadí, částice a přechody.')}
+      {@render toggle(
+        'lite',
+        'Úsporná grafika',
+        settings.liteAuto
+          ? 'Zapnula se sama, protože se hra na tomto počítači trhala. Bez rozostření a částic.'
+          : 'Bez rozostření a částic. Pomůže na pomalejších počítačích.',
+      )}
+
+      <div class="row name-row">
+        <label class="row-text" for="player-name">
+          <span class="label">Tvé jméno pro učitele</span>
+          <span class="desc">Uloží se do souboru s postupem, aby ho učitel v přehledu třídy poznal. Nepovinné.</span>
+        </label>
+        <input
+          id="player-name"
+          class="text-input"
+          type="text"
+          maxlength="40"
+          autocomplete="off"
+          value={progress.name}
+          onchange={(e) => setName(e.currentTarget.value)}
+        />
+      </div>
 
       <div class="file-row">
         <ProgressFile />
       </div>
+
+      <section class="teacher" aria-labelledby="teacher-title">
+        <h3 id="teacher-title"><Icon name="teacher" size={18} /> Učitelský režim</h3>
+        {#if settings.teacher}
+          <p class="desc">Zapnuto: všechna patra i komnaty jsou otevřené, ať jde ukázat cokoli.</p>
+          <div class="teacher-actions">
+            <button type="button" class="btn btn-primary" onclick={openOverview}>Přehled třídy</button>
+            <button type="button" class="btn btn-ghost" onclick={teacherOff}>Vypnout</button>
+          </div>
+        {:else}
+          <form class="pin" onsubmit={teacherOn}>
+            <label class="visually-hidden" for="teacher-pin">PIN učitelského režimu</label>
+            <input
+              id="teacher-pin"
+              class="text-input"
+              type="password"
+              inputmode="numeric"
+              autocomplete="off"
+              placeholder="PIN"
+              maxlength="8"
+              bind:value={pin}
+              oninput={() => (pinWrong = false)}
+            />
+            <button type="submit" class="btn btn-ghost">Zapnout</button>
+          </form>
+          {#if pinWrong}<p class="desc err" role="status">Nesprávný PIN.</p>{/if}
+        {/if}
+      </section>
 
       <div class="danger">
         <button type="button" class="btn btn-ghost" class:confirm={confirmReset} onclick={reset}>
@@ -107,7 +187,58 @@
   .modal {
     position: relative;
     width: min(480px, 100%);
+    max-height: calc(100dvh - 32px);
+    overflow-y: auto;
     padding: 18px 22px 22px;
+  }
+  .name-row label {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .text-input {
+    width: 170px;
+    min-height: 40px;
+    padding: 6px 10px;
+    border: 1px solid var(--stone-400);
+    border-radius: 6px;
+    background: rgba(0, 0, 0, 0.35);
+    font: inherit;
+    font-size: var(--fs-md);
+    color: var(--text);
+  }
+  .text-input:focus-visible {
+    outline: 2px solid var(--lumen);
+    outline-offset: 2px;
+  }
+  .teacher {
+    margin-top: 18px;
+    padding-top: 14px;
+    border-top: 2px solid rgba(0, 0, 0, 0.35);
+  }
+  .teacher h3 {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0 0 8px;
+    font-size: var(--fs-md);
+    color: var(--text);
+  }
+  .teacher .desc {
+    margin: 0 0 10px;
+  }
+  .teacher .err {
+    color: var(--warn);
+  }
+  .pin,
+  .teacher-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .pin .text-input {
+    width: 120px;
+    letter-spacing: 0.3em;
   }
   header {
     display: flex;

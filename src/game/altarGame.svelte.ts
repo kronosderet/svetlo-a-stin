@@ -40,7 +40,7 @@ export class AltarGame extends BaseGame<AltarLevel> {
     if (events.length === 0) return;
 
     // Undo funguje jen v rámci aktuálního cíle; splněný cíl se nevrací.
-    const advanced = events.some((e) => e.type === 'step' || e.type === 'found');
+    const advanced = events.some((e) => e.type === 'step' || e.type === 'found' || e.type === 'reset');
     this.history = advanced ? [] : [...this.history, before];
     if (advanced) this.hintLevel = 0;
     this.state = state;

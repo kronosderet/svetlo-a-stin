@@ -56,6 +56,45 @@ export function genI7(rng: Rng): InscriptionConfig {
   return { bits: 4, tasks: [write(w1), read(r1), write(w2), read(r2), write(15)] };
 }
 
+/** Zápis a čtení střídavě na n krystalech; hodnoty jsou různé a mají aspoň tři světla. */
+function mixedInscription(rng: Rng, bits: number, dirs: ('read' | 'write')[], lo: number, hi: number, radix?: 16): InscriptionConfig {
+  const values = sequence(rng, dirs.length, () => int(rng, lo, hi), (v) => popcount(v) >= 3);
+  return { bits, ...(radix ? { radix } : {}), tasks: values.map((v, k) => (dirs[k] === 'read' ? read(v) : write(v))) };
+}
+
+/** I-12, Velký nápis: oktáva, zápis a čtení střídavě. */
+export function genI12(rng: Rng): InscriptionConfig {
+  return mixedInscription(rng, 8, ['write', 'read', 'write', 'read', 'write'], 40, 250);
+}
+
+/** I-13, Řeč glyfů: šest čtveřic, aspoň tři glyfy s písmenem (A–F). */
+export function genI13(rng: Rng): InscriptionConfig {
+  const dirs = ['read', 'read', 'write', 'read', 'write', 'read'] as const;
+  const values = until(
+    () => sequence(rng, 6, () => int(rng, 1, 15), (v, k, prev) => k === 0 || v !== prev[k - 1]),
+    (vs) => vs.filter((v) => v >= 10).length >= 3 && vs.some((v) => v < 10),
+  );
+  return { bits: 4, radix: 16, tasks: values.map((v, k) => (dirs[k] === 'read' ? read(v) : write(v))) };
+}
+
+/** I-14, Dvojznak: oktáva dvěma glyfy, čtení a zápis střídavě. */
+export function genI14(rng: Rng): InscriptionConfig {
+  return until(
+    () => mixedInscription(rng, 8, ['read', 'write', 'read', 'write', 'read'], 17, 254, 16),
+    (cfg) => cfg.tasks.filter((t) => t.value >> 4 >= 10 || (t.value & 15) >= 10).length >= 3,
+  );
+}
+
+/** I-15, velká brána Předsíně (oktáva): zápis, čtení, zápis. */
+export function genI15Octave(rng: Rng): InscriptionConfig {
+  return mixedInscription(rng, 8, ['write', 'read', 'write'], 60, 250);
+}
+
+/** I-15, velká brána Předsíně (glyfy): čtení, zápis, čtení dvěma glyfy. */
+export function genI15Glyphs(rng: Rng): InscriptionConfig {
+  return mixedInscription(rng, 8, ['read', 'write', 'read'], 17, 254, 16);
+}
+
 // --- Akt II ---
 
 /** II-2: čtyři součty bez přenosu. */
@@ -196,7 +235,7 @@ export function genII9(rng: Rng): TideConfig {
 
 /** II-10: po ukázce 5 × 3 dva součiny trojmístného čísla a čísla se dvěma jedničkami, aspoň s jedním přenosem. */
 export function genII10(rng: Rng): CascadeConfig {
-  const base: CascadeConfig = { width: 6, bits: 3, carries: 'manual', tasks: [] };
+  const base: CascadeConfig = { width: 6, bits: 3, carries: 'manual', pickCopies: true, tasks: [] };
   const rest = sequence(
     rng,
     2,
@@ -258,6 +297,112 @@ export function genII14(rng: Rng): TideConfig {
         (t) => `${t.start}>${t.target}`,
       ),
     (ts) => ts.some((t) => hintPath(base, t).ops.includes('dec')) && ts.some((t) => hintPath(base, t).ops.includes('shr')),
+  );
+  return { ...base, tasks };
+}
+
+/** II-11, Dělení posunem: dělí se 4, 8, 2 a 16; aspoň jednou beze zbytku, jinak zbytek padá do misky. */
+export function genII11(rng: Rng): TideConfig {
+  const shifts = [2, 3, 1, 4];
+  const tasks = until(
+    () =>
+      shifts.map((k) => {
+        const start = int(rng, Math.max(13, 3 << k), 63);
+        return { start, target: start >> k, show: `÷ ${2 ** k}` };
+      }),
+    (ts) => {
+      const rems = ts.map((t, k) => t.start & ((1 << shifts[k]) - 1));
+      return rems[0] !== 0 && rems.filter((r) => r === 0).length === 1 && new Set(ts.map((t) => t.start)).size === ts.length;
+    },
+  );
+  return { bits: 6, ops: ['shr'], tasks };
+}
+
+/** II-12, Tři řady: dvě losované trojice se sloupcem čtyř a víc světel; na konci vždy 15 + 15 + 15. */
+export function genII12(rng: Rng): CascadeConfig {
+  const base: CascadeConfig = { width: 6, bits: 4, carries: 'manual', farCarries: true, tasks: [] };
+  const last = add3(15, 15, 15);
+  const first = sequence(
+    rng,
+    2,
+    () => add3(int(rng, 3, 15), int(rng, 3, 15), int(rng, 3, 15)),
+    (t, k) => {
+      const ans = answer(base, t);
+      if (k === 0) return ans.far === 0 && popcount(ans.carries) >= 2;
+      return ans.far !== 0 && t.operands.some((o) => o !== 15);
+    },
+    (t) => [...t.operands].sort((x, y) => x - y).join('+'),
+  );
+  return { ...base, tasks: [...first, last] };
+}
+
+function add3(a: number, b: number, c: number): CascadeTask {
+  return { op: 'add', operands: [a, b, c] };
+}
+
+/** II-13, Doplněk (záporná čísla): tři různá čísla do 7 převrátit a přidat jednu. */
+export function genII13Negate(rng: Rng): TideConfig {
+  const values = sequence(rng, 3, () => int(rng, 1, 7));
+  return { bits: 4, ops: ['not', 'inc'], tasks: values.map((b) => ({ start: b, target: (16 - b) & 15, show: `−${b}` })) };
+}
+
+/** II-13, Doplněk (odčítání sčítáním): a + doplněk b v nádobě se čtyřmi krystaly, přetečení do přepadu. */
+export function genII13Add(rng: Rng): CascadeConfig {
+  const base: CascadeConfig = { width: 4, carries: 'manual', overflow: true, tasks: [] };
+  const tasks = sequence(
+    rng,
+    3,
+    () => {
+      const a = int(rng, 3, 15);
+      const b = int(rng, 1, a - 1);
+      return add(a, (16 - b) & 15);
+    },
+    (t) => carryCount(base, t) >= 2,
+    pairKey,
+  );
+  return { ...base, tasks };
+}
+
+/** II-15, velká brána Síně (odliv): dva pětimístné rozdíly s několika výpůjčkami. */
+export function genII15Sub(rng: Rng): CascadeConfig {
+  const base: CascadeConfig = { width: 5, carries: 'manual', tasks: [] };
+  const tasks = sequence(
+    rng,
+    2,
+    () => {
+      const a = int(rng, 9, 31);
+      return sub(a, int(rng, 1, a - 1));
+    },
+    (t) => carryCount(base, t) >= 2,
+  );
+  return { ...base, tasks };
+}
+
+/** II-15, velká brána Síně (násobení): dva součiny s výběrem kopií. */
+export function genII15Mul(rng: Rng): CascadeConfig {
+  const base: CascadeConfig = { width: 6, bits: 3, carries: 'manual', pickCopies: true, tasks: [] };
+  const tasks = sequence(
+    rng,
+    2,
+    () => mul(pick(rng, [3, 5, 6, 7]), pick(rng, [3, 5, 6])),
+    (t) => carryCount(base, t) >= 1,
+  );
+  return { ...base, tasks };
+}
+
+/** II-15, velká brána Síně (Váhy Osudu): vyvážení na tři a na čtyři tahy, bez přetočení. */
+export function genII15Fate(rng: Rng): TideConfig {
+  const base: TideConfig = { bits: 6, ops: FATE_OPS, strict: true, tasks: [] };
+  const tasks = sequence(
+    rng,
+    2,
+    () => ({ start: int(rng, 2, 62), target: int(rng, 2, 62) }),
+    (t, k) => {
+      if (t.start === t.target) return false;
+      const d = distance(base, t.start, t.target);
+      return d === 3 + k && d === distanceNoWrap(6, t.start, t.target) && !hintPath(base, t).wraps;
+    },
+    (t) => `${t.start}>${t.target}`,
   );
   return { ...base, tasks };
 }
