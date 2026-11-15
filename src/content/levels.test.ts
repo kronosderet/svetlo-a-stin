@@ -351,9 +351,13 @@ for (const act of ACTS) {
       });
     }
 
-    it('základní cesta má komnaty 1–7, Hlubší síně čísla 8–15 vzestupně', () => {
+    it('základní cesta má nultou komnatu a komnaty 1–7, Hlubší síně čísla 8–15 vzestupně', () => {
       const basic = act.levels.filter((l) => !isAdvanced(l.id));
-      expect(basic.map((l) => l.id)).toEqual(Array.from({ length: GATE }, (_, k) => `${act.numeral}-${k + 1}`));
+      expect(basic.map((l) => l.id)).toEqual(Array.from({ length: GATE + 1 }, (_, k) => `${act.numeral}-${k}`));
+      // Nultá komnata jen ukáže nápad patra: žádný kvíz ani záznam Kodexu.
+      const zero = basic[0];
+      expect(zero.kodex).toBeUndefined();
+      expect(zero.kind !== 'mixed' && zero.quiz).toBeFalsy();
       const deep = act.levels.filter((l) => isAdvanced(l.id)).map((l) => roomNumber(l.id));
       // Patra I a II mají Hlubší síně celé, další se doplňují.
       expect(deep).toEqual([8, 9, 10, 11, 12, 13, 14, 15]);
@@ -390,10 +394,13 @@ describe('celá observatoř', () => {
   });
 
   it('základní cesta vede přes bránu do dalšího patra, Hlubší síně jdou po sobě', () => {
+    expect(nextLevelId('I-0')).toBe('I-1');
     expect(nextLevelId('I-1')).toBe('I-2');
     expect(nextLevelId('I-6')).toBe('I-7');
-    expect(nextLevelId('I-7')).toBe('II-1');
-    expect(nextLevelId('II-7')).toBe('III-1');
+    expect(nextLevelId('I-7')).toBe('II-0');
+    expect(nextLevelId('II-0')).toBe('II-1');
+    expect(nextLevelId('II-7')).toBe('III-0');
+    expect(nextLevelId('III-0')).toBe('III-1');
     expect(nextLevelId('III-7')).toBeNull();
     expect(nextLevelId('III-14')).toBe('III-15');
     expect(nextLevelId('III-15')).toBeNull();
@@ -403,7 +410,7 @@ describe('celá observatoř', () => {
     expect(nextLevelId('II-10')).toBe('II-11');
     expect(nextLevelId('II-14')).toBe('II-15');
     expect(nextLevelId('II-15')).toBeNull();
-    expect(BASIC_PATH.map((l) => l.id)).toHaveLength(21);
+    expect(BASIC_PATH.map((l) => l.id)).toHaveLength(24);
     expect(actOf('II-3').numeral).toBe('II');
     expect(ACTS[ACTS.length - 1].nextAct).toBeDefined();
     ACTS.slice(0, -1).forEach((a) => expect(a.nextAct).toBeUndefined());

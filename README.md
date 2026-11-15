@@ -3,8 +3,9 @@
 Didaktická hra o binární matematice, logice a výpočtech v atmosféře zapomenuté civilizace.
 Cílová skupina: sexta gymnázia. Herní design a plán vývoje jsou v [PLAN.md](PLAN.md).
 
-**Stav:** prototyp, Akty I až III, 45 komnat. Každé patro má základní cestu 1–7 (komnata 7 je
-brána) a nepovinné Hlubší síně 8–15 (komnata 15 je velká brána).
+**Stav:** prototyp, Akty I až III, 48 komnat. Každé patro začíná nultou komnatou, která ukáže
+základní nápad patra jednoduchou hrou, pokračuje základní cestou 1–7 (komnata 7 je brána)
+a má nepovinné Hlubší síně 8–15 (komnata 15 je velká brána).
 Akt I, Předsíň Prvního Světla: základ (bit, kombinace 2ⁿ, poziční hodnota, převody oběma
 směry), Hlubší síně (pátý krystal, přenos, bajt, Grayův kód, šestnáctková soustava a glyfy).
 Akt II, Síň Počtářů: základ (sčítání s přenosem, přetečení, posuny ×2 a ÷2, smíšená brána),

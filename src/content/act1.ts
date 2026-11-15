@@ -3,8 +3,9 @@ import { qBitsFor, qByteHex, qCombosNext, qCombosOf, qFlips, qGlyphOf, qGlyphWei
 import type { ActDef, LevelDef } from './types';
 
 const levels: LevelDef[] = [
+  // Nultá komnata patra: základní nápad jedním dotekem. Glyf 0000, z kola se teprve probouzí.
   {
-    id: 'I-1',
+    id: 'I-0',
     title: 'Probuzení',
     kind: 'altar',
     config: { bits: 1, goal: { kind: 'pattern', targets: [1] }, reveal: 'never' },
@@ -16,10 +17,28 @@ const levels: LevelDef[] = [
     ],
     echo: {
       intro: ['…{{ticho}}… {{věky}} ticha…', 'Někdo přišel. Dotkni se krystalu.'],
+      solved: ['Světlo. Po tak dlouhé době.', 'Observatoř se probouzí.'],
+    },
+  },
+  {
+    id: 'I-1',
+    title: 'Ticho',
+    kind: 'altar',
+    config: { bits: 1, goal: { kind: 'pattern', targets: [1, 0, 1] }, reveal: 'never' },
+    presentation: { task: 'Napodob krystal ve stěně.', showDigits: false, showSum: false, sizes: 'equal', ledger: false },
+    hints: [
+      'Porovnej krystal s reliéfem ve stěně.',
+      'Když krystal ve stěně svítí, rozsviť ho. Když mlčí, zhasni ho.',
+      'Krystal je zvýrazněný. Stačí na něj kliknout.',
+    ],
+    echo: {
+      intro: ['Krystal umí svítit. Umí ale i mlčet.', 'Stěna si pamatuje, jak kdysi zářil. Napodob ji.'],
+      step: { 0: 'Svítí. Teď stěna ztichla.', 1: 'Mlčí. I ticho je zpráva.' },
       solved: [
-        'Světlo. Po tak dlouhé době.',
-        'Jeden krystal: svítí, nebo mlčí. Nic mezi tím. Na tomhle stála celá věda Lumenitů.',
+        'Jeden krystal: svítí, nebo mlčí. Nic mezi tím.',
+        'Na tomhle stála celá věda Lumenitů.',
       ],
+      skill: 'Ani jeden zbytečný dotek.',
     },
     kodex: 'jiskra',
   },

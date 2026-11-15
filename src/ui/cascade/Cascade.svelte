@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { tick, untrack } from 'svelte';
   import { fade, fly } from 'svelte/transition';
   import Crystal from '../Crystal.svelte';
   import Gem from '../Gem.svelte';
@@ -8,7 +9,17 @@
   import CascadeLedger from './CascadeLedger.svelte';
   import Spark from './Spark.svelte';
   import { isBitSet, toBinaryString } from '../../core/bits';
-  import { carryColumns, farColumns, liveInflow, wallRows, wallShifts } from '../../core/puzzles/cascade';
+  import {
+    carryColumns,
+    farColumns,
+    lightFlow,
+    liveInflow,
+    wallRows,
+    wallShifts,
+    type FlowMove,
+    type FlowSink,
+    type FlowSource,
+  } from '../../core/puzzles/cascade';
   import { settings } from '../../game/settings.svelte.ts';
   import type { CascadeGame } from '../../game/cascadeGame.svelte.ts';
   import { aidOn } from '../../content/types';
@@ -82,31 +93,82 @@
   }
 
   /**
-   * Sčítání: co odteče do přenosu, ve sloupci pohasne. Krystal přenosu nad sloupcem i + 1 odnese
-   * ze sloupce i dvě světla (přenos o dvě místa čtyři), takže je vidět, že 1 + 1 = 10.
-   * Bere se shora: nejdřív krystaly řad, pak přenosy, které do sloupce samy přitekly.
+   * Světla se přesouvají podle toho, co hráč rozsvítil (lightFlow): do krystalu výsledku sjede
+   * nejspodnější světlo sloupce, do krystalu přenosu odletí dvě světla shora, u odčítání se menšitel
+   * vyruší a soused půjčuje. Světlo, které odešlo, ve sloupci pohasne a jeho kopie dolétne do cíle.
    */
-  const spent = $derived.by(() => {
-    const out = { lines: new Set<string>(), carry: new Set<number>(), far: new Set<number>() };
-    if (sub || cfg.carries !== 'manual') return out;
-    for (const i of columns) {
-      let need =
-        (carryCols.includes(i + 1) && isBitSet(view.carries, i + 1) ? 2 : 0) +
-        (farCols.includes(i + 2) && isBitSet(view.far, i + 2) ? 4 : 0);
-      for (let j = 0; j < lines.length && need > 0; j++) {
-        if (pick && !isBitSet(view.copies, j)) continue;
-        if (!shown(j, i) || !isBitSet(lines[j], i)) continue;
-        out.lines.add(`${j}:${i}`);
-        need--;
-      }
-      if (need > 0 && farCols.includes(i) && isBitSet(view.far, i)) {
-        out.far.add(i);
-        need--;
-      }
-      if (need > 0 && carryCols.includes(i) && isBitSet(view.carries, i)) out.carry.add(i);
-    }
-    return out;
+  const flow = $derived(lightFlow(cfg, task, view));
+  const srcKey = (f: FlowSource): string =>
+    f.kind === 'line' ? `line:${f.row}:${f.column}` : f.kind === 'loan' ? `loan:${f.column}:${f.k}` : `${f.kind}:${f.column}`;
+  const sinkKey = (t: FlowSink): string => `${t.kind}:${t.column}`;
+  const spentKeys = $derived(new Set(flow.map((mv) => srcKey(mv.from))));
+  const isSpent = (key: string): boolean => spentKeys.has(key);
+
+  /** Kopie světla, které právě letí na nové místo (nad deskou, jen pro oko). */
+  interface Flight {
+    id: number;
+    x: number;
+    y: number;
+    dx: number;
+    dy: number;
+    delay: number;
+  }
+  let flights: Flight[] = $state([]);
+  let flightId = 0;
+  /** Přesuny, které už deska ukázala (nové se ukážou letem, zrušené jen znovu rozsvítí zdroj). */
+  let shownMoves = new Set<string>();
+  let shownTaskKey = '';
+  const FLYING = new Set<FlowSink['kind']>(['result', 'carry', 'far']);
+  const moveKey = (mv: FlowMove): string => `${srcKey(mv.from)}>${sinkKey(mv.to)}`;
+
+  $effect(() => {
+    const moves = flow;
+    const key = `${shownStep}:${JSON.stringify(task)}`;
+    untrack(() => {
+      const fresh = key === shownTaskKey ? moves.filter((mv) => FLYING.has(mv.to.kind) && !shownMoves.has(moveKey(mv))) : [];
+      shownTaskKey = key;
+      shownMoves = new Set(moves.map(moveKey));
+      if (!fresh.length || !m) return;
+      tick().then(() => launch(fresh));
+    });
   });
+
+  /** Pošle kopie světel z jejich buněk do cílových krystalů (souřadnice v rámci mřížky). */
+  function launch(moves: FlowMove[]) {
+    const grid = gridEl;
+    if (!grid) return;
+    const box = grid.getBoundingClientRect();
+    const centre = (key: string) => {
+      const r = grid.querySelector(`[data-flow="${key}"]`)?.getBoundingClientRect();
+      return r ? { x: r.left + r.width / 2 - box.left, y: r.top + r.height / 2 - box.top } : null;
+    };
+    const perSink = new Map<string, number>();
+    const next: Flight[] = [];
+    for (const mv of moves) {
+      const a = centre(srcKey(mv.from));
+      const b = centre(sinkKey(mv.to));
+      if (!a || !b) continue;
+      const order = perSink.get(sinkKey(mv.to)) ?? 0;
+      perSink.set(sinkKey(mv.to), order + 1);
+      next.push({ id: ++flightId, x: a.x, y: a.y, dx: b.x - a.x, dy: b.y - a.y, delay: order * 90 });
+    }
+    flights = [...flights, ...next];
+  }
+
+  /** Let kopie světla: vyrazí ze zdroje, doletí do cíle a tam se rozplyne v krystalu. */
+  function flightPath(node: HTMLElement, f: Flight) {
+    const end = `translate(calc(-50% + ${f.dx}px), calc(-50% + ${f.dy}px))`;
+    const anim = node.animate(
+      [
+        { transform: 'translate(-50%, -50%) scale(1)', opacity: 1 },
+        { transform: `${end} scale(0.9)`, opacity: 1, offset: 0.82 },
+        { transform: `${end} scale(0.6)`, opacity: 0 },
+      ],
+      { duration: 620, delay: f.delay, easing: 'cubic-bezier(0.45, 0, 0.3, 1)', fill: 'both' },
+    );
+    anim.onfinish = () => (flights = flights.filter((x) => x.id !== f.id));
+    return { destroy: () => anim.cancel() };
+  }
 
   let gridEl: HTMLElement | undefined = $state();
   const ARROWS: Record<string, [number, number]> = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] };
@@ -265,7 +327,12 @@
               out:fade={{ duration: 200 * m }}
             >
               {#each [0, 1] as k (k)}
-                <span in:fly={{ x: -42, y: 6, duration: 460 * m, delay: k * 90 * m }}><Gem on={true} /></span>
+                <span
+                  class="loan-gem"
+                  class:spent={isSpent(`loan:${j}:${k}`)}
+                  data-flow="loan:{j}:{k}"
+                  in:fly={{ x: -42, y: 6, duration: 460 * m, delay: k * 90 * m }}><Gem on={true} /></span
+                >
               {/each}
             </div>
           {/each}
@@ -273,10 +340,10 @@
           <span class="sign carved" style:grid-column="1" style:grid-row={rCarry}>−</span>
         {/if}
         {#each farCols as i (i)}
-          <div class="cell" style:grid-column={colOf(i)} style:grid-row={rFar}>
+          <div class="cell" style:grid-column={colOf(i)} style:grid-row={rFar} data-flow="far:{i}">
             <Spark
               on={isBitSet(view.far, i)}
-              spent={spent.far.has(i)}
+              spent={isSpent(`far:${i}`)}
               tone="carry"
               highlight={hint?.row === 'far' && hint.column === i}
               wrong={wrong?.row === 'far' && wrong.column === i}
@@ -291,10 +358,10 @@
         {/if}
 
         {#each carryCols as i (i)}
-          <div class="cell" style:grid-column={colOf(i)} style:grid-row={rCarry}>
+          <div class="cell" style:grid-column={colOf(i)} style:grid-row={rCarry} data-flow="carry:{i}">
             <Spark
               on={isBitSet(view.carries, i)}
-              spent={spent.carry.has(i)}
+              spent={isSpent(`carry:${i}`)}
               tone={i === width ? 'spout' : 'carry'}
               highlight={hint?.row === 'carry' && hint.column === i}
               wrong={wrong?.row === 'carry' && wrong.column === i}
@@ -325,10 +392,10 @@
             {/if}
             {#each columns as i (i)}
               {#if shown(j, i)}
-                {@const gone = spent.lines.has(`${j}:${i}`)}
                 <div
                   class="cell"
-                  class:spent={gone}
+                  class:spent={isSpent(`line:${j}:${i}`)}
+                  data-flow="line:{j}:{i}"
                   class:off={pick && !isBitSet(view.copies, j)}
                   class:pad={task.op === 'mul' && i < shifts[j]}
                   style:grid-column={colOf(i)}
@@ -336,10 +403,6 @@
                   in:fly={{ y: -14, duration: 360 * m, delay: (j * 60 + (width - i) * 25) * m }}
                 >
                   <Gem on={isBitSet(line, i)} digit={digits} />
-                  {#if gone && m}
-                    <!-- Světlo odlétá do krystalu přenosu vlevo nahoře. -->
-                    <span class="wisp" aria-hidden="true"><Gem on={true} /></span>
-                  {/if}
                 </div>
               {/if}
             {/each}
@@ -364,7 +427,7 @@
 
         <span class="sign carved" style:grid-column="1" style:grid-row={rResult}>=</span>
         {#each columns as i, k (i)}
-          <div class="cell" style:grid-column={colOf(i)} style:grid-row={rResult}>
+          <div class="cell" style:grid-column={colOf(i)} style:grid-row={rResult} data-flow="result:{i}">
             <Crystal
               on={isBitSet(view.result, i)}
               weight={2 ** i}
@@ -382,6 +445,11 @@
         {#if values}
           <span class="value live" style:grid-column={valueCol} style:grid-row={rResult}>{view.result}</span>
         {/if}
+
+        <!-- Kopie světel na cestě do nového místa: dolů do výsledku, nahoru do přenosu. -->
+        {#each flights as f (f.id)}
+          <span class="flight" style:left="{f.x}px" style:top="{f.y}px" use:flightPath={f} aria-hidden="true"><Gem on={true} /></span>
+        {/each}
       </div>
     </div>
 
@@ -464,23 +532,21 @@
       opacity 420ms ease,
       filter 420ms ease;
   }
-  .wisp {
+  /* Kopie světla, která letí na nové místo. Nad buňkami, klikání neblokuje. */
+  .flight {
     position: absolute;
-    top: 0;
-    left: 50%;
+    z-index: 3;
     pointer-events: none;
-    animation: wisp-out 640ms cubic-bezier(0.4, 0, 0.7, 1) forwards;
-    filter: drop-shadow(0 0 6px rgba(255, 210, 130, 0.8));
+    transform: translate(-50%, -50%);
+    filter: drop-shadow(0 0 6px rgba(255, 210, 130, 0.85));
   }
-  @keyframes wisp-out {
-    from {
-      transform: translateX(-50%);
-      opacity: 1;
-    }
-    to {
-      transform: translate(calc(-50% - var(--cell) * 0.85), calc(var(--cell) * -0.9)) scale(0.55);
-      opacity: 0;
-    }
+  /* Půjčené světlo, které se vyrušilo nebo sjelo do výsledku. */
+  .loan-gem.spent > :global(.gem svg) {
+    opacity: 0.22;
+    filter: grayscale(0.4);
+    transition:
+      opacity 420ms ease,
+      filter 420ms ease;
   }
   .cell.off {
     opacity: 0.28;

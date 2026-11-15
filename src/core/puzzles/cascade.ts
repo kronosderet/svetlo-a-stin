@@ -295,3 +295,94 @@ export function confirm(cfg: CascadeConfig, st: CascadeState): Result {
 
 /** Ideál: každý výsledek napoprvé. */
 export const par = (cfg: CascadeConfig): number => cfg.tasks.length;
+
+/** Odkud světlo vychází: krystal řádku ve stěně, krystal přenosu (o jedno nebo dvě místa), půjčené světlo. */
+export type FlowSource =
+  | { kind: 'line'; row: number; column: number }
+  | { kind: 'carry' | 'far'; column: number }
+  | { kind: 'loan'; column: number; k: number };
+
+/**
+ * Kam světlo odejde: dolů do krystalu výsledku, nahoru do krystalu přenosu (o jedno nebo dvě místa),
+ * do půjčky sousedovi vpravo (lend), nebo se vyruší s menšitelem (cancel).
+ */
+export type FlowSink = { kind: 'result' | 'carry' | 'far' | 'lend' | 'cancel'; column: number };
+
+export interface FlowMove {
+  from: FlowSource;
+  to: FlowSink;
+}
+
+/** Co hráč na desce rozsvítil (stav Kaskády nebo přijatý výsledek během pauzy). */
+export interface FlowMarks {
+  result: number;
+  carries: number;
+  far: number;
+  copies: number;
+}
+
+/**
+ * Kudy světla na desce tečou podle toho, co hráč rozsvítil. Světlo se přesune, jen když může:
+ * krystal výsledku si vezme nejspodnější světlo svého sloupce, krystal přenosu dvě světla
+ * (přenos o dvě místa čtyři) ze sloupce vpravo, a to shora, nejblíž ke svému místu. Díky tomu
+ * se nic nepřehazuje, ať hráč rozsvěcí v jakémkoli pořadí. Sloupce se procházejí zprava.
+ *
+ * Bez krystalů přenosu (Soutok) si výsledek, který ve svém sloupci nic nemá, vezme dvě světla
+ * ze sloupce vpravo: tak je vidět, že 1 + 1 = 10.
+ *
+ * Odčítání: menšitel vyruší nejspodnější světlo sloupce (ukáže se, až hráč sloupec zpracuje),
+ * výsledek si vezme další zespodu a krystal výpůjčky půjčí sousedovi vpravo světlo shora.
+ */
+export function lightFlow(cfg: CascadeConfig, task: CascadeTask, marks: FlowMarks): FlowMove[] {
+  const w = cfg.width;
+  const lines = wallRows(cfg, task);
+  const carryCols = carryColumns(cfg);
+  const moves: FlowMove[] = [];
+  const lit = (mask: number, i: number) => isBitSet(mask, i);
+
+  if (task.op === 'sub') {
+    const [a, b] = lines;
+    for (let i = 0; i < w; i++) {
+      // Kladná světla zdola nahoru: menšenec, pak dvě půjčená světla nad ním.
+      const pool: FlowSource[] = [];
+      if (lit(a, i)) pool.push({ kind: 'line', row: 0, column: i });
+      if (carryCols.includes(i + 1) && lit(marks.carries, i + 1)) pool.push({ kind: 'loan', column: i, k: 1 }, { kind: 'loan', column: i, k: 0 });
+      const cancel: FlowMove[] = [];
+      if (lit(b, i) && pool.length) {
+        cancel.push({ from: pool.shift()!, to: { kind: 'cancel', column: i } }, { from: { kind: 'line', row: 1, column: i }, to: { kind: 'cancel', column: i } });
+      }
+      const own: FlowMove[] = [];
+      if (lit(marks.result, i) && pool.length) own.push({ from: pool.shift()!, to: { kind: 'result', column: i } });
+      if (carryCols.includes(i) && lit(marks.carries, i) && pool.length) own.push({ from: pool.pop()!, to: { kind: 'lend', column: i } });
+      if (own.length) moves.push(...cancel, ...own);
+    }
+    return moves;
+  }
+
+  const farCols = farColumns(cfg);
+  const picked = (j: number) => !(task.op === 'mul' && cfg.pickCopies) || lit(marks.copies, j);
+  // Volná světla každého sloupce zdola nahoru: řádky ve stěně, přenos, přenos o dvě místa.
+  const pools: FlowSource[][] = Array.from({ length: w }, (_, i) => {
+    const pool: FlowSource[] = [];
+    for (let j = lines.length - 1; j >= 0; j--) if (picked(j) && lit(lines[j], i)) pool.push({ kind: 'line', row: j, column: i });
+    if (carryCols.includes(i) && lit(marks.carries, i)) pool.push({ kind: 'carry', column: i });
+    if (farCols.includes(i) && lit(marks.far, i)) pool.push({ kind: 'far', column: i });
+    return pool;
+  });
+  const take = (i: number, n: number, to: FlowSink, from: 'top' | 'bottom'): boolean => {
+    const pool = pools[i];
+    if (!pool || pool.length < n) return false;
+    const taken = from === 'bottom' ? pool.splice(0, n) : pool.splice(pool.length - n, n);
+    for (const src of taken) moves.push({ from: src, to });
+    return true;
+  };
+  for (let i = 0; i < w; i++) {
+    if (farCols.includes(i + 2) && lit(marks.far, i + 2)) take(i, 4, { kind: 'far', column: i + 2 }, 'top');
+    if (carryCols.includes(i + 1) && lit(marks.carries, i + 1)) take(i, 2, { kind: 'carry', column: i + 1 }, 'top');
+    if (lit(marks.result, i)) {
+      const to: FlowSink = { kind: 'result', column: i };
+      if (!take(i, 1, to, 'bottom') && cfg.carries === 'none') take(i - 1, 2, to, 'top') || take(i - 2, 4, to, 'top');
+    }
+  }
+  return moves;
+}

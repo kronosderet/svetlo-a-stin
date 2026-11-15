@@ -167,7 +167,8 @@ export interface ActDef {
   /** Glyfy komnat na mapě: patro I má prázdný střed (0), Síň Počtářů rozsvícený (16). */
   glyphBase: number;
   /**
-   * Komnaty patra. Číslo v id je zároveň glyf: 1–7 základní cesta (7 = brána patra),
+   * Komnaty patra. Číslo v id je zároveň glyf: 0–7 základní cesta (0 = nultá komnata, která
+   * ukáže základní nápad patra jednoduchou hrou, 7 = brána patra),
    * 8–15 pokročilé Hlubší síně (15 = velká brána). Chybějící čísla jsou zatím zapečetěná.
    */
   levels: LevelDef[];

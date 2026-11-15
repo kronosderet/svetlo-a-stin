@@ -30,6 +30,30 @@ const EXPLORE_HINTS: [string, string, string] = [
 ];
 
 const levels: LevelDef[] = [
+  // Nultá komnata patra: světlovod bez runy, lampa ukazuje, co k ní doteče.
+  {
+    id: 'III-0',
+    title: 'Cesta světla',
+    kind: 'gate',
+    config: { tasks: [{ mode: 'explore', circuit: { inputs: ['A'], nodes: [], output: 'A' } }] },
+    presentation: {
+      task: 'Rozsviť krystal vstupu a sleduj lampu. Vyzkoušej světlo i stín.',
+      showDigits: true,
+      showSum: false,
+      sizes: 'equal',
+      ledger: false,
+    },
+    hints: [
+      'Klikni na krystal vstupu A a sleduj lampu vpravo.',
+      'Kombinace jsou dvě: vstup svítí, nebo mlčí. Zkus obě.',
+      'Zvýrazněný vstup vede k nové kombinaci.',
+    ],
+    echo: {
+      intro: ['Zahrada Bran. Lumenité tu světlu stavěli cesty.', 'Světlovod vede od krystalu k lampě. Co lampa udělá?'],
+      solved: ['Lampa ukazuje, co k ní doteče: světlo, nebo stín.', 'Do cest se tu vkládají runy. Každá se světlem něco udělá.'],
+      skill: 'Jediný dotek.',
+    },
+  },
   {
     id: 'III-1',
     title: 'Obraceč',
@@ -82,7 +106,7 @@ const levels: LevelDef[] = [
     ],
     echo: {
       intro: [
-        'Zahrada Bran. Lumenité tu světlu stavěli cesty a do cest vkládali runy.',
+        'Obraceč. První runa Zahrady.',
         'Brána vpravo říká, kdy má lampa svítit. Zkus, co runa se světlem udělá.',
       ],
       step: { 0: 'Obraceč: kde bylo světlo, je stín. A naopak.', 1: 'Dva Obraceče za sebou se navzájem zruší.' },

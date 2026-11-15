@@ -1,5 +1,9 @@
 <script lang="ts">
+  import { untrack } from 'svelte';
+  import { actOf, roomNumber } from '../content/levels';
   import { fxState } from '../game/fx.svelte.ts';
+  import { nav } from '../game/nav.svelte.ts';
+  import { progress } from '../game/progress.svelte.ts';
   import { settings } from '../game/settings.svelte.ts';
 
   let canvas: HTMLCanvasElement | undefined = $state();
@@ -13,6 +17,34 @@
     { bit: 1, d: 'M9 9H-9' },
     { bit: 0, d: 'M-9 9V-9' },
   ];
+
+  /**
+   * Nahoře na kole je vždy glyf komnaty, kterou hráč řeší (číslo komnaty je zároveň její glyf).
+   * Na mapě kolo zůstane u poslední komnaty, na titulní obrazovce ukazuje prázdný glyf.
+   */
+  let roomId: string | null = $state(null);
+  $effect(() => {
+    if (nav.screen.name === 'level') roomId = nav.screen.id;
+  });
+
+  /** Natočení kola ve stupních. Sčítá se, ať se kolo nikdy neprotočí zpátky přes celý kruh. */
+  let angle = $state(0);
+  let top = 0;
+  $effect(() => {
+    const target = roomId ? roomNumber(roomId) : 0;
+    // Dopředu (i z brány na první komnatu dalšího patra) se kolo točí doleva, o kousek zpět doprava.
+    const ahead = (((target - top) % 16) + 16) % 16;
+    const step = ahead <= 10 ? -ahead : 16 - ahead;
+    untrack(() => (angle += step * 22.5));
+    top = target;
+  });
+
+  /** Hotové komnaty patra, ve kterém hráč je: jejich glyfy na kole svítí. */
+  const done = $derived.by(() => {
+    if (!roomId) return new Set<number>();
+    const act = actOf(roomId);
+    return new Set(glyphs.filter((g) => progress.levels[`${act.numeral}-${g.v}`]).map((g) => g.v));
+  });
 
   // Prach ve světle pochodní. Při omezených animacích se nevykresluje.
   $effect(() => {
@@ -76,8 +108,8 @@
   <div class="wall"></div>
 
   <svg class="wheel" viewBox="-500 -500 1000 1000">
-    <!-- Po každé otevřené komnatě se kolo o jeden glyf pootočí a glyfy se rozzáří. -->
-    <g class="spin" style:transform="rotate({fxState.wins * 22.5}deg)">
+    <!-- Nahoře je glyf rozehrané komnaty. Po otevřené komnatě se glyfy krátce rozzáří. -->
+    <g class="spin" style:transform="rotate({angle}deg)">
     <!-- Každá linka dvakrát: stín a o pixel posunuté světlo = vytesaný reliéf. -->
     {#each ['shade', 'light'] as layer (layer)}
       <g class={layer}>
@@ -100,6 +132,17 @@
         <path d="M0 -120 L104 60 L-104 60 Z" />
       </g>
     {/each}
+    <!-- Glyfy hotových komnat patra svítí zlatem vykládaným v kameni. -->
+    <g class="lit" class:soft={settings.lite}>
+      {#each glyphs as g (g.v)}
+        <g transform="rotate({g.deg}) translate(0 -362)" class:on={done.has(g.v)}>
+          <rect x="-22" y="-22" width="44" height="44" rx="4" />
+          {#each SIDES as s (s.bit)}
+            {#if (g.v >> s.bit) & 1}<path d={s.d} class="stroke" />{/if}
+          {/each}
+        </g>
+      {/each}
+    </g>
     {#key fxState.wins}
       {#if fxState.wins > 0 && !settings.reducedMotion}
         <g class="glow">
@@ -175,6 +218,21 @@
   }
   .spin {
     transition: transform 2.6s var(--heavy);
+  }
+  .wheel :global(.lit) {
+    stroke: rgba(242, 193, 78, 0.62);
+    filter: drop-shadow(0 0 7px rgba(242, 160, 60, 0.55));
+  }
+  /* Odlehčený režim: záře bez rozostření, které by se přepočítávalo při otáčení kola. */
+  .wheel :global(.lit.soft) {
+    filter: none;
+  }
+  .wheel :global(.lit > g) {
+    opacity: 0;
+    transition: opacity 1.6s ease-out;
+  }
+  .wheel :global(.lit > g.on) {
+    opacity: 1;
   }
   .wheel :global(.glow) {
     stroke: rgba(255, 196, 110, 0.75);

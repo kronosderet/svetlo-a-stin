@@ -58,15 +58,19 @@
   const numbered = $derived(circuit.nodes.some((g) => g.free));
   const nodeNo = (id: string) => circuit.nodes.findIndex((g) => g.id === id) + 1;
   const sourceName = (src: string) => (circuit.inputs.includes(src) ? src : String(nodeNo(src)));
-  const lampCol = $derived(Math.max(...circuit.nodes.map((g) => g.col)) + 1);
-  const outNode = $derived(circuit.nodes.find((g) => g.id === circuit.output)!);
+  // Obvod bez run (Cesta světla): světlovod vede ze vstupu rovnou do lampy o dva sloupce dál.
+  const lampCol = $derived(circuit.nodes.length ? Math.max(...circuit.nodes.map((g) => g.col)) + 1 : 2);
+  const outNode = $derived(circuit.nodes.find((g) => g.id === circuit.output) ?? null);
   const maxRow = $derived(Math.max(n - 1, ...circuit.nodes.map((g) => g.row)));
   const W = $derived(PX * 2 + lampCol * CW);
   const H = $derived(PY * 2 + maxRow * RH);
 
   const inputPos = (i: number) => ({ x: PX, y: PY + i * RH });
   const nodePos = (g: GateNode) => ({ x: PX + g.col * CW, y: PY + g.row * RH });
-  const lampPos = $derived({ x: PX + lampCol * CW, y: nodePos(outNode).y });
+  const lampPos = $derived({
+    x: PX + lampCol * CW,
+    y: outNode ? nodePos(outNode).y : inputPos(Math.max(0, circuit.inputs.indexOf(circuit.output))).y,
+  });
   const arity = (g: GateNode): number => ARITY[g.rune ?? g.choices?.[0] ?? 'id'];
   const runeOf = (g: GateNode): Rune | null => g.rune ?? runes[g.id] ?? null;
 

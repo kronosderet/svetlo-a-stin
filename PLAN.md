@@ -277,7 +277,7 @@ Díky tomu je přidávání levelů rychlé a datově řízené.
 | **Oltář** | klikáním přepínáš krystaly, abys dosáhl cílové hodnoty; v přísném režimu (Tichý krok) projdeš všechny kombinace bez opakování, jinak se cesta přeruší | bit → číslo, poziční hodnota, Grayův kód | I |
 | **Nápis** | chrám rozsvítí kombinaci, na kamenných kotoučích (desítky, jednotky) nastavíš její hodnotu; umí i opačný směr a kotouče s glyfy 0–F (jeden na každou čtveřici krystalů) | binární → desítkové, šestnáctková soustava | I |
 | **Počítadlo** | poutníci přibývají jako čárky a ty nastavuješ „další“ číslo; zápisník červeně ukáže změněné krystaly (technicky Oltář s cíli n + 1) | inkrementace, přenos | I |
-| **Kaskáda** | počítání pod sebou: ve stěně svítí řádky, hráč rozsvěcí krystaly výsledku a krystaly přenosu nad sloupci a výsledek potvrdí. Chyba otřese prvním špatným sloupcem zprava a Echo řekne proč (kolik světel se v něm slévá, který přenos chybí). Umí sčítání, pevnou nádobu s přepadem, odčítání s výpůjčkami, tři řady s přenosem o dvě místa i násobení, ve kterém hráč sám vybírá posunuté kopie | aritmetika | II |
+| **Kaskáda** | počítání pod sebou: ve stěně svítí řádky, hráč rozsvěcí krystaly výsledku a krystaly přenosu nad sloupci a výsledek potvrdí. Světla se přesouvají při každém doteku: do rozsvíceného krystalu výsledku sjede nejspodnější světlo sloupce, do krystalu přenosu odletí dvě světla shora (o dvě místa čtyři), u odčítání se menšitel vyruší a výpůjčka půjčí sousedovi; co odešlo, ve sloupci pohasne. Chyba otřese prvním špatným sloupcem zprava a Echo řekne proč (kolik světel se v něm slévá, který přenos chybí). Umí sčítání, pevnou nádobu s přepadem, odčítání s výpůjčkami, tři řady s přenosem o dvě místa i násobení, ve kterém hráč sám vybírá posunuté kopie | aritmetika | II |
 | **Příliv** | páky posouvají celou řadu (vlevo = ×2, vpravo = ÷2, co přeteče přes okraj, je ztracené), další páky přidají nebo uberou jedničku. Cíl co nejméně tahy; ve Vahách Osudu dovolí každá zkouška jen ideální počet tahů a pak se vrátí na začátek. Páka „převrať“ (doplněk), miska zbytku (dělení) a kolo může místo čísla ukázat „÷ 8“ nebo „−3“ | posuny, ×2, ÷2, doplněk | II |
 | **Smíšená komnata** | brána patra: několik hádanek různých archetypů za sebou (třeba Kaskáda a pak Příliv), nad scénou ukazatel zkoušek; tahy, pokusy i nápovědy se pro pečetě sčítají za celou komnatu | syntéza patra | II |
 | **Brána** | kamenná deska s obvodem: vlevo krystaly vstupů, uprostřed kameny s runami, vpravo lampa, mezi nimi světlovody, které svítí, když nesou světlo. Zkoumání (runy pevné, hráč zkouší všechny kombinace vstupů) a vkládání run do prázdných kamenů (kliknutí runy střídá, Zkouška projde všechny řádky a nesedící rozsvítí okrově) | hradla, skládání | III |
@@ -293,21 +293,24 @@ Díky tomu je přidávání levelů rychlé a datově řízené.
 
 ## 6. Osnova levelů
 
-Každé patro má **15 míst pro komnaty**, přesně tolik, kolik rozliší čtyři strany čtveřicového glyfu
-(0001 až 1111). **Základní cesta** jsou komnaty 1–7: glyf jim svítí nejvýš na třech spodních stranách
-a komnata 7 je brána patra, která otevře schody dál. Základ stačí na celou hru a patro se v něm
+Každé patro má **16 míst pro komnaty**, přesně tolik, kolik rozliší čtyři strany čtveřicového glyfu
+(0000 až 1111). **Nultá komnata** (glyf bez jediné rozsvícené strany) ukáže základní nápad patra
+jednoduchou hrou: v Předsíni hráč rozsvítí krystal, v Síni Počtářů sečte jedna a jedna pod sebou,
+v Zahradě pustí světlo k lampě. Nemá kvíz ani záznam Kodexu. **Základní cesta** jsou komnaty 0–7:
+glyf jim svítí nejvýš na třech spodních stranách a komnata 7 je brána patra, která otevře schody dál. Základ stačí na celou hru a patro se v něm
 vejde zhruba do jedné vyučovací hodiny. **Hlubší síně** 8–15 mají rozsvícenou i horní stranu glyfu,
 jsou nepovinné a otevírají se po bráně patra, pak po jedné. Patří do nich látka, kterou sexta
 nutně nepotřebuje, ale je škoda o ni přijít (odčítání, násobení, dělení, šestnáctková soustava).
-Komnata 15 (glyf 1111) je velká brána patra. Akty I a II jsou rozdělené takto a mají všech
-15 komnat; Akty III–V zatím drží původní osnovu po deseti levelech a rozdělí se, až na ně přijde
+Komnata 15 (glyf 1111) je velká brána patra. Akty I až III jsou rozdělené takto a mají všech
+16 komnat; Akty III–V zatím drží původní osnovu po deseti levelech a rozdělí se, až na ně přijde
 řada (chybějící komnaty jsou na mapě zapečetěné). Sloupec *Nové* označuje jediný nový koncept levelu.
 
 ### Akt I — Předsíň Prvního Světla (bit a počítání)
 
 | # | Název | Archetyp | Nové | Popis |
 |---|---|---|---|---|
-| I-1 | Probuzení | Oltář | bit | Jeden krystal. Rozsviť ho a dveře se otevřou. Naučí jediný klik. |
+| I-0 | Probuzení | Oltář | (nultá komnata) | Jeden krystal. Rozsviť ho a dveře se otevřou. Naučí jediný klik. |
+| I-1 | Ticho | Oltář | bit | Jeden krystal a stěna: světlo, stín, světlo. I zhasnutý krystal je zpráva. Kodex přeloží Krystal → Bit. |
 | I-2 | Dvě světla | Oltář | kombinace | Dva krystaly. Napodob 4 vzory ukázané na stěně. |
 | I-3 | Kolik kombinací? | Oltář | 2ⁿ | Tři krystaly. Najdi všech 8 různých vzorů (registr se plní). Echo se ptá, kolik by jich bylo se čtyřmi. |
 | I-4 | Váhy kamenů | Oltář | poziční hodnota | Krystaly 4-2-1 s viditelnými váhami a živým součtem. Cíle 1–7. |
@@ -328,6 +331,7 @@ Komnata 15 (glyf 1111) je velká brána patra. Akty I a II jsou rozdělené takt
 
 | # | Název | Archetyp | Nové | Popis |
 |---|---|---|---|---|
+| II-0 | Jedna a jedna | Kaskáda | (nultá komnata) | Jediný součet 1 + 1 pod sebou. Hráč rozsvítí krystal s váhou 2 a obě světla do něj sama sjedou. |
 | II-1 | Soutok | Kaskáda | 1 + 1 = 10 | Světlo z řad krystalů stéká do nádrže: 1 + 0, 1 + 1, 1 + 1 + 1. Pod sloupcem svítí počet světel, pod výsledkem váhy 2 a 1, takže hráč objeví, že dvě světla jsou krystal s váhou 2. Kvíz: 1 + 1 a 1 + 1 + 1 + 1 dvojkově. |
 | II-2 | Dvě řady | Kaskáda | sčítání pod sebou | Čtyři součty bez přenosu (0101 + 0010…), s počty světel i desítkovými hodnotami. |
 | II-3 | Krystaly přenosu | Kaskáda | přenos | Čtyřbitové součty s přenosy. Hráč sám umisťuje malé krystaly přenosu nad sloupce a brána chce vidět i je. Počty světel pod sloupci se s nimi živě mění. Kvíz: zákon sloupce (tři světla = dole 1, přenos 1). |
@@ -353,6 +357,7 @@ tesali těmi samými znaky. Moderní značka (NOT, AND…) se pod runou objeví,
 
 | # | Název | Archetyp | Nové | Popis |
 |---|---|---|---|---|
+| III-0 | Cesta světla | Brána | (nultá komnata) | Vstup a lampa spojené světlovodem bez runy. Hráč vyzkouší světlo i stín: lampa ukazuje, co k ní doteče. |
 | III-1 | Obraceč | Brána | NOT | Do prázdného kamene mezi vstupem a lampou se vkládá Průchod, nebo Obraceč, aby lampa svítila podle brány. Pak dva Obraceče za sebou (¬¬A = A). |
 | III-2 | Pouto | smíšená (Brána + Deska) | AND | Hráč přepíná vstupy a zkouší všechny čtyři kombinace (deska objevů je zapisuje, ideál po jediné změně), pak vyplní desku zákona zpaměti. |
 | III-3 | Rozcestí | smíšená (Brána + Deska) | OR | Stejný postup pro OR. Kvíz: ve kterých řádcích se liší Pouto a Rozcestí. |
@@ -535,7 +540,9 @@ na rušné textuře: buď na klidném kameni, v prohlubni, nebo na papíře.
 ### 8.4 Motivy a prvky
 
 - **Pozadí:** kamenné zdivo s procedurální texturou (zrno, skvrny, reliéf), za scénou vytesané kolo
-  s čtveřicovými glyfy, teplé světlo pochodní z boků, vinětace a prach ve vzduchu.
+  s čtveřicovými glyfy, teplé světlo pochodní z boků, vinětace a prach ve vzduchu. Nahoře na kole je
+  vždy glyf rozehrané komnaty: při postupu dopředu se kolo pootočí doleva a glyfy hotových komnat
+  patra svítí zlatem.
 - **Krystal (bit):** stojí v kamenném podstavci s bronzovými drápky. Rozsvícený vrhá světlo
   na podstavec i okolní kámen. Váha je **mosazný štítek**, stav bitu vytesaná číslice.
 - **Oltář:** kamenné kolo s bronzovými hřeby, které se s každou přijatou váhou těžce pootočí.
@@ -900,4 +907,9 @@ osnovy nejde naučit těmi stávajícími.
     verze mimo komnaty, workflow pro GitHub Pages, relativní cesty pro libovolný hosting.
     Samostatné HTML zůstává pro počítače bez internetu. Zbývá: projít všechny komnaty na telefonu
     na výšku i na šířku a doladit rozložení a dotykové cíle.
-14. Akt IV, Hlubina Strojů: poloviční a úplná sčítačka, Dílna (volná stavba obvodů), paměť.
+14. **Playtest tří modelových žáků a úpravy ✓:** zpráva v `PLAYTEST.md`, cílené hlášky chyb u Nápisu,
+    opory mizící uvnitř komnaty, zkouška navíc v branách po ukázce kroku, Echo nabídne náznak, když
+    hráč uvízne. Kolo na pozadí ukazuje glyf rozehrané komnaty. Nultá komnata v každém patře
+    (I-0 Probuzení, nová I-1 Ticho, II-0 Jedna a jedna, III-0 Cesta světla, postup se převede)
+    a světla v Kaskádě se při každém doteku přesouvají do výsledku a přenosů.
+15. Akt IV, Hlubina Strojů: poloviční a úplná sčítačka, Dílna (volná stavba obvodů), paměť.

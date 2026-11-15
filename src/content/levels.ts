@@ -13,8 +13,8 @@ export const LEVELS: LevelDef[] = ACTS.flatMap((a) => a.levels);
 /** Brána základní cesty má v každém patře číslo 7, velká brána Hlubších síní 15. */
 export const GATE = 7;
 export const GREAT_GATE = 15;
-/** Kolik míst pro komnaty má patro: tolik, kolik rozliší čtyři strany glyfu. */
-export const ROOMS_PER_FLOOR = 15;
+/** Kolik míst pro komnaty má patro: tolik, kolik rozliší čtyři strany glyfu (0000 až 1111). */
+export const ROOMS_PER_FLOOR = 16;
 
 /** Číslo komnaty v patře (zároveň hodnota glyfu na mapě): "II-7" → 7. */
 export function roomNumber(id: string): number {
@@ -32,7 +32,7 @@ export function isAdvanced(id: string): boolean {
   return roomNumber(id) > GATE;
 }
 
-/** Základní cesta celou observatoří: 1–7 v každém patře. */
+/** Základní cesta celou observatoří: 0–7 v každém patře (0 = nultá komnata, 7 = brána). */
 export const BASIC_PATH: LevelDef[] = LEVELS.filter((l) => !isAdvanced(l.id));
 
 export function getLevel(id: string): LevelDef | undefined {

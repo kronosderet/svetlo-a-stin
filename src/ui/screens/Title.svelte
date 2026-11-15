@@ -89,7 +89,7 @@
       <button type="button" class="icon-btn" onclick={() => (ui.settingsOpen = true)} aria-label="Nastavení" title="Nastavení">
         <Icon name="settings" />
       </button>
-      <span class="carved">Prototyp · Akty I až III, 45 komnat</span>
+      <span class="carved">Prototyp · Akty I až III, 48 komnat</span>
       {#if pwa.canInstall && !pwa.installed}
         <button type="button" class="btn btn-ghost install" onclick={install}>
           <Icon name="install" size={18} /> Nainstalovat hru

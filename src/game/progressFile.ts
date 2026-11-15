@@ -42,8 +42,8 @@ export function parseProgress(text: string, levelIds: string[], kodexIds: string
   const src = raw.postup;
   const levels: Record<string, LevelRecord> = {};
   if (isRecord(src.levels)) {
-    // Soubor uložený před rozdělením pater má původní čísla komnat.
-    const saved = src.layout === LAYOUT ? src.levels : migrateLevelIds(src.levels);
+    // Soubor uložený ve starším rozvržení komnat má jejich původní čísla.
+    const saved = src.layout === LAYOUT ? src.levels : migrateLevelIds(src.levels, src.layout);
     for (const [id, rec] of Object.entries(saved)) {
       if (!levelIds.includes(id) || !isRecord(rec) || !isRecord(rec.seals)) continue;
       levels[id] = { seals: { solved: true, skill: rec.seals.skill === true, pure: rec.seals.pure === true } };
@@ -51,7 +51,7 @@ export function parseProgress(text: string, levelIds: string[], kodexIds: string
   }
   const stats: Record<string, RoomStats> = {};
   if (isRecord(src.stats)) {
-    const saved = src.layout === LAYOUT ? src.stats : migrateLevelIds(src.stats);
+    const saved = src.layout === LAYOUT ? src.stats : migrateLevelIds(src.stats, src.layout);
     const count = (v: unknown) => (typeof v === 'number' && Number.isFinite(v) && v >= 0 ? Math.floor(v) : 0);
     for (const [id, st] of Object.entries(saved)) {
       if (!levelIds.includes(id) || !isRecord(st)) continue;

@@ -46,8 +46,9 @@ function load(): ProgressData {
     if (data?.version !== 1) return empty();
     const loaded: ProgressData = { ...empty(), ...data };
     if (data.layout !== LAYOUT) {
-      // Postup z doby před rozdělením pater: komnaty dostanou nová čísla a hned se uloží.
-      loaded.levels = migrateLevelIds(loaded.levels);
+      // Postup ze staršího rozvržení komnat: komnaty dostanou nová čísla a hned se uloží.
+      loaded.levels = migrateLevelIds(loaded.levels, data.layout);
+      loaded.stats = migrateLevelIds(loaded.stats, data.layout);
       loaded.layout = LAYOUT;
       localStorage.setItem(KEY, JSON.stringify(loaded));
     }

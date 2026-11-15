@@ -23,6 +23,37 @@ import type { ActDef, LevelDef } from './types';
 const CELL_HINT = 'Zvýrazněný krystal je potřeba přepnout.';
 
 const levels: LevelDef[] = [
+  // Nultá komnata patra: jedna a jedna pod sebou. Světla se při každém doteku sama přesunou.
+  {
+    id: 'II-0',
+    title: 'Jedna a jedna',
+    kind: 'cascade',
+    config: {
+      width: 2,
+      bits: 1,
+      carries: 'none',
+      tasks: [{ op: 'add', operands: [1, 1] }],
+    },
+    presentation: {
+      task: 'Sečti světlo se světlem. Rozsviť dole krystal, do kterého se vejdou obě.',
+      showDigits: true,
+      showSum: false,
+      sizes: 'equal',
+      ledger: true,
+      showWeights: true,
+      columnCounts: true,
+    },
+    hints: [
+      'Kolik světel je ve sloupci? A kolik váží krystaly dole?',
+      'Dvě světla váží 2. Do krystalu s váhou 1 se nevejdou, rozsviť ten s váhou 2.',
+      CELL_HINT,
+    ],
+    echo: {
+      intro: ['Síň Počtářů. Tady Lumenité světla sčítali.', 'Jedno světlo a pod ním druhé. Kam se obě vejdou?'],
+      solved: ['Dvě světla se do jednoho krystalu nevejdou. Slila se do sousedního.', 'Jedna a jedna je 10: jedna-nula, ne deset.'],
+      skill: 'Napoprvé.',
+    },
+  },
   {
     id: 'II-1',
     title: 'Soutok',
@@ -53,7 +84,7 @@ const levels: LevelDef[] = [
       CELL_HINT,
     ],
     echo: {
-      intro: ['Síň Počtářů. Tady Lumenité světla sčítali.', 'Světlo z řad krystalů stéká do nádrže. Kolik ho připlulo?'],
+      intro: ['Soutok. Světlo z řad krystalů stéká do nádrže.', 'Kolik ho připlulo?'],
       step: {
         0: 'Jedna a nic je jedna. To bylo snadné.',
         1: 'Jedna a jedna se do jednoho krystalu nevejdou. Přetekly do sousedního: 10, čti jedna-nula.',

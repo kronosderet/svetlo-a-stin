@@ -2,12 +2,12 @@ import { describe, expect, it } from 'vitest';
 import { covers, fileNameFor, parseProgress, roomCount, serializeProgress } from './progressFile';
 import type { ProgressData } from './progress.svelte.ts';
 
-const LEVELS = ['I-1', 'I-2', 'I-3', 'I-6', 'I-7', 'I-8', 'II-6', 'II-14'];
+const LEVELS = ['I-0', 'I-1', 'I-2', 'I-3', 'I-6', 'I-7', 'I-8', 'II-6', 'II-14'];
 const KODEX = ['jiskra', 'svit-stin', 'podoby'];
 
 const sample: ProgressData = {
   version: 1,
-  layout: 2,
+  layout: 3,
   name: 'Jana',
   stats: { 'I-1': { entered: 2, solved: 1, extra: 0, hints: 1, stepHints: 0, quizMistakes: 0 } },
   levels: {
@@ -42,12 +42,13 @@ describe('soubor s postupem', () => {
       },
     });
     const r = parseProgress(text, LEVELS, KODEX);
+    // Soubor bez rozvržení je z nejstaršího číslování: Probuzení tehdy bylo I-1, dnes je I-0.
     expect(r.ok && r.data).toEqual({
       version: 1,
-      layout: 2,
+      layout: 3,
       name: '',
       stats: {},
-      levels: { 'I-1': { seals: { solved: true, skill: false, pure: true } } },
+      levels: { 'I-0': { seals: { solved: true, skill: false, pure: true } } },
       kodex: ['jiskra'],
       seen: [],
     });
@@ -61,7 +62,18 @@ describe('soubor s postupem', () => {
       postup: { version: 1, levels: { 'I-1': { seals: seal, bestMoves: 1 }, 'I-6': { seals: seal }, 'I-7': { seals: seal }, 'I-10': { seals: seal }, 'II-7': { seals: seal }, 'II-10': { seals: seal } }, kodex: [], seen: [] },
     });
     const r = parseProgress(text, LEVELS, KODEX);
-    expect(r.ok && Object.keys(r.data.levels).sort()).toEqual(['I-1', 'I-6', 'I-7', 'I-8', 'II-14', 'II-6']);
+    expect(r.ok && Object.keys(r.data.levels).sort()).toEqual(['I-0', 'I-6', 'I-7', 'I-8', 'II-14', 'II-6']);
+  });
+
+  it('soubor z doby před nultými komnatami přestěhuje Probuzení z I-1 na I-0', () => {
+    const seal = { solved: true, skill: true, pure: true };
+    const text = JSON.stringify({
+      format: 'svetlo-a-stin-postup',
+      postup: { layout: 2, levels: { 'I-1': { seals: seal }, 'I-2': { seals: seal } }, stats: { 'I-1': { entered: 1, solved: 1 } } },
+    });
+    const r = parseProgress(text, LEVELS, KODEX);
+    expect(r.ok && Object.keys(r.data.levels).sort()).toEqual(['I-0', 'I-2']);
+    expect(r.ok && Object.keys(r.data.stats)).toEqual(['I-0']);
   });
 
   it('pozná, jestli soubor obsahuje všechno z tohoto počítače', () => {
@@ -91,6 +103,6 @@ describe('soubor s postupem: jméno a statistiky', () => {
     });
     const r = parseProgress(text, LEVELS, KODEX);
     expect(r.ok && r.data.name).toBe('Petr');
-    expect(r.ok && r.data.stats).toEqual({ 'I-1': { entered: 3, solved: 0, extra: 0, hints: 0, stepHints: 0, quizMistakes: 0 } });
+    expect(r.ok && r.data.stats).toEqual({ 'I-0': { entered: 3, solved: 0, extra: 0, hints: 0, stepHints: 0, quizMistakes: 0 } });
   });
 });
