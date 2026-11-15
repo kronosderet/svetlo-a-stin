@@ -36,6 +36,26 @@
       <stop offset="0" stop-color="#ffffff" stop-opacity="0.95" />
       <stop offset="1" stop-color="#ffe7a8" stop-opacity="0" />
     </radialGradient>
+    <!-- Otvor v podstavci, do kterého svítí zapuštěný krystal: nejjasnější je zadní vnitřní stěna. -->
+    <radialGradient id="hole-glow" cx="0.5" cy="0.32" r="0.62">
+      <stop offset="0" stop-color="#fff0c4" />
+      <stop offset="0.45" stop-color="#f2b356" stop-opacity="0.9" />
+      <stop offset="1" stop-color="#7a3e10" stop-opacity="0.2" />
+    </radialGradient>
+    <!-- Světlo stoupající z otvoru podstavce pod rozsvíceným krystalem. -->
+    <linearGradient id="hole-beam" x1="0" y1="1" x2="0" y2="0">
+      <stop offset="0" stop-color="#ffe2a0" stop-opacity="0.8" />
+      <stop offset="0.45" stop-color="#f2c14e" stop-opacity="0.35" />
+      <stop offset="1" stop-color="#f2a64e" stop-opacity="0" />
+    </linearGradient>
+    <!--
+      Krystal zapuštěný do podstavce (souřadnice krystalu 100 × 160): pod předním okrajem otvoru
+      není vidět. Střed otvoru leží ve výšce 153,6, otvor má poloosy 25 a 6,25 (viz Crystal.svelte).
+      V klidu špička jen nahlíží do otvoru, ořez se uplatní, když krystal po doteku dosedne.
+    -->
+    <clipPath id="crystal-seat" clipPathUnits="userSpaceOnUse">
+      <path d="M-60 -60H160V153.6H75A25 6.25 0 0 1 25 153.6H-60Z" />
+    </clipPath>
   </defs>
 </svg>
 

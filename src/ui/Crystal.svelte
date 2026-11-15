@@ -39,11 +39,12 @@
     return { dx: Math.cos(a) * 46, dy: -Math.sin(a) * 18 - 4, s: 2 + (k % 3) };
   });
 
-  let wrap: HTMLElement | undefined = $state();
+  /** Krystal uvnitř SVG: hýbe se on, podstavec a jeho otvor (ořez) zůstávají na místě. */
+  let press: SVGGElement | undefined = $state();
   let presses = $state(0);
   let mounted = false;
 
-  // Krystal se při přepnutí zasune do kamenného lůžka a zvíří prach.
+  // Krystal se při přepnutí zasune do otvoru v podstavci a zvíří prach.
   $effect(() => {
     void on;
     untrack(() => {
@@ -52,9 +53,9 @@
         return;
       }
       presses++;
-      if (!settings.reducedMotion && wrap) {
-        wrap.animate(
-          [{ transform: 'translateY(0)' }, { transform: 'translateY(6px)' }, { transform: 'translateY(0)' }],
+      if (!settings.reducedMotion && press) {
+        press.animate(
+          [{ transform: 'translateY(0)' }, { transform: 'translateY(8px)' }, { transform: 'translateY(0)' }],
           { duration: 280, easing: 'cubic-bezier(.3,.7,.4,1)' },
         );
       }
@@ -75,28 +76,47 @@
   {disabled}
   onclick={onToggle}
 >
-  <span class="gem-wrap" bind:this={wrap}>
+  <span class="gem-wrap">
     {#if celebrate && on}<span class="beam" aria-hidden="true"></span>{/if}
     <span class="halo" aria-hidden="true"></span>
     {#if highlight}<span class="ring" aria-hidden="true"></span>{/if}
     <svg class="gem" viewBox="0 0 100 160" aria-hidden="true" focusable="false">
-      <polygon class="body off" points={OUTER} />
-      <polygon class="body lit" points={OUTER} />
-      <polygon class="face" points="50,28 72,54 72,106 50,132 28,106 28,54" />
-      <path class="facets" d="M50 4V28M94 46L72 54M94 114L72 106M50 156V132M6 114L28 106M6 46L28 54" />
-      <ellipse class="core" cx="50" cy="72" rx="10" ry="22" />
-      <polygon class="outline" points={OUTER} />
+      <!--
+        Zhasnutý krystal sedí na drápcích a špičkou se noří do otvoru, rozsvícený se nad nimi
+        vznáší na světle z podstavce. Co zajede pod přední okraj otvoru, ořízne lůžko (GemDefs).
+        lift = klid a najetí myší, press = dosednutí po doteku, bob = pomalé vznášení.
+      -->
+      <g clip-path="url(#crystal-seat)">
+        <g class="lift">
+          <g class="press" bind:this={press}>
+            <g class="bob">
+              <polygon class="body off" points={OUTER} />
+              <polygon class="body lit" points={OUTER} />
+              <polygon class="face" points="50,28 72,54 72,106 50,132 28,106 28,54" />
+              <path class="facets" d="M50 4V28M94 46L72 54M94 114L72 106M50 156V132M6 114L28 106M6 46L28 54" />
+              <ellipse class="core" cx="50" cy="72" rx="10" ry="22" />
+              <polygon class="outline" points={OUTER} />
+            </g>
+          </g>
+        </g>
+      </g>
     </svg>
     <span class="burst" aria-hidden="true"></span>
   </span>
 
+  <!-- Kamenný podstavec je za krystalem, bronzové drápky vyrůstají z otvoru před ním. -->
   <span class="plinth" aria-hidden="true">
-    <svg viewBox="0 0 120 50" focusable="false">
+    <svg class="base" viewBox="0 0 120 50" focusable="false">
       <path class="front" d="M8 14 V34 Q60 52 112 34 V14 Q60 32 8 14Z" />
       <ellipse class="top" cx="60" cy="14" rx="52" ry="11" />
       <ellipse class="pool" cx="60" cy="14" rx="46" ry="9" />
-      <ellipse class="hole" cx="60" cy="13" rx="20" ry="4.5" />
+      <ellipse class="hole" cx="60" cy="13" rx="24" ry="6" />
+      <ellipse class="hole-glow" cx="60" cy="13" rx="24" ry="6" />
       <path class="groove" d="M10 24 Q60 40 110 24" />
+      <!-- Světlo, které z otvoru stoupá a nese rozsvícený krystal. -->
+      <path class="updraft" d="M40 13 L33 -34 H87 L80 13 Z" />
+    </svg>
+    <svg class="claws" viewBox="0 0 120 50" focusable="false">
       <path class="prong" d="M40 14 L45 1 L50 15Z M70 15 L75 1 L80 14Z" />
     </svg>
     {#key presses}
@@ -145,7 +165,20 @@
     display: block;
     width: var(--w);
     aspect-ratio: 100 / 160;
-    transition: transform var(--t-med) ease;
+  }
+  /*
+   * Krystal se hýbe uvnitř svého SVG (px tu jsou jednotky krystalu 100 × 160), podstavec zůstává.
+   * Zhasnutý sedí na drápcích, rozsvícený se o kus zvedne a pomalu se vznáší.
+   */
+  .lift {
+    transform: translateY(0);
+    transition: transform var(--t-slow) cubic-bezier(0.3, 0.7, 0.4, 1);
+  }
+  .on .lift {
+    transform: translateY(-8px);
+  }
+  .on .bob {
+    animation: levitate 3.6s ease-in-out infinite;
   }
   .gem {
     position: relative;
@@ -225,8 +258,11 @@
     filter: drop-shadow(0 0 10px rgba(255, 210, 130, 0.6)) drop-shadow(0 0 28px rgba(242, 170, 70, 0.35));
   }
 
-  .crystal:not(:disabled):hover .gem-wrap {
-    transform: translateY(-4px);
+  .crystal:not(:disabled):hover .lift {
+    transform: translateY(-5px);
+  }
+  .crystal.on:not(:disabled):hover .lift {
+    transform: translateY(-12px);
   }
   .crystal:not(:disabled):hover .outline {
     stroke: #b4aac8;
@@ -258,7 +294,7 @@
     animation: ring 1.6s ease-in-out infinite;
   }
 
-  .celebrate .gem-wrap {
+  .celebrate .press {
     animation: rise 900ms ease-out var(--d) both;
   }
   /* Komnata otevřena: z rozsvíceného krystalu vyšlehne slabý sloup světla ke stropu. */
@@ -278,19 +314,33 @@
     animation: beam 1500ms ease-out var(--d) both;
   }
 
-  /* Kamenný podstavec s bronzovými drápky. */
+  /*
+   * Kamenný podstavec s bronzovými drápky. Je za krystalem a sedí tak, aby střed otvoru
+   * (výška 13 z 50 v podstavci) padl na výšku 153,6 ze 160 v krystalu: hroty drápků (výška 1)
+   * se pak dotýkají spodních hran krystalu a jeho špička se noří do otvoru.
+   * 1,536 w − 13/120 · 1,25 w − 1,6 w ≈ −0,1994 w. Podstavec sám nemá z-index, ať drápky
+   * můžou být před krystalem a kámen za ním.
+   */
   .plinth {
     position: relative;
-    z-index: 2;
     display: block;
     width: calc(var(--w) * 1.25);
-    margin-top: calc(var(--w) * -0.2);
+    margin-top: calc(var(--w) * -0.1994);
   }
   .plinth svg {
     display: block;
     width: 100%;
     height: auto;
     overflow: visible;
+  }
+  .plinth .base {
+    position: relative;
+    z-index: 0;
+  }
+  .plinth .claws {
+    position: absolute;
+    inset: 0 0 auto;
+    z-index: 2;
   }
   .plinth .front {
     fill: url(#plinth-front);
@@ -313,6 +363,30 @@
   .plinth .hole {
     fill: #0d0a07;
   }
+  /* Rozsvícený krystal prosvítí otvor, do kterého je zapuštěný. */
+  .plinth .hole-glow {
+    fill: url(#hole-glow);
+    opacity: 0;
+    transition: opacity var(--t-slow) ease;
+  }
+  .on .plinth .hole-glow {
+    opacity: 1;
+  }
+  /* Sloup světla z otvoru: nese rozsvícený krystal a rozplývá se vzhůru. */
+  .plinth .updraft {
+    fill: url(#hole-beam);
+    opacity: 0;
+    filter: blur(2.5px);
+    transition: opacity var(--t-slow) ease;
+  }
+  /* Úsporná grafika: bez rozostření. */
+  :global(:root[data-lite='on']) .plinth .updraft {
+    filter: none;
+  }
+  .on .plinth .updraft {
+    opacity: 1;
+    animation: updraft 3.6s ease-in-out infinite;
+  }
   .plinth .groove {
     fill: none;
     stroke: rgba(0, 0, 0, 0.45);
@@ -326,6 +400,7 @@
 
   .dust {
     position: absolute;
+    z-index: 3;
     left: 50%;
     top: 22%;
     pointer-events: none;
@@ -439,7 +514,26 @@
       transform: translateY(0);
     }
     40% {
-      transform: translateY(-12px);
+      transform: translateY(-16px);
+    }
+  }
+  /* Rozsvícený krystal se na světle pomalu pohupuje, sloup světla s ním dýchá. */
+  @keyframes levitate {
+    0%,
+    100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-3px);
+    }
+  }
+  @keyframes updraft {
+    0%,
+    100% {
+      opacity: 0.85;
+    }
+    50% {
+      opacity: 1;
     }
   }
   @keyframes dust {
