@@ -3,6 +3,8 @@
   import ProgressFile from '../ProgressFile.svelte';
   import { go, ui } from '../../game/nav.svelte.ts';
   import { hasStarted } from '../../game/progress.svelte.ts';
+  import { install, pwa } from '../../game/pwa.svelte.ts';
+  import { AUTHOR, LICENSE_NAME, YEAR } from '../../content/about';
   import { playDoor, unlock } from '../../audio/sound';
 
   const started = $derived(hasStarted());
@@ -83,10 +85,18 @@
   </div>
 
   <footer class="foot">
-    <button type="button" class="icon-btn" onclick={() => (ui.settingsOpen = true)} aria-label="Nastavení" title="Nastavení">
-      <Icon name="settings" />
-    </button>
-    <span class="carved">Prototyp · Akty I a II, 20 komnat</span>
+    <div class="foot-row">
+      <button type="button" class="icon-btn" onclick={() => (ui.settingsOpen = true)} aria-label="Nastavení" title="Nastavení">
+        <Icon name="settings" />
+      </button>
+      <span class="carved">Prototyp · Akty I až III, 45 komnat</span>
+      {#if pwa.canInstall && !pwa.installed}
+        <button type="button" class="btn btn-ghost install" onclick={install}>
+          <Icon name="install" size={18} /> Nainstalovat hru
+        </button>
+      {/if}
+    </div>
+    <p class="credit carved">© {YEAR} {AUTHOR} ve spolupráci s Claude · {LICENSE_NAME}</p>
   </footer>
 </div>
 
@@ -99,8 +109,14 @@
     align-items: center;
     justify-content: center;
     gap: 14px;
-    padding: 32px 16px 88px;
+    padding: 32px 16px 112px;
     text-align: center;
+  }
+  /* Patička se na telefonu zalomí do dvou řádků (s tlačítkem instalace). */
+  @media (max-width: 520px) {
+    .title-screen {
+      padding-bottom: 156px;
+    }
   }
 
   /* Vytesaný kámen se dvěma krystaly */
@@ -243,18 +259,37 @@
     stroke-width: 1.2;
   }
 
+  /* Na konci stránky, ne přes ni: na nízkých obrazovkách by jinak zakryla tlačítka. */
   .foot {
-    position: fixed;
+    position: absolute;
     left: 0;
     right: 0;
     bottom: 0;
     display: flex;
+    flex-direction: column;
     align-items: center;
-    justify-content: center;
-    gap: 8px;
-    padding: 12px 16px;
+    gap: 2px;
+    padding: 10px 16px 12px;
     font-size: var(--fs-sm);
     color: var(--text-muted);
+  }
+  .foot-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .credit {
+    margin: 0;
+    font-size: var(--fs-xs);
+    opacity: 0.8;
+  }
+
+  .install {
+    min-height: 36px;
+    padding: 4px 12px;
+    font-size: var(--fs-sm);
   }
 
   @keyframes flame {

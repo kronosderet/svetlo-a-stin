@@ -2,11 +2,13 @@
   import { nav } from './game/nav.svelte.ts';
   import { onMount } from 'svelte';
   import { watchFrameRate } from './game/perf';
+  import { startPwa } from './game/pwa.svelte.ts';
   import { saveSettings, settings } from './game/settings.svelte.ts';
   import Background from './ui/Background.svelte';
   import GemDefs from './ui/GemDefs.svelte';
   import KodexPanel from './ui/KodexPanel.svelte';
   import SettingsPanel from './ui/SettingsPanel.svelte';
+  import UpdateToast from './ui/UpdateToast.svelte';
   import Title from './ui/screens/Title.svelte';
   import MapScreen from './ui/screens/MapScreen.svelte';
   import Level from './ui/screens/Level.svelte';
@@ -17,6 +19,9 @@
     document.documentElement.dataset.motion = settings.reducedMotion ? 'reduced' : 'full';
     document.documentElement.dataset.lite = settings.lite ? 'on' : 'off';
   });
+
+  // Uložení hry do zařízení (offline), instalace na plochu a nabídka nových verzí.
+  onMount(startPwa);
 
   // Trhá-li se hra (pomalý školní počítač), zapne si úspornou grafiku sama. Ruční volba má přednost.
   onMount(() => {
@@ -50,6 +55,7 @@
 
 <KodexPanel />
 <SettingsPanel />
+<UpdateToast />
 
 <style>
   .app {

@@ -19,9 +19,6 @@ export interface Settings {
   liteSet: boolean;
 }
 
-/** PIN učitelského režimu. Není to zabezpečení, jen pojistka proti náhodnému zapnutí. */
-export const TEACHER_PIN = '????';
-
 function defaults(): Settings {
   let reduced = false;
   try {

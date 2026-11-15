@@ -2,11 +2,17 @@
   "name": "svetlo-a-stin",
   "private": true,
   "version": "0.1.0",
+  "description": "Didaktická hra o binární matematice a logice pro střední školy.",
+  "author": "Jakub Kotyza <kotyza.jakub@centrum.cz>",
+  "contributors": [
+    "Claude (Anthropic)"
+  ],
+  "license": "CC-BY-NC-SA-4.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "build:single": "vite build && node scripts/build-single.mjs",
+    "build:single": "vite build --mode single && node scripts/build-single.mjs",
     "preview": "vite preview",
     "check": "svelte-check --tsconfig ./tsconfig.json",
     "test": "vitest run",
@@ -18,6 +24,7 @@
     "svelte-check": "^4.7.8",
     "typescript": "^5.9.3",
     "vite": "^8.3.8",
+    "vite-plugin-pwa": "^2.0.0",
     "vitest": "^5.1.0"
   },
   "dependencies": {

@@ -170,7 +170,7 @@ export function hasStarted(): boolean {
 export function sealCount(ids?: string[]): number {
   return Object.entries(progress.levels)
     .filter(([id]) => !ids || ids.includes(id))
-    .reduce((sum, [, r]) => sum + Number(r.seals.solved) + Number(r.seals.skill) + Number(r.seals.pure), 0);
+    .reduce((sum, [, r]) => sum + Number(!!r.seals?.solved) + Number(!!r.seals?.skill) + Number(!!r.seals?.pure), 0);
 }
 
 export function unseenKodex(): string[] {

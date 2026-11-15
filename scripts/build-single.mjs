@@ -62,6 +62,9 @@ html = html.replace(/<link rel="icon" href="([^"]+\.svg)"([^>]*)>/, (_, href, re
   return `<link rel="icon" href="${dataUri(fileOf(href), 'image/svg+xml')}"${rest}>`;
 });
 
+// Ikona na plochu iPhonu a manifest aplikace patří k verzi na webu, ze souboru je nikdo nevyužije.
+html = html.replace(/\s*<link rel="(?:apple-touch-icon|manifest)"[^>]*>/g, '');
+
 // Kontrola: stránka nesmí odkazovat na žádný další soubor.
 const leftovers = html.match(/(?:src|href)="(?!data:|https?:)[^"]+"|url\((?!data:)["']?\/?assets\//g);
 if (leftovers) throw new Error(`Zbyly odkazy na soubory: ${leftovers.slice(0, 3).join(', ')}`);

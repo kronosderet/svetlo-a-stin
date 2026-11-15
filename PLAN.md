@@ -712,7 +712,8 @@ export default {
 
 ### 11.6 Ukládání a lokalizace
 
-- Uložení: verzované schéma v localStorage s migracemi.
+- Uložení: verzované schéma v localStorage s migracemi. Ve webové aplikaci (PWA) je hra
+  i s postupem uložená v zařízení; nainstalovaná hra žádá o trvalé úložiště.
 - **Pečetní kód:** progres exportovaný jako krátký hex řetězec. Je tematický a umožní přenos mezi
   zařízeními bez serveru.
 - Lokalizace: čeština primárně, angličtina sekundárně. Žádný text není vložený do obrázků.
@@ -836,7 +837,7 @@ osnovy nejde naučit těmi stávajícími.
 
 - **Akt VI: Zpěvy Srdce** — jednoduchý asemblerový jazyk, smyčky, podmínky, mini-programování.
 - **Editor levelů pro učitele a komunitu**, sdílení levelů kódem.
-- **Učitelský režim:** ✓ zapíná se PINem v Nastavení, odemkne všechna patra a přehled třídy
+- **Učitelský režim:** ✓ zapíná se PINem v Nastavení (posílá ho autor), odemkne všechna patra a přehled třídy
   ze souborů s postupem (bez serveru). Zbývá: tisknutelné pracovní listy, sdílený přehled bez
   ručního sbírání souborů (vyžaduje backend).
 - Další témata: desetinná čísla, komprese, základy kryptografie.
@@ -883,4 +884,9 @@ osnovy nejde naučit těmi stávajícími.
     runy NOT, AND, OR, XOR (NAND a NOR skládáním), glyfy patra s kosočtvercem uprostřed, sedm
     záznamů Kodexu. Fáze B ✓: Hlubší síně III-8 až III-15, točité kameny vstupů run, runy Rovnost a Důsledek,
     tři vstupy, starý obvod jako vzor, archetyp Maska se šifrou XOR, osm záznamů Kodexu.
-13. Akt IV, Hlubina Strojů: poloviční a úplná sčítačka, Dílna (volná stavba obvodů), paměť.
+13. **Distribuce jako webová aplikace (PWA) ✓:** service worker uloží celou hru do zařízení
+    (běží offline), manifest a ikony pro instalaci na počítači, Androidu i iPhonu, nabídka nové
+    verze mimo komnaty, workflow pro GitHub Pages, relativní cesty pro libovolný hosting.
+    Samostatné HTML zůstává pro počítače bez internetu. Zbývá: projít všechny komnaty na telefonu
+    na výšku i na šířku a doladit rozložení a dotykové cíle.
+14. Akt IV, Hlubina Strojů: poloviční a úplná sčítačka, Dílna (volná stavba obvodů), paměť.

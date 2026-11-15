@@ -6,7 +6,10 @@
   import { go, ui } from '../game/nav.svelte.ts';
   import { progress, resetProgress, setName } from '../game/progress.svelte.ts';
   import { unlinkFile } from '../game/progressLink.svelte.ts';
-  import { TEACHER_PIN, saveSettings, settings, type Settings } from '../game/settings.svelte.ts';
+  import { applyUpdate, install, pwa } from '../game/pwa.svelte.ts';
+  import { saveSettings, settings, type Settings } from '../game/settings.svelte.ts';
+  import { checkTeacherPin } from '../game/pin';
+  import { AUTHOR, CONTACT, LICENSE_NAME, LICENSE_URL } from '../content/about';
   import { unlock } from '../audio/sound';
 
   let confirmReset = $state(false);
@@ -16,7 +19,7 @@
 
   function teacherOn(e: SubmitEvent) {
     e.preventDefault();
-    if (pin.trim() !== TEACHER_PIN) {
+    if (!checkTeacherPin(pin)) {
       pinWrong = true;
       return;
     }
@@ -137,7 +140,34 @@
         <ProgressFile />
       </div>
 
-      <section class="teacher" aria-labelledby="teacher-title">
+      {#if pwa.supported}
+        <section class="sub" aria-labelledby="app-title">
+          <h3 id="app-title"><Icon name="install" size={18} /> Hra jako aplikace</h3>
+          {#if pwa.installed}
+            <p class="desc">Hra je nainstalovaná a spouští se jako aplikace.</p>
+          {:else if pwa.canInstall}
+            <p class="desc">Nainstaluj si hru: spustí se z plochy v celém okně, bez lišty prohlížeče.</p>
+            <div class="sub-actions">
+              <button type="button" class="btn btn-ghost" onclick={install}>Nainstalovat</button>
+            </div>
+          {:else if pwa.ios}
+            <p class="desc">
+              V Safari klepni na Sdílet a pak na Přidat na plochu. Hra se pak spouští jako aplikace a Safari postup
+              nesmaže, ani když hru delší dobu nespustíš.
+            </p>
+          {:else}
+            <p class="desc">Hru jde nainstalovat z nabídky prohlížeče (Nainstalovat aplikaci nebo Přidat na plochu).</p>
+          {/if}
+          {#if pwa.offline}<p class="desc">Hra je uložená v zařízení a poběží i bez internetu.</p>{/if}
+          {#if pwa.update}
+            <div class="sub-actions">
+              <button type="button" class="btn btn-primary" onclick={applyUpdate}>Načíst novou verzi</button>
+            </div>
+          {/if}
+        </section>
+      {/if}
+
+      <section class="teacher sub" aria-labelledby="teacher-title">
         <h3 id="teacher-title"><Icon name="teacher" size={18} /> Učitelský režim</h3>
         {#if settings.teacher}
           <p class="desc">Zapnuto: všechna patra i komnaty jsou otevřené, ať jde ukázat cokoli.</p>
@@ -155,14 +185,29 @@
               inputmode="numeric"
               autocomplete="off"
               placeholder="PIN"
-              maxlength="8"
+              maxlength="16"
               bind:value={pin}
               oninput={() => (pinWrong = false)}
             />
             <button type="submit" class="btn btn-ghost">Zapnout</button>
           </form>
           {#if pinWrong}<p class="desc err" role="status">Nesprávný PIN.</p>{/if}
+          <p class="desc">PIN učitelům posílá autor hry: <a href="mailto:{CONTACT}">{CONTACT}</a></p>
         {/if}
+      </section>
+
+      <section class="sub about" aria-labelledby="about-title">
+        <h3 id="about-title"><Icon name="info" size={18} /> O hře</h3>
+        <p class="desc">
+          Hru vytvořil <strong>{AUTHOR}</strong> ve spolupráci s <strong>Claude</strong>, umělou inteligencí od
+          Anthropic.
+        </p>
+        <p class="desc">
+          Licence <a href={LICENSE_URL} target="_blank" rel="noopener">{LICENSE_NAME}</a>: ve veřejných školách, doma
+          a k jiným nekomerčním účelům ji můžete volně používat, upravovat a sdílet, když uvedete autora. Soukromé
+          školy, placené kurzy a jiné komerční užití: <a href="mailto:{CONTACT}">{CONTACT}</a>.
+        </p>
+        <p class="desc">Písma Cinzel, Cormorant Garamond, Atkinson Hyperlegible a JetBrains Mono: SIL Open Font License.</p>
       </section>
 
       <div class="danger">
@@ -211,12 +256,12 @@
     outline: 2px solid var(--lumen);
     outline-offset: 2px;
   }
-  .teacher {
+  .sub {
     margin-top: 18px;
     padding-top: 14px;
     border-top: 2px solid rgba(0, 0, 0, 0.35);
   }
-  .teacher h3 {
+  .sub h3 {
     display: flex;
     align-items: center;
     gap: 8px;
@@ -224,13 +269,14 @@
     font-size: var(--fs-md);
     color: var(--text);
   }
-  .teacher .desc {
+  .sub .desc {
     margin: 0 0 10px;
   }
   .teacher .err {
     color: var(--warn);
   }
   .pin,
+  .sub-actions,
   .teacher-actions {
     display: flex;
     flex-wrap: wrap;
@@ -327,6 +373,13 @@
   .danger p {
     margin: 0;
     color: var(--text-muted);
+  }
+  .sub a {
+    color: var(--lumen);
+    text-underline-offset: 2px;
+  }
+  .sub strong {
+    color: var(--text);
   }
   .confirm {
     border-color: var(--warn);
