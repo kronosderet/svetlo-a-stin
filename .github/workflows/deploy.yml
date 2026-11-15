@@ -8,10 +8,8 @@ on:
     branches: [main]
   workflow_dispatch:
 
-permissions:
-  contents: read
-  pages: write
-  id-token: write
+# Každá úloha dostane jen oprávnění, která opravdu potřebuje.
+permissions: {}
 
 concurrency:
   group: pages
@@ -21,9 +19,11 @@ jobs:
   build:
     if: ${{ !github.event.repository.private }}
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-node@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: 24
           cache: npm
@@ -31,16 +31,20 @@ jobs:
       - run: npm run check
       - run: npm test
       - run: npm run build
-      - uses: actions/upload-pages-artifact@v4
+      - uses: actions/upload-pages-artifact@v5
         with:
           path: dist
 
+  # Zápis na Pages smí jen tahle úloha, která nic nesestavuje ani nespouští cizí kód.
   deploy:
     needs: build
     runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
