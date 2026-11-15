@@ -32,11 +32,15 @@ export class TableGame extends BaseGame<TableLevel> {
   held: TableView | null = $state(null);
 
   constructor(level: TableLevel, emit: (e: GameEvent) => void) {
-    super(level, computePar(level.config), emit);
+    super(level, computePar, emit);
   }
 
   get moves(): number {
     return this.state.moves;
+  }
+
+  get step(): number {
+    return this.state.step;
   }
 
   get playing(): boolean {

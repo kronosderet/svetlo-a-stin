@@ -12,6 +12,7 @@
   import { FX } from '../../game/fx.svelte.ts';
   import { settings } from '../../game/settings.svelte.ts';
   import type { InscriptionGame } from '../../game/inscriptionGame.svelte.ts';
+  import { aidOn } from '../../content/types';
 
   let { game, pulse, onNudge }: { game: InscriptionGame; pulse: number; onNudge: (wheel: number, delta: number) => void } =
     $props();
@@ -31,6 +32,9 @@
   const fmt = (v: number): string => (hex ? toHex(v, game.wheels) : String(v));
   const taskText = $derived(reading ? level.presentation.task : (level.presentation.writeTask ?? level.presentation.task));
   const m = $derived(settings.reducedMotion ? 0 : 1);
+  /** Opory, které v komnatě postupně mizí (Čtení nápisů: nejdřív váhy, pak velikosti). */
+  const fadeWeights = $derived(aidOn(level.presentation, 'weights', st.step));
+  const sizes = $derived(aidOn(level.presentation, 'sizes', st.step) ? 'weighted' : level.presentation.sizes);
 
   let readerEl: HTMLElement | undefined = $state();
 
@@ -55,7 +59,7 @@
   });
 
   function weightState(i: number): WeightState {
-    if (settings.alwaysWeights) return 'known';
+    if (settings.alwaysWeights || fadeWeights) return 'known';
     return game.hintWeights && isBitSet(game.mask, i) ? 'known' : 'hidden';
   }
 
@@ -100,7 +104,7 @@
         {bits}
         mask={game.mask}
         {weightState}
-        sizes={level.presentation.sizes}
+        {sizes}
         {digits}
         highlight={game.hintTarget}
         disabled={!game.writing}

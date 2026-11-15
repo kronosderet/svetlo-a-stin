@@ -47,6 +47,18 @@ export interface Presentation {
   scale?: boolean;
   /** Příliv: světla, která spadnou přes pravý okraj, se chytají do misky zbytku (dělení posunem). */
   remainder?: boolean;
+  /**
+   * Opory, které mizí uvnitř komnaty: číslo říká, v kolika prvních úlohách opora ještě svítí.
+   * weights = váhy pod krystaly, sizes = velikost krystalů podle váhy, counts = počty pod sloupci Kaskády.
+   */
+  fade?: Partial<Record<FadingAid, number>>;
+}
+
+export type FadingAid = 'weights' | 'sizes' | 'counts';
+
+/** Svítí v úloze s pořadím step opora, která v komnatě postupně mizí? */
+export function aidOn(pres: Presentation, aid: FadingAid, step: number): boolean {
+  return step < (pres.fade?.[aid] ?? 0);
 }
 
 interface LevelBase {

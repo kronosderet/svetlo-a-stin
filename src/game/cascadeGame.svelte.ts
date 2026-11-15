@@ -33,11 +33,15 @@ export class CascadeGame extends BaseGame<CascadeLevel> {
   held: CascadeView | null = $state(null);
 
   constructor(level: CascadeLevel, emit: (e: GameEvent) => void) {
-    super(level, computePar(level.config), emit);
+    super(level, computePar, emit);
   }
 
   get moves(): number {
     return this.state.moves;
+  }
+
+  get step(): number {
+    return this.state.step;
   }
 
   get playing(): boolean {

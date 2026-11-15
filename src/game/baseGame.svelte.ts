@@ -7,6 +7,8 @@ import type { InscriptionEvent, InscriptionState } from '../core/puzzles/inscrip
 import type { TideEvent, TideState } from '../core/puzzles/tide';
 import type { PuzzleLevel, QuizQuestion } from '../content/types';
 import { shuffleOptions } from '../content/random';
+import { isGateRoom } from '../content/levels';
+import { extraTaskFor } from './extraTask';
 import { settings } from './settings.svelte.ts';
 
 export interface LevelResult {
@@ -41,19 +43,28 @@ export type GameEvent =
   | { kind: 'gate'; event: GateEvent; state: GateState }
   | { kind: 'table'; event: TableEvent; state: TableState }
   | { kind: 'mask'; event: MaskEvent; state: MaskState }
-  | { kind: 'hint'; level: number }
+  /** extra: brána za ukázku kroku přidala na konec zkoušku navíc. */
+  | { kind: 'hint'; level: number; extra: boolean }
   | { kind: 'quiz'; correct: boolean; question: number }
   | { kind: 'solved'; result: LevelResult };
 
 export type Phase = 'play' | 'quiz' | 'solved';
+
+/** Ideální počet tahů podle zadání (zápis metodou, ať jde hra předat jako BaseGame<PuzzleLevel>). */
+type ParOf<L extends PuzzleLevel> = { parOf(config: L['config']): number }['parOf'];
 
 /**
  * Společný průběh komnaty bez ohledu na archetyp: nápovědy, závěrečný kvíz, pečetě.
  * Potomek drží stav hádanky a volá solve(), když je hádanka hotová.
  */
 export abstract class BaseGame<L extends PuzzleLevel = PuzzleLevel> {
-  readonly level: L;
-  readonly par: number;
+  /** Komnata (část brány). V bráně se může prodloužit o zkoušku navíc, proto je reaktivní. */
+  level: L = $state.raw() as unknown as L;
+  /** Ideální počet tahů; se zkouškou navíc se přepočítá. */
+  par = $state(0);
+  /** Brána už přidala zkoušku navíc (nejvýš jednu za část). */
+  extraAdded = $state(false);
+  readonly #parOf: ParOf<L>;
 
   /** Stupeň nápovědy pro aktuální cíl (po splnění cíle se nuluje). */
   hintLevel = $state(0);
@@ -77,14 +88,17 @@ export abstract class BaseGame<L extends PuzzleLevel = PuzzleLevel> {
   /** Kvíz s možnostmi v náhodném pořadí: každý hráč je má jinak, takže se nedají napovědět „první“. */
   readonly quiz: QuizQuestion[];
 
-  constructor(level: L, par: number, emit: (e: GameEvent) => void) {
+  constructor(level: L, parOf: ParOf<L>, emit: (e: GameEvent) => void) {
     this.level = level;
-    this.par = par;
+    this.#parOf = parOf;
+    this.par = parOf(level.config);
     this.emit = emit;
     this.quiz = (level.quiz ?? []).map((q) => shuffleOptions(typeof q === 'function' ? q(Math.random) : q));
   }
 
   abstract get moves(): number;
+  /** Pořadí rozpracované úlohy. */
+  abstract get step(): number;
   abstract get canUndo(): boolean;
   abstract undo(): void;
 
@@ -97,7 +111,28 @@ export abstract class BaseGame<L extends PuzzleLevel = PuzzleLevel> {
     this.hintLevel += 1;
     this.hintsUsed += 1;
     if (this.hintLevel >= 3) this.stepHints += 1;
-    this.emit({ kind: 'hint', level: this.hintLevel });
+    const extra = this.hintLevel >= 3 && this.#addExtraTask();
+    this.emit({ kind: 'hint', level: this.hintLevel, extra });
+  }
+
+  /**
+   * Brána patra: po ukázce kroku přidá na konec části jednu podobnou losovanou úlohu, ať si hráč
+   * hned zkusí totéž bez ukázky. Nápovědy na ní zůstávají (nápověda je vždy dostupná), další
+   * zkouška navíc ale už nepřibude. Komnaty bez generátoru nebo bez seznamu úloh se nemění.
+   */
+  #addExtraTask(): boolean {
+    const level = this.level as PuzzleLevel;
+    if (this.extraAdded || !level.generate || !isGateRoom(level.id)) return false;
+    const config = level.config as { tasks?: object[] };
+    if (!Array.isArray(config.tasks)) return false;
+    const generate = level.generate;
+    const extra = extraTaskFor(config.tasks, () => (generate(Math.random) as { tasks?: object[] }).tasks ?? [], this.step);
+    if (!extra) return false;
+    const longer = { ...config, tasks: [...config.tasks, extra] } as L['config'];
+    this.level = { ...this.level, config: longer };
+    this.par = this.#parOf(longer);
+    this.extraAdded = true;
+    return true;
   }
 
   answer(option: number): void {

@@ -78,9 +78,53 @@
 
   const echo = new Echo();
 
+  /**
+   * Uvíznutí: kdo v úloze dvakrát chybuje, tomu se rozzáří tlačítko nápovědy (náznak nic nestojí).
+   * Kdo dlouho nic neudělá, tomu Echo náznak řekne samo. Talentovaný hráč si toho nevšimne,
+   * slabší nemusí umět o pomoc požádat.
+   */
+  const NUDGE_SLIPS = 2;
+  const NUDGE_IDLE_MS = 45_000;
+  let slips = 0;
+  let lastActive = Date.now();
+  let nudgeHint = $state(false);
+
+  function watchSlips(e: GameEvent) {
+    if (!('event' in e)) return;
+    lastActive = Date.now();
+    const ev = e.event as { type: string; correct?: boolean };
+    if (ev.type === 'step' || ev.type === 'complete') {
+      slips = 0;
+      nudgeHint = false;
+    } else if (ev.type === 'wrong' || ev.type === 'reset' || (ev.type === 'pick' && ev.correct === false)) {
+      slips += 1;
+      if (slips >= NUDGE_SLIPS) nudgeHint = true;
+    }
+  }
+
+  $effect(() => {
+    const poke = () => (lastActive = Date.now());
+    const timer = setInterval(() => {
+      const busy = ui.kodexOpen || ui.settingsOpen || document.hidden || showComplete;
+      if (busy || game.phase !== 'play' || game.hintLevel > 0) return poke();
+      if (Date.now() - lastActive >= NUDGE_IDLE_MS) {
+        poke();
+        game.useHint();
+      }
+    }, 5000);
+    addEventListener('pointerdown', poke);
+    addEventListener('keydown', poke);
+    return () => {
+      clearInterval(timer);
+      removeEventListener('pointerdown', poke);
+      removeEventListener('keydown', poke);
+    };
+  });
+
   /** Co potřebuje obsluha událostí jednotlivých archetypů (src/ui/screens/level). */
   const ctx: LevelCtx = {
-    level: () => level,
+    // Hra drží i zkoušku navíc, kterou brána přidá po ukázce kroku.
+    level: () => game.level,
     bits: () => bits,
     echo,
     announce,
@@ -138,6 +182,8 @@
         level = parts[partIndex];
         bits = bitsOf(level);
         ctx.said = freshFlags();
+        slips = 0;
+        nudgeHint = false;
         game = createGame();
         echo.say(level.echo.intro);
         announce(`Část ${partIndex + 1} z ${parts.length}: ${level.title}. ${level.presentation.task}`);
@@ -209,6 +255,7 @@
   }
 
   function handle(e: GameEvent) {
+    watchSlips(e);
     switch (e.kind) {
       case 'altar':
         onAltar(ctx, e.event, e.state);
@@ -232,7 +279,8 @@
         onMask(ctx, e.event, e.state);
         break;
       case 'hint': {
-        const text = level.hints[e.level - 1];
+        nudgeHint = false;
+        const text = level.hints[e.level - 1] + (e.extra ? ' Na konec pak přibude ještě jedna podobná zkouška, tu zkus bez ukázky.' : '');
         recordHint(room.id, e.level >= 3);
         echo.say([text], 'hint');
         announce(`Nápověda ${e.level}: ${text}`);
@@ -394,6 +442,7 @@
     <button
       type="button"
       class="btn btn-ghost hint-btn"
+      class:nudge={nudgeHint && game.hintLevel === 0 && game.phase === 'play'}
       onclick={() => game.useHint()}
       disabled={game.phase !== 'play' || game.hintLevel >= 3}
       title="Nápověda (H)"
@@ -578,6 +627,17 @@
   }
   .spacer {
     flex: 1;
+  }
+  /* Po dvou chybách se nápověda nabídne mosaznou září (s omezenými animacemi zůstane záře stát). */
+  .hint-btn.nudge {
+    border-color: var(--brass);
+    box-shadow: 0 0 0 2px rgba(201, 162, 74, 0.55), 0 0 18px rgba(242, 193, 78, 0.45);
+    animation: nudge 1.8s ease-in-out infinite;
+  }
+  @keyframes nudge {
+    50% {
+      box-shadow: 0 0 0 2px rgba(201, 162, 74, 0.25), 0 0 6px rgba(242, 193, 78, 0.15);
+    }
   }
   .count {
     font-family: var(--font-mono);

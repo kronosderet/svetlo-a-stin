@@ -27,11 +27,15 @@ export class MaskGame extends BaseGame<MaskLevel> {
   held: MaskView | null = $state(null);
 
   constructor(level: MaskLevel, emit: (e: GameEvent) => void) {
-    super(level, computePar(level.config), emit);
+    super(level, computePar, emit);
   }
 
   get moves(): number {
     return this.state.moves;
+  }
+
+  get step(): number {
+    return this.state.step;
   }
 
   get playing(): boolean {

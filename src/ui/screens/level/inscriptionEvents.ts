@@ -1,10 +1,24 @@
 import { maxValue, toHex } from '../../../core/bits';
-import type { InscriptionEvent, InscriptionState } from '../../../core/puzzles/inscription';
+import { readSlip, type InscriptionEvent, type InscriptionState, type ReadSlip } from '../../../core/puzzles/inscription';
 import * as sound from '../../../audio/sound';
 import { sayComplete, type LevelCtx } from './context';
 
 /** Repliky po dalších chybných čteních (první říká level.echo.wrong). */
 const WRONG_AGAIN = ['Ještě ne. Který krystal nesedí?', 'Porovnej obě kombinace krystal po krystalu.'];
+
+/** Typická chyba čtení má vlastní repliku: řekne, co se stalo, ne jen že je to špatně. */
+function slipLine(slip: ReadSlip, guess: number): string {
+  switch (slip.kind) {
+    case 'swap':
+      return 'Glyfy jsou prohozené. Levá čtveřice patří na levý kotouč.';
+    case 'mirror':
+      return 'Čteš zrcadlově. Nejtěžší krystal stojí vlevo.';
+    case 'count':
+      return `${guess === 1 ? 'Jedno světlo' : 'Tolik světel'} svítí, to sedí. Každé ale váží jinak.`;
+    case 'one':
+      return `Skoro. Liší se jediný krystal: ten s váhou ${slip.weight}.`;
+  }
+}
 
 /** Hodnota tak, jak ji ukazují kotouče: číslo, nebo u Řeči glyfů šestnáctkově. */
 export function dialText(ctx: LevelCtx, v: number): string {
@@ -26,7 +40,9 @@ export function onInscription(ctx: LevelCtx, ev: InscriptionEvent, state: Inscri
     case 'wrong': {
       ctx.failFx('.dial', '.wall');
       const n = ++ctx.said.wrongCount;
+      const slip = readSlip(cfg, ev.guess, ev.target);
       if (ev.guess > maxValue(bits)) ctx.echo.say([`Tolik se do ${bits} krystalů nevejde. Nejvíc je ${maxValue(bits)}.`]);
+      else if (slip) ctx.echo.say([slipLine(slip, ev.guess)]);
       else if (n === 1 && level.echo.wrong) ctx.echo.say([level.echo.wrong]);
       else ctx.echo.say([WRONG_AGAIN[n % WRONG_AGAIN.length]]);
       ctx.announce(`Kotouče ukazují ${dialText(ctx, ev.guess)}. Nápis váží jinak.`);

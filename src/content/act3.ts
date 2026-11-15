@@ -69,7 +69,7 @@ const levels: LevelDef[] = [
       ],
     },
     presentation: {
-      task: 'Vlož do prázdného kamene runu tak, aby lampa svítila přesně podle brány. Pak spusť Zkoušku.',
+      task: 'Vlož do prázdného kamene runu tak, aby lampa svítila přesně tak, jak žádá brána vpravo. Pak spusť Zkoušku.',
       showDigits: true,
       showSum: false,
       sizes: 'equal',
@@ -327,7 +327,7 @@ const levels: LevelDef[] = [
     },
     generate: genIII6,
     presentation: {
-      task: 'Runy se tu řadí za sebe. Osaď kameny tak, aby lampa svítila podle brány.',
+      task: 'Runy se tu řadí za sebe. Osaď kameny tak, aby lampa svítila podle brány vpravo.',
       showDigits: true,
       showSum: false,
       sizes: 'equal',
@@ -416,7 +416,7 @@ const levels: LevelDef[] = [
           ],
         },
         generate: genIII7Gate,
-        presentation: { task: 'Druhá zkouška: osaď kameny tak, aby lampa svítila podle brány.', showDigits: true, showSum: false, sizes: 'equal', ledger: false },
+        presentation: { task: 'Druhá zkouška: osaď kameny tak, aby lampa svítila podle brány vpravo.', showDigits: true, showSum: false, sizes: 'equal', ledger: false },
         hints: [
           'Začni od lampy: kdy má svítit?',
           'Najdi runu s touhle deskou, nebo s deskou obrácenou, a za ni dej Obraceč.',
@@ -503,7 +503,7 @@ const levels: LevelDef[] = [
           'Lampa má svítit, jen když oba vstupy mlčí, tedy když oba obrácené vstupy svítí. Která runa chce oba?',
           SLOT_HINT,
         ],
-        echo: { intro: ['Druhé zrcadlo postav sám.'], wrong: 'Brána se nepohnula. Kdy mají svítit oba obrácené vstupy?', solved: [] },
+        echo: { intro: ['Druhé zrcadlo postavíš ty.'], wrong: 'Brána se nepohnula. Kdy mají svítit oba obrácené vstupy?', solved: [] },
         quiz: [
           {
             question: 'Jak jinak zapíšeš ¬(A ∨ B)?',
@@ -609,10 +609,10 @@ const levels: LevelDef[] = [
         presentation: { task: 'Tři vstupy, osm kombinací. Vyzkoušej je všechny.', showDigits: true, showSum: false, sizes: 'equal', ledger: false },
         hints: [
           'Každým dotekem přepni jeden vstup.',
-          'Kombinací je osm. Tichý krok z Předsíně tě provede všemi po jediné změně.',
+          'Kombinací je osm. Měň pokaždé jediný vstup, jako při hledání kombinací v Předsíni.',
           'Zvýrazněný vstup vede k nové kombinaci.',
         ],
-        echo: { intro: ['Tři strážci: A, B a C.'], found: { 4: 'Polovina kombinací.', 7: 'Ještě jedna.' }, solved: ['Lampa svítila, kdykoli svítily aspoň dva. Teď ho postav sám.'] },
+        echo: { intro: ['Tři strážci: A, B a C.'], found: { 4: 'Polovina kombinací.', 7: 'Ještě jedna.' }, solved: ['Lampa svítila, kdykoli svítily aspoň dva. Teď ho postavíš ty.'] },
       },
       {
         id: 'III-10',
@@ -625,7 +625,7 @@ const levels: LevelDef[] = [
           'Levé kameny hlídají dvojice vstupů, pravé je slévají dohromady.',
           SLOT_HINT,
         ],
-        echo: { intro: ['Teď postav Hlas většiny sám.'], wrong: 'Brána se nepohnula. Které dvojice musí svítit obě?', solved: [] },
+        echo: { intro: ['Pět kamenů, dvě runy. Hlas většiny je na tobě.'], wrong: 'Brána se nepohnula. Které dvojice musí svítit obě?', solved: [] },
         quiz: [
           {
             question: 'Ve kolika řádcích desky svítí Hlas většiny se třemi vstupy?',
@@ -645,7 +645,7 @@ const levels: LevelDef[] = [
     kind: 'gate',
     config: { tasks: [nandOnly('not'), nandOnly('and'), nandOnly('or')] },
     presentation: {
-      task: 'Máš jen Zlomená pouta. Natoč kamínky u jejich vstupů tak, aby lampa svítila podle brány.',
+      task: 'Máš jen Zlomená pouta. Natoč kamínky u jejich vstupů tak, aby lampa svítila podle brány vpravo.',
       showDigits: true,
       showSum: false,
       sizes: 'equal',

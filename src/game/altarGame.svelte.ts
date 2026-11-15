@@ -16,12 +16,16 @@ export class AltarGame extends BaseGame<AltarLevel> {
   history: AltarState[] = $state([]);
 
   constructor(level: AltarLevel, emit: (e: GameEvent) => void) {
-    super(level, computePar(level.config), emit);
+    super(level, computePar, emit);
     this.state = initAltar(level.config);
   }
 
   get moves(): number {
     return this.state.moves;
+  }
+
+  get step(): number {
+    return this.state.step;
   }
 
   /** Krystal zvýrazněný nápovědou 3. stupně. */

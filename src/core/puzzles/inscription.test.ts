@@ -4,6 +4,8 @@ import {
   currentTask,
   dialWheels,
   hintBit,
+  mirrored,
+  readSlip,
   initInscription,
   nudgeDial,
   par,
@@ -144,5 +146,49 @@ describe('nápis: glyfy (šestnáctkové kotouče)', () => {
     const st = setDial(hex, initInscription(), 0xb6);
     expect(confirm(hex, st).state.complete).toBe(true);
     expect(setDial(hex, initInscription(), 999).dial).toBe(255);
+  });
+});
+
+describe('nápis: typické chyby čtení', () => {
+  const four: InscriptionConfig = { bits: 4, tasks: [] };
+  const glyphs: InscriptionConfig = { bits: 8, radix: 16, tasks: [] };
+
+  it('zrcadlový obraz přesune krystaly na opačnou stranu', () => {
+    expect(mirrored(0b1100, 4)).toBe(0b0011);
+    expect(mirrored(0b0001, 4)).toBe(0b1000);
+    expect(mirrored(0b10110000, 8)).toBe(0b00001101);
+  });
+
+  it('pozná zrcadlové čtení', () => {
+    expect(readSlip(four, 3, 0b1100)).toEqual({ kind: 'mirror' });
+    expect(readSlip(four, 1, 0b1000)).toEqual({ kind: 'mirror' });
+  });
+
+  it('pozná počet světel místo vah', () => {
+    expect(readSlip(four, 2, 0b0101)).toEqual({ kind: 'count' });
+    expect(readSlip(four, 3, 0b1011)).toEqual({ kind: 'count' });
+  });
+
+  it('pozná jediný krystal vedle a řekne jeho váhu', () => {
+    expect(readSlip(four, 9, 0b1101)).toEqual({ kind: 'one', weight: 4 });
+    expect(readSlip(four, 14, 0b1100)).toEqual({ kind: 'one', weight: 2 });
+  });
+
+  it('zrcadlo má přednost před jediným krystalem a počet světel před ním taky', () => {
+    // 0010 zrcadlově je 0100: liší se dva krystaly, ale hlavně je to zrcadlo.
+    expect(readSlip(four, 4, 0b0010)).toEqual({ kind: 'mirror' });
+    // 0011 má dvě světla a 2 se od 3 liší jediným krystalem: počet světel je výstižnější.
+    expect(readSlip(four, 2, 0b0011)).toEqual({ kind: 'count' });
+  });
+
+  it('u dvojznaku pozná prohozené glyfy', () => {
+    expect(readSlip(glyphs, 0xc3, 0x3c)).toEqual({ kind: 'swap' });
+    expect(readSlip({ bits: 8, tasks: [] }, 0xc3, 0x3c)).toBeNull();
+  });
+
+  it('chybu bez jména, správné číslo a číslo mimo rozsah nechá být', () => {
+    expect(readSlip(four, 7, 0b1101)).toBeNull();
+    expect(readSlip(four, 13, 0b1101)).toBeNull();
+    expect(readSlip(four, 99, 0b1101)).toBeNull();
   });
 });

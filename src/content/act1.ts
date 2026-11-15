@@ -174,6 +174,8 @@ const levels: LevelDef[] = [
       showSum: false,
       sizes: 'equal',
       ledger: true,
+      // Opory mizí postupně: dva nápisy s vahami, jeden už jen s velikostmi, zbytek holý.
+      fade: { weights: 2, sizes: 3 },
     },
     hints: [
       'Které krystaly svítí? A kolik který váží?',
@@ -185,7 +187,12 @@ const levels: LevelDef[] = [
         'Stěny jsou plné nápisů. Lumenité jimi zapisovali čísla.',
         'Přečti nápis a nastav jeho váhu na kotoučích.',
       ],
-      step: { 0: 'Kotouče zapadly. První nápis je přečtený.', 3: 'Čteš rychleji než já.' },
+      step: {
+        0: 'Kotouče zapadly. První nápis je přečtený.',
+        1: 'Teď váhy zmizí. Velikost krystalů ti ještě napoví.',
+        2: 'A teď jsou krystaly stejné. Nejtěžší stojí vlevo.',
+        3: 'Čteš rychleji než já.',
+      },
       wrong: 'Kotouče nezapadly. Porovnej obě kombinace.',
       solved: ['Číst světlo je snadné: sečti váhy krystalů, které svítí.', 'Stín neváží nic.'],
       skill: 'Každý nápis napoprvé.',
@@ -299,7 +306,7 @@ const levels: LevelDef[] = [
         6: 'Sedm: tři světla vedle sebe. Co udělá další poutník?',
       },
       complete: 'Osm. Tři krystaly zhasly a jediný se rozsvítil.',
-      solved: ['Když krystal přeteče, zhasne a předá světlo sousedovi vlevo.', 'Lumenité tomu říkali předání.'],
+      solved: ['Když krystal přeteče, zhasne a předá světlo sousedovi vlevo.', 'Lumenité tomu říkali předání. Moderní jméno je přenos.'],
       skill: 'Žádný zbytečný dotek. Předání ovládáš.',
     },
     quiz: [
@@ -451,7 +458,7 @@ const levels: LevelDef[] = [
       wrong: 'Kotouč nezapadl. Porovnej obě kombinace.',
       solved: [
         'Glyfy Lumenitů jsou šestnáctková soustava. Moderně se píšou 0 až 9 a A až F.',
-        'Číslo komnaty na dveřích teď přečteš sám.',
+        'Číslo komnaty na dveřích teď umíš přečíst.',
       ],
       skill: 'Každý glyf napoprvé.',
     },

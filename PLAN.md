@@ -165,12 +165,15 @@ Každý level má sadu pomůcek, které se v dalších levelech postupně vypín
 
 | Pomůcka | Zap. | Vyp. |
 |---|---|---|
-| váhy pod krystaly (8 4 2 1) | I-4 | I-6 (v Nastavení jde zapnout „Vždy ukazovat váhy“) |
+| váhy pod krystaly (8 4 2 1) | I-4 | uvnitř I-6: dva nápisy s vahami, třetí už jen s velikostmi krystalů, zbytek holý (v Nastavení jde zapnout „Vždy ukazovat váhy“) |
 | živý součet „Tvé světlo váží: 5“ | I-4 | I-7 |
 | číslice 0/1 pod krystaly | I-1 (přístupnostní volba) | nikdy nucené |
-| počty světel pod sloupci (kolik se jich ve sloupci slévá) | II-1 | II-4 |
+| počty světel pod sloupci (kolik se jich ve sloupci slévá) | II-1 | uvnitř II-4, po prvním součtu |
 | desítkové hodnoty řádků při počítání pod sebou | II-1 | II-3 (vrací se u nových operací: přetečení, odčítání, násobení) |
 | živé světlo ve vodičích | III-1 | nikdy (je to jádro reaktivity) |
+
+Opora nemizí ve stejné chvíli, kdy přichází nový nápad. Odchází uvnitř komnaty po několika úlohách
+(`presentation.fade`) a Echo to řekne: v I-6 přibývá čtení i kotouče, v II-4 delší řady.
 
 ### 3.3 Nápovědy ve třech stupních
 
@@ -181,6 +184,12 @@ Každý level má sadu pomůcek, které se v dalších levelech postupně vypín
 Nápověda je vždy dostupná a nic nestojí. Náznaky 1. a 2. stupně neberou nic; pečeť odvahy (viz 3.6)
 bere jen ukázka kroku (3. stupeň). Studenti si tak nebojí pomoct obecnou radou.
 
+- **Zkouška navíc v bráně:** když hráč v bráně patra (komnaty 7 a 15) použije ukázku kroku, přibude
+  na konec části jedna podobná losovaná úloha (`src/game/extraTask.ts`), nejvýš jedna za část.
+  Nápovědy na ní zůstávají, ukázka kroku tak přestane být autopilot, kterým jde bránou projít.
+- **Echo se ozve samo:** po dvou chybách v jedné úloze se rozzáří tlačítko Nápověda, po 45 sekundách
+  bez jediné akce řekne Echo náznak 1. stupně samo. Slabší hráč nemusí umět o pomoc požádat.
+
 ### 3.4 Zpětná vazba na chyby
 
 Chyba nikdy není jen „špatně“. Hra vždy ukáže **proč**:
@@ -190,6 +199,8 @@ Chyba nikdy není jen „špatně“. Hra vždy ukáže **proč**:
 - Obvod: test projde všechny kombinace vstupů a zastaví se na prvním řádku tabulky, kde se
   výstup liší. Ten řádek se zvýrazní.
 - Sčítání: sloupec s chybou se jemně rozvlní a ukáže přenos, který chybí.
+- Nápis: typická chyba čtení má vlastní repliku. Zrcadlové čtení, počet světel místo vah, jediný
+  krystal vedle (s jeho váhou) a u dvojznaku prohozené glyfy.
 
 Tón je vždy neutrální až povzbudivý, bez červených křížků a rušivých zvuků.
 

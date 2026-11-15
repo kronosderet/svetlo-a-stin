@@ -29,13 +29,17 @@ export class InscriptionGame extends BaseGame<InscriptionLevel> {
   history: InscriptionState[] = $state([]);
 
   constructor(level: InscriptionLevel, emit: (e: GameEvent) => void) {
-    super(level, computePar(level.config), emit);
+    super(level, computePar, emit);
     this.radix = level.config.radix ?? 10;
     this.wheels = dialWheels(level.config.bits, this.radix);
   }
 
   get moves(): number {
     return this.state.moves;
+  }
+
+  get step(): number {
+    return this.state.step;
   }
 
   get task(): InscriptionTask | null {

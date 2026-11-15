@@ -11,6 +11,7 @@
   import { carryColumns, farColumns, liveInflow, wallRows, wallShifts } from '../../core/puzzles/cascade';
   import { settings } from '../../game/settings.svelte.ts';
   import type { CascadeGame } from '../../game/cascadeGame.svelte.ts';
+  import { aidOn } from '../../content/types';
 
   let { game, pulse, wobble }: { game: CascadeGame; pulse: number; wobble: number } = $props();
 
@@ -35,7 +36,9 @@
   const spout = $derived(!!cfg.overflow && cfg.carries === 'manual');
   const digits = $derived(pres.showDigits || settings.alwaysDigits);
   const weights = $derived(!!pres.showWeights || settings.alwaysWeights);
-  const counts = $derived(!!pres.columnCounts && !sub);
+  /** Pořadí úlohy na stěně (během pauzy po splnění ještě ta přijatá). */
+  const shownStep = $derived(game.state.step - (game.holding && game.held ? 1 : 0));
+  const counts = $derived((!!pres.columnCounts || aidOn(pres, 'counts', shownStep)) && !sub);
   const values = $derived(!!pres.showValues);
   /** Sloupce zleva doprava jako indexy bitů (nejvyšší vlevo). */
   const columns = $derived(Array.from({ length: width }, (_, k) => width - 1 - k));

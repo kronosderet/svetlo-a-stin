@@ -18,7 +18,7 @@ export const KODEX: KodexEntry[] = [
     modernName: '1 a 0',
     ancient: 'Lumenité psali jen dvěma znaky: světlem a stínem.',
     modern:
-      'Světlo zapisujeme jako 1, stín jako 0. Řadu krystalů pak čteme jako řetězec číslic: rozsvícený a zhasnutý krystal dají 10. Odteď uvidíš pod krystaly i moderní zápis.',
+      'Světlo zapisujeme jako 1, stín jako 0. Řadu krystalů pak čteme jako řetězec číslic: rozsvícený a zhasnutý krystal dají 10 (čti jedna-nula, ne deset). Odteď uvidíš pod krystaly i moderní zápis.',
     today: 'Celý obsah tvého telefonu (fotky, zprávy, hudba) je jen velmi dlouhá řada nul a jedniček.',
   },
   {

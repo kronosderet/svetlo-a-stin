@@ -117,6 +117,33 @@ export function par(cfg: InscriptionConfig): number {
   return cfg.tasks.reduce((sum, t) => sum + (t.dir === 'read' ? 1 : popcount(t.value)), 0);
 }
 
+/**
+ * Typická chyba čtení, kterou jde poznat z čísla na kotoučích:
+ *  - swap:   dvojznak s prohozenými glyfy (levá čtveřice na pravém kotouči),
+ *  - mirror: nápis čtený zrcadlově (nejlehčí krystal vlevo),
+ *  - count:  hráč spočítal svítící krystaly místo jejich vah,
+ *  - one:    liší se jediný krystal (weight = jeho váha).
+ */
+export type ReadSlip = { kind: 'swap' | 'mirror' | 'count' } | { kind: 'one'; weight: number };
+
+/** Zrcadlový obraz nápisu: krystal i se přesune na místo bits − 1 − i. */
+export function mirrored(value: number, bits: number): number {
+  let out = 0;
+  for (let i = 0; i < bits; i++) if (isBitSet(value, i)) out |= 1 << (bits - 1 - i);
+  return out >>> 0;
+}
+
+/** Pozná typickou chybu čtení, nebo vrátí null (chyba bez jména, nebo žádná). */
+export function readSlip(cfg: InscriptionConfig, guess: number, value: number): ReadSlip | null {
+  if (guess === value || guess < 0 || guess > maxValue(cfg.bits)) return null;
+  if (cfg.radix === 16 && cfg.bits === 8 && guess === (((value & 0x0f) << 4) | (value >>> 4))) return { kind: 'swap' };
+  if (guess === mirrored(value, cfg.bits)) return { kind: 'mirror' };
+  if (guess === popcount(value)) return { kind: 'count' };
+  const diff = guess ^ value;
+  if (popcount(diff) === 1) return { kind: 'one', weight: diff };
+  return null;
+}
+
 /** Krystal, který nápověda 3. stupně doporučí přepnout (jen při zápisu). */
 export function hintBit(cfg: InscriptionConfig, st: InscriptionState): number | null {
   const task = currentTask(cfg, st);

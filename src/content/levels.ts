@@ -21,6 +21,12 @@ export function roomNumber(id: string): number {
   return Number(id.slice(id.indexOf('-') + 1));
 }
 
+/** Brána patra (7) nebo velká brána Hlubších síní (15). */
+export function isGateRoom(id: string): boolean {
+  const n = roomNumber(id);
+  return n === GATE || n === GREAT_GATE;
+}
+
 /** Hlubší síně (8–15) jsou nepovinné a otevírají se po bráně patra. */
 export function isAdvanced(id: string): boolean {
   return roomNumber(id) > GATE;

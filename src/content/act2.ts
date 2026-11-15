@@ -56,10 +56,10 @@ const levels: LevelDef[] = [
       intro: ['Síň Počtářů. Tady Lumenité světla sčítali.', 'Světlo z řad krystalů stéká do nádrže. Kolik ho připlulo?'],
       step: {
         0: 'Jedna a nic je jedna. To bylo snadné.',
-        1: 'Jedna a jedna se do jednoho krystalu nevejdou. Přetekly do sousedního: 10.',
+        1: 'Jedna a jedna se do jednoho krystalu nevejdou. Přetekly do sousedního: 10, čti jedna-nula.',
       },
       complete: 'Tři světla ze tří řad: 11. Jedno zůstalo dole, jedno přeteklo.',
-      solved: ['Jedna a jedna jsou dvě. Lumenité to psali jako 10.', 'Co se do krystalu nevejde, přeteče doleva.'],
+      solved: ['Jedna a jedna jsou dvě. Lumenité to psali 10: jedna-nula, ne deset.', 'Co se do krystalu nevejde, přeteče doleva.'],
       skill: 'Všechny soutoky napoprvé.',
     },
     quiz: [
@@ -68,7 +68,7 @@ const levels: LevelDef[] = [
         options: ['2', '10', '11', '1'],
         correct: 1,
         hint: 'Ve dvojkové soustavě máš jen číslice 0 a 1. Dvojka se musí zapsat jinak.',
-        explain: '1 + 1 = 10₂. Jednička přeteče do sloupce s váhou 2 a ve sloupci jednotek zůstane 0.',
+        explain: '1 + 1 = 10₂ (čti jedna-nula). Jednička přeteče do sloupce s váhou 2 a ve sloupci jednotek zůstane 0.',
       },
       {
         question: 'A kolik je 1 + 1 + 1 + 1?',
@@ -197,6 +197,8 @@ const levels: LevelDef[] = [
       showSum: false,
       sizes: 'equal',
       ledger: true,
+      // Počty pod sloupci vydrží první součet, ať nemizí zároveň s delší řadou.
+      fade: { counts: 1 },
     },
     hints: [
       'Postupuj zprava, sloupec po sloupci. Přenos z jednoho sloupce mění ten další.',
@@ -204,9 +206,9 @@ const levels: LevelDef[] = [
       CELL_HINT,
     ],
     echo: {
-      intro: ['Velká kaskáda. Světlo tu padá přes šest stupňů.', 'Počty pod sloupci zmizely. Počítej sám.'],
+      intro: ['Velká kaskáda. Světlo tu padá přes šest stupňů.', 'Počty pod sloupci vydrží jen první součet.'],
       step: {
-        0: 'Přenos proběhl pěti sloupci, jeden za druhým.',
+        0: 'Přenos proběhl pěti sloupci, jeden za druhým. Teď počty pod sloupci zmizí.',
         1: 'Zbývá poslední: všechna světla dvakrát.',
       },
       complete: 'Sto dvacet šest. Sedm krystalů, i když řady měly jen šest.',
@@ -275,12 +277,12 @@ const levels: LevelDef[] = [
         explain: '18 = 10010₂ má pět číslic. Pětijiskrová nádoba unese až 31.',
       },
       {
-        question: 'Oktáva (bajt) drží 255. Co v ní zůstane, když přičteš 1?',
+        question: 'Nádoba z osmi krystalů (bajt) unese nejvýš 255. Co v ní zůstane, když přičteš 1?',
         options: ['256', '0', '255', '1'],
         correct: 1,
         hint: '255 = 1111 1111. Přenos proběhne všemi osmi krystaly.',
         explain:
-          '1111 1111 + 1 = 1 0000 0000. Deváté světlo se do oktávy nevejde, vyteče a zůstane 0. Tomu se říká přetečení.',
+          '1111 1111 + 1 = 1 0000 0000. Deváté světlo se do osmi krystalů nevejde, vyteče a zůstane 0. Tomu se říká přetečení.',
       },
     ],
     kodex: 'nadoba',
@@ -855,7 +857,7 @@ const levels: LevelDef[] = [
           CELL_HINT,
         ],
         echo: {
-          intro: ['Druhá zkouška: násobení. Kopie si vyber sám.'],
+          intro: ['Druhá zkouška: násobení. Kopie si vybíráš ty.'],
           solved: ['Součiny sedí. Zbývají Váhy Osudu.'],
         },
       },

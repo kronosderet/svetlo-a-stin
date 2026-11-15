@@ -27,12 +27,16 @@ export class TideGame extends BaseGame<TideLevel> {
   held: { value: number; target: number; show?: string; start: number; trail: TideOp[] } | null = $state(null);
 
   constructor(level: TideLevel, emit: (e: GameEvent) => void) {
-    super(level, computePar(level.config), emit);
+    super(level, computePar, emit);
     this.state = initTide(level.config);
   }
 
   get moves(): number {
     return this.state.moves;
+  }
+
+  get step(): number {
+    return this.state.step;
   }
 
   get playing(): boolean {
