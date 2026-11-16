@@ -57,6 +57,8 @@
   const hint = $derived(game.hintCell);
   const solvedTasks = $derived(cfg.tasks.slice(0, game.state.step));
   const m = $derived(settings.reducedMotion ? 0 : 1);
+  /** Krystaly jdou přepínat při řešení i ve volné hře po vyřešení. */
+  const touch = $derived(game.playing || game.free);
 
   // Mřížka: [znaménko] [přepad] sloupce… [hodnota].
   // Řádky: přenosy, řady ve stěně, (výpůjčky), počty, čára, výsledek. Přenos se při sčítání píše
@@ -252,9 +254,7 @@
   <section class="main" style:--board-max="{(width + (spout ? 1 : 0)) * 76 + 28 + (values ? 76 : 0) + 24}px">
     <header class="task">
       <p class="task-text carved">{pres.task}</p>
-      {#if cfg.tasks.length > 1}
-        <Pips total={cfg.tasks.length} done={game.state.step} />
-      {/if}
+      <Pips total={cfg.tasks.length} done={game.state.step} />
     </header>
 
     {#if task.op === 'mul'}
@@ -347,7 +347,7 @@
               tone="carry"
               highlight={hint?.row === 'far' && hint.column === i}
               wrong={wrong?.row === 'far' && wrong.column === i}
-              disabled={!game.playing}
+              disabled={!touch}
               label={farLabel(i)}
               onToggle={() => game.toggle({ row: 'far', column: i })}
             />
@@ -365,7 +365,7 @@
               tone={i === width ? 'spout' : 'carry'}
               highlight={hint?.row === 'carry' && hint.column === i}
               wrong={wrong?.row === 'carry' && wrong.column === i}
-              disabled={!game.playing}
+              disabled={!touch}
               label={sparkLabel(i)}
               onToggle={() => game.toggle({ row: 'carry', column: i })}
             />
@@ -382,7 +382,7 @@
                   tone="carry"
                   highlight={hint?.row === 'copy' && hint.column === j}
                   wrong={wrong?.row === 'copy' && wrong.column === j}
-                  disabled={!game.playing}
+                  disabled={!touch}
                   label={copyLabel(j)}
                   onToggle={() => game.toggle({ row: 'copy', column: j })}
                 />
@@ -434,7 +434,7 @@
               weightState={weights ? 'known' : 'hidden'}
               digit={digits}
               highlight={hint?.row === 'result' && hint.column === i}
-              disabled={!game.playing}
+              disabled={!touch}
               celebrate={game.phase === 'solved'}
               delay={k * 90}
               label={resultLabel(i)}

@@ -9,6 +9,8 @@ import {
   setRune,
   setWire,
   shownTask,
+  solutions,
+  type GateConfig,
   test as runTest,
   toggleInput as flipInput,
   type GateEvent,
@@ -66,17 +68,64 @@ export class GateGame extends BaseGame<GateLevel> {
     return false;
   }
 
+  protected taskCount(cfg: GateConfig): number {
+    return cfg.tasks.length;
+  }
+
+  protected sliceTasks(cfg: GateConfig, k: number): GateConfig {
+    return { ...cfg, tasks: cfg.tasks.slice(0, k + 1) };
+  }
+
+  /** Vyřešený obvod: kameny osazené podle řešení, u zkoumání všechny kombinace vyzkoušené. */
+  protected showSolved(): void {
+    const cfg = this.level.config;
+    const task = cfg.tasks[cfg.tasks.length - 1];
+    const sol = task.mode === 'slots' ? solutions(task)[0] : undefined;
+    const rows = Array.from({ length: 2 ** task.circuit.inputs.length }, (_, r) => r);
+    this.state = {
+      ...this.state,
+      step: cfg.tasks.length,
+      complete: true,
+      inputs: 0,
+      runes: sol?.runes ?? {},
+      wires: sol?.wires ?? {},
+      tried: task.mode === 'explore' ? rows : [0],
+      failed: null,
+    };
+  }
+
   undo(): void {
     /* Brána nemá co vracet: runy jde kdykoli vyměnit a vstupy přepnout zpátky. */
   }
 
+  /** Volná hra: stav, jako by poslední úloha běžela (najde kameny a vstupy obvodu na desce). */
+  get #live(): GateState {
+    return { ...this.state, step: this.level.config.tasks.length - 1, complete: false };
+  }
+
   toggleInput(index: number): void {
+    if (this.free) {
+      // Volná hra: vstupy se přepínají a lampa ukazuje, co k ní doteče. Nic se nepočítá.
+      const n = this.view.task.circuit.inputs.length;
+      if (index < 0 || index >= n) return;
+      const inputs = this.state.inputs ^ (1 << (n - 1 - index));
+      this.state = { ...this.state, inputs };
+      this.emit({ kind: 'gate', event: { type: 'input', index, on: ((inputs >> (n - 1 - index)) & 1) === 1 }, state: this.state });
+      return;
+    }
     if (!this.playing) return;
     this.#apply(flipInput(this.level.config, $state.snapshot(this.state) as GateState, index));
   }
 
   /** Kliknutí na prázdný kámen: další runa z nabídky. */
   cycleRune(node: string): void {
+    if (this.free) {
+      const rune = nextRune(this.level.config, this.#live, node);
+      if (!rune) return;
+      this.state = { ...this.state, runes: { ...this.state.runes, [node]: rune } };
+      this.emit({ kind: 'gate', event: { type: 'rune', node, rune }, state: this.state });
+      return;
+    }
     if (!this.playing) return;
     const rune = nextRune(this.level.config, this.state, node);
     if (rune) this.#apply(setRune(this.level.config, $state.snapshot(this.state) as GateState, node, rune));
@@ -84,6 +133,13 @@ export class GateGame extends BaseGame<GateLevel> {
 
   /** Kliknutí na točitý kámen: pootočí ho k dalšímu zdroji světla. */
   cycleWire(key: string): void {
+    if (this.free) {
+      const source = nextSource(this.level.config, this.#live, key);
+      if (!source) return;
+      this.state = { ...this.state, wires: { ...this.state.wires, [key]: source } };
+      this.emit({ kind: 'gate', event: { type: 'wire', key, source }, state: this.state });
+      return;
+    }
     if (!this.playing) return;
     const source = nextSource(this.level.config, this.state, key);
     if (source) this.#apply(setWire(this.level.config, $state.snapshot(this.state) as GateState, key, source));

@@ -7,6 +7,8 @@ import {
   par as computePar,
   pick as pickRune,
   shownTask,
+  tableOf,
+  type TableConfig,
   toggleCell as flipCell,
   type TableEvent,
   type TableState,
@@ -61,11 +63,35 @@ export class TableGame extends BaseGame<TableLevel> {
     return false;
   }
 
+  protected taskCount(cfg: TableConfig): number {
+    return cfg.tasks.length;
+  }
+
+  protected sliceTasks(cfg: TableConfig, k: number): TableConfig {
+    return { ...cfg, tasks: cfg.tasks.slice(0, k + 1) };
+  }
+
+  /** Vyřešená deska: vyplněná podle zákona, runa pod závojem odhalená. */
+  protected showSolved(): void {
+    const cfg = this.level.config;
+    const task = cfg.tasks[cfg.tasks.length - 1];
+    const cells = task.mode === 'fill' ? tableOf(task).reduce((m, v, r) => m | (v << r), 0) : 0;
+    this.state = { ...this.state, step: cfg.tasks.length, complete: true, cells, wrongRow: null, wrongPicks: [] };
+  }
+
   undo(): void {
     /* Buňky desky jde přepnout zpátky jedním kliknutím. */
   }
 
   toggleCell(row: number): void {
+    if (this.free) {
+      // Volná hra: na hotové desce jdou řádky dál přepínat, nic se nepočítá.
+      if (this.view.task.mode !== 'fill') return;
+      const cells = this.state.cells ^ (1 << row);
+      this.state = { ...this.state, cells };
+      this.emit({ kind: 'table', event: { type: 'cell', row, on: ((cells >> row) & 1) === 1 }, state: this.state });
+      return;
+    }
     if (!this.playing) return;
     this.#apply(flipCell(this.level.config, $state.snapshot(this.state) as TableState, row));
   }

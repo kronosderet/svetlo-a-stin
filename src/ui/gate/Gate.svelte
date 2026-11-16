@@ -39,9 +39,7 @@
 
   <header class="task">
     <p class="task-text carved">{level.presentation.task}</p>
-    {#if cfg.tasks.length > 1}
-      <Pips total={cfg.tasks.length} done={game.state.step} />
-    {/if}
+    <Pips total={cfg.tasks.length} done={game.state.step} />
   </header>
 
   <div class="work">
@@ -60,8 +58,8 @@
           inputs={view.inputs}
           runes={view.runes}
           wires={view.wires}
-          canToggle={game.playing}
-          canPlace={game.playing && !explore}
+          canToggle={game.playing || game.free}
+          canPlace={(game.playing || game.free) && !explore}
           {modern}
           highlight={hl}
           celebrate={game.phase === 'solved'}

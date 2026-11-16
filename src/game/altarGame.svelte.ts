@@ -3,9 +3,11 @@ import {
   initAltar,
   par as computePar,
   toggle as toggleAltar,
+  type AltarConfig,
   type AltarState,
 } from '../core/puzzles/altar';
 import type { AltarLevel } from '../content/types';
+import { flipBit, isBitSet } from '../core/bits';
 import { BaseGame, type GameEvent } from './baseGame.svelte.ts';
 
 /** Reaktivní obal kolem čisté logiky oltáře (a počítadla, které na něm stojí). */
@@ -38,6 +40,13 @@ export class AltarGame extends BaseGame<AltarLevel> {
   }
 
   toggle(bit: number): void {
+    if (this.free) {
+      // Volná hra: krystal se přepne, nic se nepočítá.
+      const mask = flipBit(this.state.mask, bit);
+      this.state = { ...this.state, mask };
+      this.emit({ kind: 'altar', event: { type: 'toggle', bit, on: isBitSet(mask, bit) }, state: this.state });
+      return;
+    }
     if (this.phase !== 'play') return;
     const before = $state.snapshot(this.state) as AltarState;
     const { state, events } = toggleAltar(this.level.config, before, bit);
@@ -51,6 +60,21 @@ export class AltarGame extends BaseGame<AltarLevel> {
 
     for (const event of events) this.emit({ kind: 'altar', event, state });
     if (state.complete) this.solve();
+  }
+
+  protected taskCount(cfg: AltarConfig): number {
+    return cfg.goal.kind === 'all' ? 1 : cfg.goal.targets.length;
+  }
+
+  protected sliceTasks(cfg: AltarConfig, k: number): AltarConfig {
+    return cfg.goal.kind === 'all' ? cfg : { ...cfg, goal: { ...cfg.goal, targets: cfg.goal.targets.slice(0, k + 1) } };
+  }
+
+  /** Vyřešený cíl: krystaly svítí přesně podle něj. */
+  protected showSolved(): void {
+    const goal = this.level.config.goal;
+    if (goal.kind === 'all') return;
+    this.state = { ...this.state, mask: goal.targets[goal.targets.length - 1], step: goal.targets.length, complete: true };
   }
 
   undo(): void {

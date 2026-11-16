@@ -281,7 +281,7 @@ Díky tomu je přidávání levelů rychlé a datově řízené.
 | **Příliv** | páky posouvají celou řadu (vlevo = ×2, vpravo = ÷2, co přeteče přes okraj, je ztracené), další páky přidají nebo uberou jedničku. Cíl co nejméně tahy; ve Vahách Osudu dovolí každá zkouška jen ideální počet tahů a pak se vrátí na začátek. Páka „převrať“ (doplněk), miska zbytku (dělení) a kolo může místo čísla ukázat „÷ 8“ nebo „−3“ | posuny, ×2, ÷2, doplněk | II |
 | **Smíšená komnata** | brána patra: několik hádanek různých archetypů za sebou (třeba Kaskáda a pak Příliv), nad scénou ukazatel zkoušek; tahy, pokusy i nápovědy se pro pečetě sčítají za celou komnatu | syntéza patra | II |
 | **Brána** | kamenná deska s obvodem: vlevo krystaly vstupů, uprostřed kameny s runami, vpravo lampa, mezi nimi světlovody, které svítí, když nesou světlo. Zkoumání (runy pevné, hráč zkouší všechny kombinace vstupů) a vkládání run do prázdných kamenů (kliknutí runy střídá, Zkouška projde všechny řádky a nesedící rozsvítí okrově) | hradla, skládání | III |
-| **Deska zákona** | pravdivostní tabulka: hráč rozsvítí, ve kterých řádcích lampa svítí, nebo podle hotové desky pozná runu pod závojem | tabulky, identifikace | III |
+| **Deska zákona** | pravdivostní tabulka: hráč rozsvítí, ve kterých řádcích lampa svítí, nebo podle hotové desky pozná runu pod závojem. Obvod vedle desky sám dokola prochází všechny kombinace vstupů a lampa ukazuje, co k ní doteče, odpovídající řádek desky svítí s ním (najetí na řádek obvod zastaví); desku jde odvodit z toho, co hráč vidí | tabulky, identifikace | III |
 | **Dílna** | volná stavba obvodu (umísti hradla, propoj vodiče, spusť zkoušku) | návrh obvodů | III–IV |
 | **Maska** | ve stěně svítí oktáva, hráč pod ní rozsvěcí masku a runa AND, OR nebo XOR z nich živě skládá výsledek; oltář žádá cílový výsledek, u šifry má maska odpovídat klíči a výsledkem je rozšifrované písmeno | bitové operace, šifra XOR | III |
 | **Šifra** | kódování/dekódování zpráv | XOR šifra, ASCII, hex | III, V |
@@ -427,6 +427,12 @@ u vstupů run, které vybírají, odkud světlo přitéká (runy mají na desce 
 - **Okamžité ověření** u jednoduchých hádanek (vyřešeno = hned se otevře).
   U obvodů je tlačítko **„Spustit zkoušku“**, které animovaně projde všechny vstupy.
 - **Žádné prohry.** Zpět/Znovu je vždy po ruce a neomezené.
+- **Otevřená komnata.** Po vyřešení výsledek nevyskočí sám. Prvky zůstanou ovladatelné a nic se už
+  nepočítá (krystaly, páky, vstupy, maska; v Nápisu jsou kotouče s krystaly propojené), hráč může ve
+  vyřešené komnatě experimentovat. Výsledek, pečetě a cestu dál ukáže tlačítko Pokračovat (nebo Enter) a z výsledku
+  se jde zpátky do komnaty. Komnatu s víc úlohami jde prolistovat (u smíšené brány i přes všechny
+  zkoušky): šipky lemují zlaté kosočtverečky úloh nad hádankou a kosočtverečky jdou i proklikat.
+  Každá úloha se ukáže vyřešená a dá se s ní dál experimentovat.
 
 ### 7.2 Rozvržení obrazovky
 

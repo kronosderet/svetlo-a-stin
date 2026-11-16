@@ -106,6 +106,49 @@ export abstract class BaseGame<L extends PuzzleLevel = PuzzleLevel> {
     return this.quiz[this.quizIndex] ?? null;
   }
 
+  /**
+   * Volná hra po vyřešení: komnata je otevřená a výsledek zapsaný, prvky se ale dají dál přepínat
+   * a nic se nepočítá. O výsledek a pečetě si hráč řekne sám tlačítkem Pokračovat.
+   */
+  get free(): boolean {
+    return this.phase === 'solved' && !this.holding;
+  }
+
+  /** Volná hra: komnata (část) se všemi úlohami, mezi kterými jde listovat. */
+  #full: L | null = null;
+  /** Volná hra: kterou úlohu hráč prohlíží (−1 = poslední, ta po vyřešení zůstane na desce). */
+  freeIndex = $state(-1);
+
+  /** Kolik úloh komnata má (u oltáře cílů). */
+  protected abstract taskCount(config: L['config']): number;
+  /** Zadání zkrácené na prvních k + 1 úloh: poslední je ta, kterou hráč prohlíží. */
+  protected abstract sliceTasks(config: L['config'], k: number): L['config'];
+  /** Na desku dá vyřešený stav poslední úlohy (zkráceného) zadání. */
+  protected abstract showSolved(): void;
+
+  /** Volná hra: kolik úloh jde prolistovat. */
+  get freeCount(): number {
+    return this.taskCount((this.#full ?? this.level).config);
+  }
+
+  /** Volná hra: která úloha je na desce. */
+  get freeAt(): number {
+    return this.freeIndex < 0 ? this.freeCount - 1 : this.freeIndex;
+  }
+
+  /**
+   * Volná hra: ukáže k-tou úlohu komnaty ve vyřešeném stavu, ať si s ní hráč může dál zkoušet.
+   * Zadání se zkrátí tak, aby byla poslední, takže ji desky ukážou jako hotovou bez dalších úprav.
+   */
+  freeShow(k: number): void {
+    if (!this.free) return;
+    const full = (this.#full ??= this.level);
+    if (k < 0 || k >= this.taskCount(full.config) || k === this.freeAt) return;
+    this.freeIndex = k;
+    this.level = { ...full, config: this.sliceTasks(full.config, k) } as L;
+    this.showSolved();
+  }
+
   useHint(): void {
     if (this.phase !== 'play' || this.hintLevel >= 3) return;
     this.hintLevel += 1;

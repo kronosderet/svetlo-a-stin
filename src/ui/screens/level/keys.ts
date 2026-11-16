@@ -24,7 +24,7 @@ const TIDE_KEYS: Record<string, TideOp> = {
 export function puzzleKey(game: AnyGame, ev: KeyboardEvent): boolean {
   const plain = !ev.ctrlKey && !ev.metaKey && !ev.altKey;
   if (!plain) return false;
-  if (game.kind === 'inscription' && game.reading) {
+  if (game.kind === 'inscription' && (game.reading || game.free)) {
     // Kotouče jdou nastavit i z klávesnice: číslice se přidávají zprava (u glyfů i A–F).
     if (/^[0-9]$/.test(ev.key) || (game.radix === 16 && /^[a-fA-F]$/.test(ev.key))) {
       game.typeDigit(parseInt(ev.key, 16));
@@ -39,7 +39,7 @@ export function puzzleKey(game: AnyGame, ev: KeyboardEvent): boolean {
     // Enter potvrdí kotouče i po kliknutí na šipku; jiná tlačítka (Potvrdit, Nápověda…) stiskne normálně.
     const target = ev.target as HTMLElement | null;
     const otherButton = target instanceof HTMLButtonElement && !target.closest('.dial');
-    if (ev.key === 'Enter' && !otherButton) {
+    if (ev.key === 'Enter' && !otherButton && game.reading) {
       game.confirm();
       return true;
     }
@@ -62,7 +62,7 @@ export function puzzleKey(game: AnyGame, ev: KeyboardEvent): boolean {
       return true;
     }
   }
-  if (game.kind === 'tide' && game.playing) {
+  if (game.kind === 'tide' && (game.playing || game.free)) {
     const op = TIDE_KEYS[ev.key];
     if (op && game.level.config.ops.includes(op)) {
       game.pull(op);

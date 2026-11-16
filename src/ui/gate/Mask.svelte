@@ -34,9 +34,7 @@
 
   <header class="task">
     <p class="task-text carved">{level.presentation.task}</p>
-    {#if cfg.tasks.length > 1}
-      <Pips total={cfg.tasks.length} done={game.state.step} />
-    {/if}
+    <Pips total={cfg.tasks.length} done={game.state.step} />
     {#if task.say}
       {#key task}
         <p class="say" in:fly={{ y: -8, duration: 300 * m }}>{task.say}</p>
@@ -63,7 +61,7 @@
             weightState={() => 'hidden'}
             digits={true}
             highlight={game.hintTarget}
-            disabled={!game.playing}
+            disabled={!game.playing && !game.free}
             celebrate={game.phase === 'solved'}
             label="Maska"
             crystalLabel={(i, k) => `Krystal masky ${k + 1} zleva`}

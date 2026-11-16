@@ -1,4 +1,5 @@
 import {
+  answer,
   confirm as confirmCascade,
   currentTask,
   firstWrong,
@@ -7,11 +8,13 @@ import {
   shownTask,
   toggle as toggleCell,
   type CascadeCell,
+  type CascadeConfig,
   type CascadeEvent,
   type CascadeState,
   type CascadeTask,
 } from '../core/puzzles/cascade';
 import type { CascadeLevel } from '../content/types';
+import { flipBit, isBitSet } from '../core/bits';
 import { BaseGame, type GameEvent } from './baseGame.svelte.ts';
 
 export interface CascadeView {
@@ -70,6 +73,14 @@ export class CascadeGame extends BaseGame<CascadeLevel> {
   }
 
   toggle(cell: CascadeCell): void {
+    if (this.free) {
+      // Volná hra: krystaly výsledku i přenosů jdou přepínat a světla se přesouvají, nic se nepočítá.
+      const key = ({ result: 'result', carry: 'carries', far: 'far', copy: 'copies' } as const)[cell.row];
+      const value = flipBit(this.state[key], cell.column);
+      this.state = { ...this.state, [key]: value };
+      this.emit({ kind: 'cascade', event: { type: 'toggle', cell, on: isBitSet(value, cell.column) }, state: this.state });
+      return;
+    }
     if (!this.playing) return;
     const before = $state.snapshot(this.state) as CascadeState;
     const r = toggleCell(this.level.config, before, cell);
@@ -89,6 +100,32 @@ export class CascadeGame extends BaseGame<CascadeLevel> {
       this.hold();
     }
     this.#apply(r.state, r.events);
+  }
+
+  protected taskCount(cfg: CascadeConfig): number {
+    return cfg.tasks.length;
+  }
+
+  protected sliceTasks(cfg: CascadeConfig, k: number): CascadeConfig {
+    return { ...cfg, tasks: cfg.tasks.slice(0, k + 1) };
+  }
+
+  /** Vyřešený součet: výsledek i přenosy rozsvícené, světla odtečou na svá místa. */
+  protected showSolved(): void {
+    const cfg = this.level.config;
+    const task = cfg.tasks[cfg.tasks.length - 1];
+    const a = answer(cfg, task);
+    const manual = cfg.carries === 'manual';
+    this.state = {
+      ...this.state,
+      step: cfg.tasks.length,
+      complete: true,
+      result: a.result,
+      carries: manual ? a.carries : 0,
+      far: manual ? a.far : 0,
+      copies: task.op === 'mul' && cfg.pickCopies ? task.operands[1] : 0,
+      wrong: null,
+    };
   }
 
   undo(): void {

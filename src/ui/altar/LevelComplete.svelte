@@ -24,9 +24,19 @@
     onNext: () => void;
     onMap: () => void;
     onReplay: () => void;
+    /** Zpátky do otevřené komnaty: hráč si s ní může dál hrát. */
+    onBack?: () => void;
   }
 
-  let { level, result, lines, kodex, hasNext, floorDone, onNext, onMap, onReplay }: Props = $props();
+  let { level, result, lines, kodex, hasNext, floorDone, onNext, onMap, onReplay, onBack }: Props = $props();
+
+  /** Escape zavře výsledek a vrátí hráče do otevřené komnaty. */
+  function onKey(e: KeyboardEvent) {
+    if (e.key === 'Escape' && onBack) {
+      e.preventDefault();
+      onBack();
+    }
+  }
 
   const m = $derived(settings.reducedMotion ? 0 : 1);
   /** Kde se výsledek potvrzuje (kotouče, Kaskáda), počítají se pokusy, ne tahy. */
@@ -56,6 +66,8 @@
         : 'bez nápovědy',
   );
 </script>
+
+<svelte:window onkeydown={onKey} />
 
 <div class="wrap" transition:fade={{ duration: 200 * m }}>
   <div class="scrim" aria-hidden="true"></div>
@@ -107,6 +119,7 @@
     {/if}
 
     <div class="actions">
+      {#if onBack}<button type="button" class="btn btn-ghost" onclick={onBack}>Zpět do komnaty</button>{/if}
       <button type="button" class="btn btn-ghost" onclick={onReplay}>Hrát znovu</button>
       {#if hasNext}
         <button type="button" class="btn btn-ghost" onclick={onMap}>Mapa</button>

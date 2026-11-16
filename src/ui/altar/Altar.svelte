@@ -91,9 +91,7 @@
 
       </div>
 
-      {#if steps.length > 1}
-        <Pips total={steps.length} done={st.step} />
-      {/if}
+      <Pips total={steps.length} done={st.step} />
     </header>
 
     <CrystalRow
@@ -103,7 +101,7 @@
       sizes={level.presentation.sizes}
       {digits}
       highlight={game.hintTarget}
-      disabled={game.phase !== 'play'}
+      disabled={game.phase !== 'play' && !game.free}
       celebrate={game.phase === 'solved'}
       label="Krystaly"
       {crystalLabel}

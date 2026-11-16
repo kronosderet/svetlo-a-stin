@@ -32,6 +32,45 @@
 
   /** Moderní značka runy se ukáže, až ji Kodex přeloží (nebo když hráč chce vždy moderní zápis). */
   const translated = (r: Rune) => !!RUNE_MODERN[r] && (settings.alwaysDigits || progress.kodex.includes(RUNE_KODEX[r] ?? ''));
+
+  /**
+   * Při řešení desky obvod sám prochází všechny kombinace vstupů a lampa ukazuje, co k ní doteče:
+   * hráč desku odvodí z toho, co vidí, a odpovídající řádek desky se rozsvítí s ním. Najetí na řádek
+   * obvod na té kombinaci zastaví. Po vyřešení přepíná vstupy hráč sám.
+   */
+  const CYCLE_MS = 1400;
+  let cycle = $state(0);
+  let pinned: number | null = $state(null);
+  let freeInputs = $state(0);
+  const cycling = $derived(!game.free);
+  const shownRow = $derived(game.free ? freeInputs : (pinned ?? cycle));
+
+  $effect(() => {
+    void task;
+    cycle = 0;
+    pinned = null;
+  });
+  $effect(() => {
+    if (!cycling) return;
+    const count = rows.length;
+    const id = setInterval(() => {
+      if (pinned === null && !document.hidden) cycle = (cycle + 1) % count;
+    }, CYCLE_MS);
+    return () => clearInterval(id);
+  });
+
+  function toggleInput(i: number) {
+    if (game.free) freeInputs ^= 1 << (n - 1 - i);
+  }
+
+  /** Najetí na řádek desky: obvod ukáže jeho kombinaci (ve volné hře ji rovnou nastaví). */
+  function pin(r: number | null) {
+    if (game.free) {
+      if (r !== null) freeInputs = r;
+      return;
+    }
+    pinned = r;
+  }
 </script>
 
 <div class="desk-room">
@@ -41,9 +80,7 @@
 
   <header class="task">
     <p class="task-text carved">{level.presentation.task}</p>
-    {#if cfg.tasks.length > 1}
-      <Pips total={cfg.tasks.length} done={game.state.step} />
-    {/if}
+    <Pips total={cfg.tasks.length} done={game.state.step} />
   </header>
 
   <div class="work">
@@ -51,13 +88,13 @@
       <div class="board-wrap" in:fly={{ y: -12, duration: 360 * m }}>
         <Board
           {circuit}
-          inputs={0}
+          inputs={shownRow}
           runes={{}}
-          canToggle={false}
+          canToggle={game.free}
           canPlace={false}
           {modern}
-          staticInputs={true}
           veiled={!fill && !view.revealed}
+          onInput={toggleInput}
         />
       </div>
     {/key}
@@ -70,7 +107,17 @@
           <span role="columnheader">lampa</span>
         </div>
         {#each rows as r (r)}
-          <div class="drow" class:wrong={view.wrongRow === r} role="row">
+          <div
+            class="drow"
+            class:wrong={view.wrongRow === r}
+            class:now={shownRow === r}
+            role="row"
+            tabindex="-1"
+            onpointerenter={() => pin(r)}
+            onpointerleave={() => pin(null)}
+            onfocusin={() => pin(r)}
+            onfocusout={() => pin(null)}
+          >
             {#each circuit.inputs as name, i (name)}
               <span class="bit" class:one={inputBit(r, i, n) === 1} role="cell">{modern ? inputBit(r, i, n) : inputBit(r, i, n) ? '●' : '○'}</span>
             {/each}
@@ -81,7 +128,7 @@
                   class="cell"
                   class:on={lit(r)}
                   class:hl={hint && 'row' in hint && hint.row === r}
-                  disabled={!game.playing}
+                  disabled={!game.playing && !(game.free && fill)}
                   aria-pressed={lit(r)}
                   aria-label="{rowLabel(r)}: lampa {lit(r) ? 'svítí' : 'mlčí'}"
                   onclick={() => game.toggleCell(r)}
@@ -218,6 +265,15 @@
     letter-spacing: 0.08em;
     text-transform: uppercase;
     color: var(--text-muted);
+  }
+  .drow {
+    outline: none;
+    transition: background var(--t-fast);
+  }
+  /* Řádek, jehož kombinaci právě ukazuje obvod vlevo. */
+  .drow.now {
+    background: rgba(255, 217, 138, 0.12);
+    box-shadow: inset 0 0 0 1px rgba(255, 217, 138, 0.35);
   }
   .drow.wrong {
     background: rgba(240, 149, 122, 0.22);

@@ -1,4 +1,5 @@
 import {
+  applyOp,
   bestOp,
   currentTarget,
   initTide,
@@ -7,6 +8,7 @@ import {
   taskLimit,
   taskStart,
   type Spill,
+  type TideConfig,
   type TideOp,
   type TideState,
 } from '../core/puzzles/tide';
@@ -93,6 +95,16 @@ export class TideGame extends BaseGame<TideLevel> {
   }
 
   pull(op: TideOp): void {
+    if (this.free) {
+      // Volná hra: páky dál posouvají světlo, nic se nepočítá.
+      if (!this.level.config.ops.includes(op)) return;
+      const from = this.state.value;
+      const { value, spill } = applyOp(op, from, this.level.config.bits);
+      this.state = { ...this.state, value };
+      this.lastPull = { op, spill, n: (this.lastPull?.n ?? 0) + 1 };
+      this.emit({ kind: 'tide', event: { type: 'pull', op, from, to: value, spill }, state: this.state });
+      return;
+    }
     if (!this.playing) return;
     const before = $state.snapshot(this.state) as TideState;
     const { state, events } = pullLever(this.level.config, before, op);
@@ -117,6 +129,21 @@ export class TideGame extends BaseGame<TideLevel> {
     this.state = state;
     for (const event of events) this.emit({ kind: 'tide', event, state });
     if (state.complete) this.solve();
+  }
+
+  protected taskCount(cfg: TideConfig): number {
+    return cfg.tasks.length;
+  }
+
+  protected sliceTasks(cfg: TideConfig, k: number): TideConfig {
+    return { ...cfg, tasks: cfg.tasks.slice(0, k + 1) };
+  }
+
+  /** Vyřešená zkouška: světlo váží přesně tolik, kolik žádala. */
+  protected showSolved(): void {
+    const cfg = this.level.config;
+    const task = cfg.tasks[cfg.tasks.length - 1];
+    this.state = { ...this.state, step: cfg.tasks.length, complete: true, value: task.target, trail: [], taskMoves: 0 };
   }
 
   undo(): void {

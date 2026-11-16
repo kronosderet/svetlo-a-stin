@@ -92,9 +92,7 @@
           />
         </div>
       {/if}
-      {#if cfg.tasks.length > 1}
-        <Pips total={cfg.tasks.length} done={st.step} />
-      {/if}
+      <Pips total={cfg.tasks.length} done={st.step} />
     </header>
 
     <!-- Při čtení krystaly rozsvítí chrám: jsou zasazené ve stěně a nejdou přepnout. -->
@@ -107,7 +105,7 @@
         {sizes}
         {digits}
         highlight={game.hintTarget}
-        disabled={!game.writing}
+        disabled={!game.writing && !game.free}
         celebrate={game.phase === 'solved'}
         label={reading ? `Nápis: ${words(game.mask)}` : 'Krystaly'}
         {crystalLabel}
@@ -147,6 +145,12 @@
           </div>
         {/key}
       {/if}
+    {:else if game.free}
+      <!-- Volná hra po vyřešení: kotouče a krystaly jsou propojené. -->
+      <div class="reader side">
+        <Dial value={game.mask} wheels={game.wheels} radix={game.radix} {onNudge} />
+      </div>
+      <p class="keys">Kotouče a krystaly jsou teď propojené. Zkus, jak se mění jedno s druhým.</p>
     {/if}
   </section>
 

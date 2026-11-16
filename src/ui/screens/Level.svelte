@@ -24,6 +24,7 @@
   import { TableGame } from '../../game/tableGame.svelte.ts';
   import { MaskGame } from '../../game/maskGame.svelte.ts';
   import { Echo } from '../../game/echo.svelte.ts';
+  import { browse } from '../../game/browse.svelte.ts';
   import { FX, fxState } from '../../game/fx.svelte.ts';
   import { go, openKodex, ui } from '../../game/nav.svelte.ts';
   import { recordEntry, recordHint, recordResult, unseenKodex } from '../../game/progress.svelte.ts';
@@ -68,12 +69,14 @@
   let announcement = $state('');
   let pulse = $state(0);
   let showComplete = $state(false);
+  /** Komnata je otevřená: výsledek je zapsaný a čeká, až si o něj hráč řekne tlačítkem Pokračovat. */
+  let ready = $state(false);
+  const READY_LINE = 'Komnata je vyřešená. Experimentuj tu, jak dlouho chceš, a pak pokračuj.';
   let solvedLines: string[] = $state([]);
   let fx: FxLayer | undefined = $state();
   let stageEl: HTMLElement | undefined = $state();
   /** Roste s každým chybným potvrzením Kaskády (otřese sloupcem). */
   let wobble = $state(0);
-  let completeTimer: ReturnType<typeof setTimeout> | undefined;
   let partTimer: ReturnType<typeof setTimeout> | undefined;
 
   const echo = new Echo();
@@ -140,6 +143,39 @@
   };
 
   let game = $state.raw(createGame());
+  /** Dohrané části komnaty (u smíšené brány všechny, jinak jediná): ve volné hře se jimi listuje. */
+  const finished: ReturnType<typeof createGame>[] = [];
+
+  /** Volná hra: všechny úlohy komnaty po řadě, u smíšené brány přes všechny její části. */
+  const browseList = $derived(ready ? finished.flatMap((g, p) => Array.from({ length: g.freeCount }, (_, k) => ({ p, k }))) : []);
+  const browseAt = $derived(browseList.findIndex((e) => e.p === partIndex && e.k === game.freeAt));
+
+  /** Volná hra: přejde na úlohu s daným pořadím. Ukáže se vyřešená a dá se s ní dál experimentovat. */
+  function showTask(at: number) {
+    const target = browseList[at];
+    if (!target) return;
+    if (target.p !== partIndex) {
+      partIndex = target.p;
+      level = parts[target.p];
+      bits = bitsOf(level);
+      ctx.said = freshFlags();
+      game = finished[target.p];
+    }
+    game.freeShow(target.k);
+    sound.playTick();
+    announce(`Úloha ${at + 1} z ${browseList.length}${parts.length > 1 ? `: ${level.title}` : ''}.`);
+  }
+
+  // Kosočtverečky úloh nad hádankou podle tohohle ukážou šipky listování.
+  $effect(() => {
+    browse.total = browseList.length;
+    browse.at = browseAt;
+    browse.show = showTask;
+  });
+  $effect(() => () => {
+    browse.total = 0;
+    browse.show = null;
+  });
 
   function createGame() {
     switch (level.kind) {
@@ -164,7 +200,6 @@
   recordEntry(room.id);
 
   $effect(() => () => {
-    clearTimeout(completeTimer);
     clearTimeout(partTimer);
   });
 
@@ -178,6 +213,7 @@
     announce(`Část ${partIndex + 1} z ${parts.length} splněna. ${done.map(plainText).join(' ')}`);
     partTimer = setTimeout(
       () => {
+        finished[partIndex] = game;
         partIndex += 1;
         level = parts[partIndex];
         bits = bitsOf(level);
@@ -318,11 +354,11 @@
           fx?.win(centerOf('.row', '.board', '.register', '.wall'), stageArea());
           shake('win');
         });
-        announce(`Komnata otevřena. ${solvedLines.map(plainText).join(' ')}`);
-        completeTimer = setTimeout(() => {
-          showComplete = true;
-          sound.playDoor();
-        }, settings.reducedMotion ? 250 : 1300);
+        // Výsledek nevyskočí sám: hráč může ve vyřešené komnatě experimentovat a pokračuje, až chce.
+        finished[partIndex] = game;
+        ready = true;
+        echo.say([READY_LINE]);
+        announce(`Komnata otevřena. ${solvedLines.map(plainText).join(' ')} Prvky si můžeš dál zkoušet, výsledek a pečetě ukáže tlačítko Pokračovat.`);
         break;
       }
     }
@@ -334,9 +370,20 @@
     sound.playTick();
   }
 
+  /** Pokračovat: dveře se otevřou a ukáže se výsledek, pečetě a cesta dál. */
+  function openResult() {
+    if (!result || showComplete) return;
+    showComplete = true;
+    sound.playDoor();
+  }
+
+  /** Z výsledku zpátky do vyřešené komnaty, ať v ní hráč může dál experimentovat. */
+  function backToRoom() {
+    showComplete = false;
+  }
+
   /** Znovu: komnata se vytvoří od začátku (a u procvičování vylosuje nové úlohy). */
   function restart() {
-    clearTimeout(completeTimer);
     clearTimeout(partTimer);
     go({ name: 'level', id: room.id, run: Date.now() });
   }
@@ -354,6 +401,12 @@
       return;
     }
     const plain = !ev.ctrlKey && !ev.metaKey && !ev.altKey;
+    // V otevřené komnatě Enter pokračuje k výsledku (tlačítka na desce si Enter nechávají).
+    if (ready && plain && ev.key === 'Enter' && !(ev.target instanceof HTMLButtonElement)) {
+      ev.preventDefault();
+      openResult();
+      return;
+    }
     if ((ev.ctrlKey || ev.metaKey) && ev.key.toLowerCase() === 'z') {
       ev.preventDefault();
       game.undo();
@@ -399,7 +452,7 @@
     <!-- Smíšená brána: kolik zkoušek je za hráčem a kolik před ním -->
     <ol class="trials" aria-label="Zkoušky brány">
       {#each parts as p, k (k)}
-        <li class:done={k < partIndex || (k === partIndex && game.phase === 'solved')} class:now={k === partIndex}>
+        <li class:done={ready || k < partIndex || (k === partIndex && game.phase === 'solved')} class:now={k === partIndex}>
           <span class="dot" aria-hidden="true"></span>
           <span>{k + 1}. {p.title}</span>
         </li>
@@ -439,16 +492,23 @@
       <Icon name="restart" /> Znovu
     </button>
     <span class="spacer"></span>
-    <button
-      type="button"
-      class="btn btn-ghost hint-btn"
-      class:nudge={nudgeHint && game.hintLevel === 0 && game.phase === 'play'}
-      onclick={() => game.useHint()}
-      disabled={game.phase !== 'play' || game.hintLevel >= 3}
-      title="Nápověda (H)"
-    >
-      <Icon name="hint" /> Nápověda <span class="count">{game.hintLevel}/3</span>
-    </button>
+    {#if ready}
+      <!-- Komnata je vyřešená: hráč pokračuje k výsledku a pečetím, až dozkoumá, co chce. -->
+      <button type="button" class="btn btn-primary continue" onclick={openResult} title="Výsledek, pečetě a cesta dál (Enter)">
+        Pokračovat <Icon name="check" />
+      </button>
+    {:else}
+      <button
+        type="button"
+        class="btn btn-ghost hint-btn"
+        class:nudge={nudgeHint && game.hintLevel === 0 && game.phase === 'play'}
+        onclick={() => game.useHint()}
+        disabled={game.phase !== 'play' || game.hintLevel >= 3}
+        title="Nápověda (H)"
+      >
+        <Icon name="hint" /> Nápověda <span class="count">{game.hintLevel}/3</span>
+      </button>
+    {/if}
   </footer>
 
   <div class="visually-hidden" aria-live="polite">{announcement}</div>
@@ -466,6 +526,7 @@
     onNext={() => next && go({ name: 'level', id: next })}
     onMap={() => go({ name: 'map' })}
     onReplay={restart}
+    onBack={backToRoom}
   />
 {/if}
 

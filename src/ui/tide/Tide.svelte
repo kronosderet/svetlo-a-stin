@@ -83,9 +83,7 @@
           <Disc value={game.demandShown} turn={game.state.step * 60} label={[GATE, GREAT_GATE].includes(roomNumber(game.level.id)) ? 'Brána žádá' : 'Oltář žádá'} />
         {/if}
       </div>
-      {#if cfg.tasks.length > 1}
-        <Pips total={cfg.tasks.length} done={game.state.step} />
-      {/if}
+      <Pips total={cfg.tasks.length} done={game.state.step} />
     </header>
 
     <!-- Řada světel: páky ji posouvají celou najednou. -->
@@ -150,7 +148,7 @@
             caption={LEVER[op].caption}
             keyHint={LEVER[op].key}
             highlight={game.hintOp === op}
-            disabled={!game.playing}
+            disabled={!game.playing && !game.free}
             label={leverLabel(op)}
             onPull={() => game.pull(op)}
           />

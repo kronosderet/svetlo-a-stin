@@ -35,7 +35,7 @@ const levels: LevelDef[] = [
       tasks: [{ op: 'add', operands: [1, 1] }],
     },
     presentation: {
-      task: 'Sečti světlo se světlem. Rozsviť dole krystal, do kterého se vejdou obě.',
+      task: 'Sečti obě světla. Rozsviť dole krystal, který unese jejich váhu.',
       showDigits: true,
       showSum: false,
       sizes: 'equal',
@@ -49,7 +49,7 @@ const levels: LevelDef[] = [
       CELL_HINT,
     ],
     echo: {
-      intro: ['Síň Počtářů. Tady Lumenité světla sčítali.', 'Jedno světlo a pod ním druhé. Kam se obě vejdou?'],
+      intro: ['Síň Počtářů. Tady Lumenité světla sčítali.', 'Dvě světla v jednom sloupci. Kolik váží dohromady?'],
       solved: ['Dvě světla se do jednoho krystalu nevejdou. Slila se do sousedního.', 'Jedna a jedna je 10: jedna-nula, ne deset.'],
       skill: 'Napoprvé.',
     },
