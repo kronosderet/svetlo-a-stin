@@ -16,6 +16,7 @@ import {
 } from '../core/puzzles/table';
 import type { TableLevel } from '../content/types';
 import { BaseGame, type GameEvent } from './baseGame.svelte.ts';
+import { identifyStep, tableStep } from './stepWords';
 
 export interface TableView {
   task: TableTask;
@@ -57,6 +58,14 @@ export class TableGame extends BaseGame<TableLevel> {
 
   get hintTarget(): ReturnType<typeof hint> {
     return this.playing && this.hintLevel >= 3 ? hint(this.level.config, this.state) : null;
+  }
+
+  /** Ukázka kroku s důvodem: proč lampa v nesedícím řádku svítí nebo mlčí, runa po runě. */
+  get stepHint(): string | null {
+    const h = this.hintTarget;
+    if (!h) return null;
+    if ('rune' in h) return identifyStep(h.rune);
+    return tableStep(this.view.task.circuit, h.row);
   }
 
   get canUndo(): boolean {

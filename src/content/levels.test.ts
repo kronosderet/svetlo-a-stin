@@ -55,7 +55,15 @@ function altarChecks(level: AltarLevel) {
   check(level, 'má platná data', (level) => {
     const { bits, goal } = level.config;
     const initial = level.config.initial ?? 0;
-    if (goal.kind !== 'all') {
+    if (goal.kind === 'class') {
+      // Skupiny čísel: každá má aspoň dvě čísla (hráč volí) a počáteční tma do první nepatří.
+      expect(goal.targets.length).toBeGreaterThan(0);
+      goal.targets.forEach((t) => {
+        expect(t.values.length).toBeGreaterThanOrEqual(1);
+        t.values.forEach((v) => expect(v >= 0 && v < 2 ** bits).toBe(true));
+      });
+      expect(goal.targets[0].values).not.toContain(initial);
+    } else if (goal.kind !== 'all') {
       expect(goal.targets.length).toBeGreaterThan(0);
       goal.targets.forEach((t, k) => {
         expect(t).toBeGreaterThanOrEqual(0);
@@ -151,7 +159,7 @@ function cascadeChecks(level: CascadeLevel) {
 
   check(level, 'jde vyřešit podle nápověd napoprvé', (level) => {
     const cfg = level.config;
-    let st = cascade.initCascade();
+    let st = cascade.initCascade(cfg);
     let guard = 0;
     while (!st.complete && guard++ < 300) {
       // Nápověda ukazuje buňky jednu po druhé; potvrzuje se až úplný výsledek.
@@ -307,9 +315,15 @@ function maskChecks(level: MaskLevel) {
     const cfg = level.config;
     let st = mask.initMask();
     let guard = 0;
-    while (!st.complete && guard++ < 300) st = mask.toggle(cfg, st, mask.hintBit(cfg, st)!).state;
+    while (!st.complete && guard++ < 300) {
+      // Úloha s klíčem z minulé úlohy se vyřeší sama (hra to udělá po pauze).
+      const arrived = mask.arrive(cfg, st);
+      st = arrived.events.length ? arrived.state : mask.toggle(cfg, st, mask.hintBit(cfg, st)!).state;
+    }
     expect(st.complete).toBe(true);
-    expect(st.moves).toBe(mask.par(cfg));
+    // Maska ze zadání („pravá čtveřice“) může úlohu splnit dřív, než se rozsvítí celá: ideál je strop.
+    if (cfg.tasks.some((t) => t.ideal !== undefined)) expect(st.moves).toBeLessThanOrEqual(mask.par(cfg));
+    else expect(st.moves).toBe(mask.par(cfg));
   });
 }
 

@@ -1,6 +1,8 @@
 # Sazba a písma
 
 > Kontrola sazby, odsazení a rozložení na šesti rozlišeních a revize písem. Verze 1 · 17. 11. 2026
+>
+> Verze 2 · 17. 11. 2026: dořešené položky ze seznamu Zbývá.
 
 ## Jak se kontrolovalo
 
@@ -95,13 +97,19 @@ Další úpravy:
 - Indexy mají nejméně 10 px, dřív 9 px ve Shrnutí patra.
 - Kód komnaty v nadpisu má nejméně 12 px.
 
+## Dořešeno ve verzi 2
+
+- **Deska Dílny na telefonu na výšku:** pod 80 % měřítka ukazují součástky zkratky (PS, ÚS, VÝH,
+  ROZ, OZV) písmem 18 px, po zmenšení kolem 12,5 px. Pod deskou je legenda jen těch součástek, které
+  na desce jsou. Celé jméno zůstává pro čtečku.
+- **Kodex na desktopu:** panel má 600 px, řádek textu kolem 58 znaků.
+- **Pečeť přesnosti** počítá všude „kroky“, i v přehledu třídy („Ø kroků nad ideál“).
+- **Popisky vstupů v Dílně:** váha je index u písmene (A₂). Test v `layout.test.ts` hlídá i popisky
+  vstupů a lamp, nejen krystaly a kameny.
+- **Deska zákona:** číslo řádku v tlumené barvě textu, ne v barvě kamene (bylo skoro nečitelné).
+- **Zmenšená deska Dílny a Brány:** pod runou jen její jméno, moderní značka (· XOR) se schová.
+
 ## Zbývá
 
-- **Deska Dílny na nejmenším telefonu:** i při 70 % má název součástky asi 8 px. Lepší by byla
-  vlastní sazba desky pro telefon na výšku, třeba se zkratkami součástek.
-- **Kodex na desktopu:** boční panel má řádek asi 43 znaků. Šířka kolem 460 px by dala ideálních
-  55 až 65 znaků.
 - **Dělení slov** (`hyphens: auto`) jsem záměrně nezapnul. Atkinson Hyperlegible je písmo pro čtenáře
   se zrakovými a čtenářskými potížemi a dělení jim čtení zhoršuje.
-- **Pečeť přesnosti:** počítané jednotky by měly mít v rozhraní jednotný název (kap. 9.3.6
-  v PLAYTEST.md).

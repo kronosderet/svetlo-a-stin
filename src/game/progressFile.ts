@@ -2,7 +2,7 @@
  * Soubor s postupem: hráč si postup uloží třeba do školního OneDrive a na jiném počítači
  * ho zase načte. Čistá logika bez prohlížeče: zápis, kontrola a porovnání.
  */
-import { LAYOUT, migrateLevelIds } from './migrate';
+import { LAYOUT, mergeCounts, mergeSeals, migrateKodexIds, migrateLevelIds } from './migrate';
 import type { LevelRecord, ProgressData, RoomStats } from './progress.svelte.ts';
 
 export const FILE_NAME = 'Svetlo-a-Stin-postup.json';
@@ -43,7 +43,7 @@ export function parseProgress(text: string, levelIds: string[], kodexIds: string
   const levels: Record<string, LevelRecord> = {};
   if (isRecord(src.levels)) {
     // Soubor uložený ve starším rozvržení komnat má jejich původní čísla.
-    const saved = src.layout === LAYOUT ? src.levels : migrateLevelIds(src.levels, src.layout);
+    const saved = src.layout === LAYOUT ? src.levels : migrateLevelIds(src.levels, src.layout, mergeSeals);
     for (const [id, rec] of Object.entries(saved)) {
       if (!levelIds.includes(id) || !isRecord(rec) || !isRecord(rec.seals)) continue;
       levels[id] = { seals: { solved: true, skill: rec.seals.skill === true, pure: rec.seals.pure === true } };
@@ -51,7 +51,7 @@ export function parseProgress(text: string, levelIds: string[], kodexIds: string
   }
   const stats: Record<string, RoomStats> = {};
   if (isRecord(src.stats)) {
-    const saved = src.layout === LAYOUT ? src.stats : migrateLevelIds(src.stats, src.layout);
+    const saved = src.layout === LAYOUT ? src.stats : migrateLevelIds(src.stats, src.layout, mergeCounts);
     const count = (v: unknown) => (typeof v === 'number' && Number.isFinite(v) && v >= 0 ? Math.floor(v) : 0);
     for (const [id, st] of Object.entries(saved)) {
       if (!levelIds.includes(id) || !isRecord(st)) continue;
@@ -66,8 +66,9 @@ export function parseProgress(text: string, levelIds: string[], kodexIds: string
     }
   }
   const name = typeof src.name === 'string' ? src.name.trim().slice(0, 40) : '';
+  // Záznamy Kodexu sloučených komnat přejdou na nový záznam, neznámé se zahodí.
   const known = (list: unknown, ids: string[]) =>
-    Array.isArray(list) ? [...new Set(list.filter((k): k is string => typeof k === 'string' && ids.includes(k)))] : [];
+    Array.isArray(list) ? migrateKodexIds(list.filter((k): k is string => typeof k === 'string')).filter((k) => ids.includes(k)) : [];
   return {
     ok: true,
     data: { version: 1, layout: LAYOUT, levels, stats, name, kodex: known(src.kodex, kodexIds), seen: known(src.seen, kodexIds) },

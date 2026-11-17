@@ -58,3 +58,52 @@ export function boxes(m: Machine): Box[] {
     ...m.lamps.map((l) => at(l.x, l.y, 46, 46, `lampa ${l.id}`)),
   ];
 }
+
+/** Vstupy se stejným písmenem (A₂ a A₁) nesou váhu jako index u písmene, ne pod krystalem. */
+export function sharedLetter(m: Machine, id: string): boolean {
+  const inp = m.inputs.find((i) => i.id === id);
+  const name = inp?.label ?? id;
+  return m.inputs.filter((i) => (i.label ?? i.id) === name).length > 1;
+}
+
+/**
+ * Popisky kolem prvků (přibližně): písmeno vstupu nad krystalem, váha nebo číslice pod ním
+ * a jméno lampy. Test hlídá, že nezasahují do jiných prvků ani do sebe navzájem.
+ */
+export function labelBoxes(m: Machine): Box[] {
+  const out: Box[] = [];
+  const weighted = new Set((m.numbers ?? []).flatMap((g) => g.bits));
+  for (const i of m.inputs) {
+    const x = i.x * G;
+    const y = i.y * G;
+    const shared = sharedLetter(m, i.id) && weighted.has(i.id);
+    out.push({ id: `písmeno ${i.id}`, x0: x - (shared ? 14 : 9), y0: y - 51, x1: x + (shared ? 14 : 9), y1: y - 29 });
+    if (!shared) out.push({ id: `pod vstupem ${i.id}`, x0: x - 8, y0: y + 31, x1: x + 8, y1: y + 49 });
+  }
+  for (const l of m.lamps) {
+    const x = l.x * G;
+    const y = l.y * G;
+    const half = Math.max(8, l.label.length * 4.5);
+    const below = l.from === 'top';
+    out.push({ id: `popisek lampy ${l.id}`, x0: x - half, y0: below ? y + 27 : y - 45, x1: x + half, y1: below ? y + 45 : y - 27 });
+  }
+  return out;
+}
+
+/** Zkratky součástek pro malou desku (telefon na výšku) a jejich význam v legendě pod deskou. */
+export const PART_ABBR: Record<string, string> = {
+  half: 'PS',
+  full: 'ÚS',
+  mux: 'VÝH',
+  dec: 'ROZ',
+  latch: 'OZV',
+  flip: 'OZV',
+};
+export const PART_FULL: Record<string, string> = {
+  half: 'poloviční sčítačka',
+  full: 'úplná sčítačka',
+  mux: 'výhybka',
+  dec: 'rozdělovač',
+  latch: 'ozvěna',
+  flip: 'ozvěna s tepem',
+};

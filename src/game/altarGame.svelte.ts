@@ -1,4 +1,7 @@
 import {
+  currentClass,
+  currentTarget,
+  goalCount,
   hintBit,
   initAltar,
   par as computePar,
@@ -9,6 +12,7 @@ import {
 import type { AltarLevel } from '../content/types';
 import { flipBit, isBitSet } from '../core/bits';
 import { BaseGame, type GameEvent } from './baseGame.svelte.ts';
+import { valueStep } from './stepWords';
 
 /** Reaktivní obal kolem čisté logiky oltáře (a počítadla, které na něm stojí). */
 export class AltarGame extends BaseGame<AltarLevel> {
@@ -33,6 +37,30 @@ export class AltarGame extends BaseGame<AltarLevel> {
   /** Krystal zvýrazněný nápovědou 3. stupně. */
   get hintTarget(): number | null {
     return this.phase === 'play' && this.hintLevel >= 3 ? hintBit(this.level.config, this.state) : null;
+  }
+
+  /**
+   * Ukázka kroku s důvodem. U vah: kolik zbývá a jestli se váha vejde. Dokud hráč váhy teprve
+   * objevuje (I-4), zůstane u holého zvýraznění, ať ukázka váhu neprozradí.
+   */
+  get stepHint(): string | null {
+    const bit = this.hintTarget;
+    if (bit === null) return null;
+    const cfg = this.level.config;
+    const on = isBitSet(this.state.mask, bit);
+    if (cfg.goal.kind === 'all')
+      return cfg.strict
+        ? 'Zvýrazněný krystal vede na kombinaci, kterou deska ještě nezná, a odtud jde cesta dál bez opakování.'
+        : 'Zvýrazněný krystal vede na kombinaci, kterou deska ještě nezná.';
+    if (cfg.goal.kind === 'pattern') return on ? 'Ve stěně je tenhle krystal zhasnutý: zvýrazněný krystal zhasni.' : 'Ve stěně tenhle krystal svítí: zvýrazněný krystal rozsviť.';
+    if (cfg.goal.kind === 'class') {
+      const group = currentClass(cfg, this.state);
+      return `${group?.hint ? `${group.hint} ` : ''}Zvýrazněný krystal ${on ? 'zhasni' : 'rozsviť'}.`;
+    }
+    const known = cfg.reveal !== 'solo' || isBitSet(this.state.revealed, bit);
+    const target = currentTarget(cfg, this.state);
+    if (!known || target === null || cfg.hintOrder === 'low') return null;
+    return valueStep(target, bit, !on);
   }
 
   get canUndo(): boolean {
@@ -63,18 +91,26 @@ export class AltarGame extends BaseGame<AltarLevel> {
   }
 
   protected taskCount(cfg: AltarConfig): number {
-    return cfg.goal.kind === 'all' ? 1 : cfg.goal.targets.length;
+    return cfg.goal.kind === 'all' ? 1 : goalCount(cfg);
   }
 
   protected sliceTasks(cfg: AltarConfig, k: number): AltarConfig {
-    return cfg.goal.kind === 'all' ? cfg : { ...cfg, goal: { ...cfg.goal, targets: cfg.goal.targets.slice(0, k + 1) } };
+    if (cfg.goal.kind === 'all') return cfg;
+    if (cfg.goal.kind === 'class') return { ...cfg, goal: { ...cfg.goal, targets: cfg.goal.targets.slice(0, k + 1) } };
+    return { ...cfg, goal: { ...cfg.goal, targets: cfg.goal.targets.slice(0, k + 1) } };
   }
 
-  /** Vyřešený cíl: krystaly svítí přesně podle něj. */
+  /** Vyřešený cíl: krystaly svítí přesně podle něj (u skupin číslo, které hráč zvolil, jinak první ze skupiny). */
   protected showSolved(): void {
     const goal = this.level.config.goal;
     if (goal.kind === 'all') return;
-    this.state = { ...this.state, mask: goal.targets[goal.targets.length - 1], step: goal.targets.length, complete: true };
+    const n = goal.targets.length;
+    if (goal.kind === 'class') {
+      const found = goal.targets.map((t, k) => (t.values.includes(this.state.found[k]) ? this.state.found[k] : t.values[0]));
+      this.state = { ...this.state, mask: found[n - 1], found, step: n, complete: true };
+      return;
+    }
+    this.state = { ...this.state, mask: goal.targets[n - 1], step: n, complete: true };
   }
 
   undo(): void {

@@ -77,10 +77,18 @@ export function genIII6(rng: Rng): GateConfig {
       slotsLike(chain(), chain(first, 'not')),
       slotsLike(chain(), chain(second, 'not')),
       slotsLike(chain(), chain('xor', 'not')),
+      exploreBranch,
       slotsLike(branch(), branch(randomBranch(rng))),
     ],
   };
 }
+
+/** III-6: hotové větvení (obrácené A a k tomu B) na prozkoumání, než ho hráč postaví sám. */
+const exploreBranch: GateTask = {
+  mode: 'explore',
+  circuit: branch({ a: 'not', b: 'id', join: 'and' }),
+  say: 'Tohle je větvení: jeden vstup se obrátí, než se cesty sejdou. Vyzkoušej všechny čtyři kombinace. Kdy lampa svítí?',
+};
 
 /** III-7 (deska): vyplnit desku pro řetěz s Obracečem a pro větvení. */
 export function genIII7Fill(rng: Rng): TableConfig {
@@ -260,11 +268,11 @@ export function genIII12(rng: Rng): MaskConfig {
   return {
     bits: 8,
     tasks: [
-      { value: a1, op: 'and', target: a1 & 0x0f, say: 'Nech svítit jen pravou čtveřici.' },
+      { value: a1, op: 'and', target: a1 & 0x0f, ideal: 0x0f, say: 'Nech svítit jen pravou čtveřici.' },
       { value: a2, op: 'and', target: subsetOf(rng, a2, 2), say: 'Nech svítit jen ta světla, která žádá oltář.' },
-      { value: o1 || 0x05, op: 'or', target: (o1 || 0x05) | 0xf0, say: 'Rozsviť celou levou čtveřici.' },
+      { value: o1 || 0x05, op: 'or', target: (o1 || 0x05) | 0xf0, ideal: 0xf0, say: 'Rozsviť celou levou čtveřici.' },
       { value: o2, op: 'or', target: extra(o2), say: 'Přidej světla, která žádá oltář. Svítící zůstanou.' },
-      { value: x1, op: 'xor', target: x1 ^ 0xff, say: 'Převrať všechny krystaly.' },
+      { value: x1, op: 'xor', target: x1 ^ 0xff, ideal: 0xff, say: 'Převrať všechny krystaly.' },
       { value: x2, op: 'xor', target: x2 ^ flip(rng), say: 'Přepni jen ty krystaly, které se mají změnit.' },
     ],
   };
@@ -275,18 +283,33 @@ const ECHO = [0x45, 0x43, 0x48, 0x4f];
 
 /** III-13 Tajná řeč: zašifrovat E klíčem a pak rozšifrovat E, C, H, O stejným klíčem. */
 export function genIII13(rng: Rng): MaskConfig {
-  let key = 0;
-  do key = int(rng, 1, 255);
-  while (popcount(key) < 3 || popcount(key) > 5);
-  return secretSpeech(key);
+  const draw = (not = -1) => {
+    let key = 0;
+    do key = int(rng, 1, 255);
+    while (popcount(key) < 3 || popcount(key) > 5 || key === not);
+    return key;
+  };
+  const key = draw();
+  return secretSpeech(key, draw(key));
 }
 
-export function secretSpeech(key: number): MaskConfig {
+/**
+ * Tajná řeč: hráč zašifruje první písmeno a klíč zůstane v masce. Tentýž klíč pak sám rozšifruje
+ * celou zprávu písmeno po písmenu (E, C, H, O). Nakonec přijde zpráva s jiným klíčem: hráč zná jen
+ * první písmeno, a z něj klíč najde (útok známým textem).
+ */
+export function secretSpeech(key: number, other: number): MaskConfig {
   return {
     bits: 8,
     tasks: [
       { value: ECHO[0], op: 'xor', key, encrypt: true, say: 'Zašifruj první písmeno: nastav masku na klíč.' },
-      ...ECHO.map((c) => ({ value: c ^ key, op: 'xor' as const, key, say: 'Rozšifruj: stejný klíč vrátí původní písmeno.' })),
+      ...ECHO.map((c) => ({ value: c ^ key, op: 'xor' as const, key, carry: true, say: 'Klíč zůstal v masce. Co udělá se šifrou?' })),
+      {
+        value: ECHO[0] ^ other,
+        op: 'xor',
+        target: ECHO[0],
+        say: 'Nová zpráva má jiný klíč, který neznáš. Víš jen, že začíná písmenem E (0100 0101). Najdi klíč.',
+      },
     ],
   };
 }

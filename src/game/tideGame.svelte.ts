@@ -14,6 +14,7 @@ import {
 } from '../core/puzzles/tide';
 import type { TideLevel } from '../content/types';
 import { BaseGame, type GameEvent } from './baseGame.svelte.ts';
+import { tideStep } from './stepWords';
 
 /** Reaktivní obal kolem Přílivu: páky posunu a ±1. */
 export class TideGame extends BaseGame<TideLevel> {
@@ -87,6 +88,11 @@ export class TideGame extends BaseGame<TideLevel> {
   /** Páka zvýrazněná nápovědou 3. stupně. */
   get hintOp(): TideOp | null {
     return this.playing && this.hintLevel >= 3 ? bestOp(this.level.config, this.state) : null;
+  }
+
+  /** Ukázka kroku s důvodem: nejkratší cesta k cíli a její první páka. */
+  get stepHint(): string | null {
+    return this.hintOp ? tideStep(this.level.config, this.state) : null;
   }
 
   /** Ve Vahách Osudu se tahy nevracejí. */

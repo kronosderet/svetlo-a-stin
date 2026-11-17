@@ -18,6 +18,7 @@ import {
 import type { InscriptionLevel } from '../content/types';
 import { flipBit, isBitSet, maxValue } from '../core/bits';
 import { BaseGame, type GameEvent } from './baseGame.svelte.ts';
+import { readStep, valueStep } from './stepWords';
 
 /** Reaktivní obal kolem Nápisu: čtení na kotoučích a zápis krystaly. */
 export class InscriptionGame extends BaseGame<InscriptionLevel> {
@@ -72,6 +73,16 @@ export class InscriptionGame extends BaseGame<InscriptionLevel> {
   /** Nápověda 3. stupně při čtení odhalí váhy svítících krystalů. */
   get hintWeights(): boolean {
     return this.reading && this.hintLevel >= 3;
+  }
+
+  /** Ukázka kroku s důvodem: při čtení které váhy sečíst, při zápisu kolik zbývá a jestli se váha vejde. */
+  get stepHint(): string | null {
+    const task = this.task;
+    if (this.phase !== 'play' || this.hintLevel < 3 || !task) return null;
+    const cfg = this.level.config;
+    if (task.dir === 'read') return readStep(task.value, cfg.bits, cfg.radix === 16);
+    const bit = this.hintTarget;
+    return bit === null ? null : valueStep(task.value, bit, !isBitSet(this.state.mask, bit));
   }
 
   get canUndo(): boolean {

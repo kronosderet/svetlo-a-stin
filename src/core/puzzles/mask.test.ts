@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { applyMask, closestMask, hintBit, initMask, par, toggle, type MaskConfig } from './mask';
+import { applyMask, arrive, closestMask, hintBit, initMask, par, toggle, type MaskConfig } from './mask';
 
 describe('Maska', () => {
   const cfg: MaskConfig = {
@@ -30,5 +30,35 @@ describe('Maska', () => {
     while (!st.complete) st = toggle(cfg, st, hintBit(cfg, st)!).state;
     expect(st.moves).toBe(par(cfg));
     expect(par(cfg)).toBe(2 + 1 + 8 + 7);
+  });
+});
+
+describe('maska: klíč zůstává v masce', () => {
+  const cfg: MaskConfig = {
+    bits: 8,
+    tasks: [
+      { value: 69, op: 'xor', key: 0b1011, encrypt: true },
+      { value: 69 ^ 0b1011, op: 'xor', key: 0b1011, carry: true },
+      { value: 67 ^ 0b1011, op: 'xor', key: 0b1011, carry: true },
+    ],
+  };
+
+  it('po zašifrování zůstane klíč v masce a další úlohy se vyřeší samy', () => {
+    let st = initMask();
+    for (const b of [3, 1, 0]) st = toggle(cfg, st, b).state;
+    expect(st.step).toBe(1);
+    expect(st.mask).toBe(0b1011);
+    const a = arrive(cfg, st);
+    expect(a.events).toContainEqual({ type: 'step', index: 1, result: 69 });
+    const b = arrive(cfg, a.state);
+    expect(b.events.map((e) => e.type)).toEqual(['step', 'complete']);
+  });
+
+  it('ideál nepočítá úlohy, které vyřeší klíč z minulé úlohy', () => {
+    expect(par(cfg)).toBe(3);
+  });
+
+  it('úloha bez carry se sama nevyřeší', () => {
+    expect(arrive(cfg, initMask()).events).toHaveLength(0);
   });
 });

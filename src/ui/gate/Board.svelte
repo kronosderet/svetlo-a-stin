@@ -21,6 +21,8 @@
     modern: boolean;
     /** Runy pod závojem (Deska zákona: hráč je pozná podle tabulky). */
     veiled?: boolean;
+    /** Lampa a poslední runa před ní pod závojem (Deska zákona v bráně: výsledek se skládá z run). */
+    lampVeiled?: boolean;
     /** Bez krystalů vstupů, jen jejich jména (obvod na Desce zákona). */
     staticInputs?: boolean;
     highlight?: { input: number } | { node: string } | { socket: string } | null;
@@ -39,6 +41,7 @@
     canPlace,
     modern,
     veiled = false,
+    lampVeiled = false,
     staticInputs = false,
     highlight = null,
     celebrate = false,
@@ -105,7 +108,7 @@
         });
     }
     const v = values ? values[circuit.output] : null;
-    out.push({ d: path(outAnchor(circuit.output), { x: lampPos.x - 26, y: lampPos.y }), on: v === 1, dead: !staticInputs && v === null });
+    out.push({ d: path(outAnchor(circuit.output), { x: lampPos.x - 26, y: lampPos.y }), on: !lampVeiled && v === 1, dead: !staticInputs && !lampVeiled && v === null });
     return out;
   });
 
@@ -116,7 +119,9 @@
   const K_MIN = 0.72;
   const k = $derived(boxW ? Math.min(1, boxW / W) : 1);
   const inputOn = (i: number) => ((inputs >> (n - 1 - i)) & 1) === 1;
-  const lampOn = $derived(values?.[circuit.output] === 1);
+  const lampOn = $derived(!lampVeiled && values?.[circuit.output] === 1);
+  /** Zahalený výsledek: poslední runa nesvítí, jinak by prozradila lampu. */
+  const hiddenLit = (id: string) => lampVeiled && id === circuit.output;
 
   /** Prázdné kameny k osazení: čtečka je čísluje, když je jich víc (v pořadí obvodu). */
   const slotIds = $derived(circuit.nodes.filter((g) => !g.rune).map((g) => g.id));
@@ -135,7 +140,7 @@
   const translated = (r: Rune) => !!RUNE_MODERN[r] && (settings.alwaysDigits || progress.kodex.includes(RUNE_KODEX[r] ?? ''));
 </script>
 
-<div class="circuit stone" class:celebrate style:width="max(min(100%, {W}px), {Math.round(W * K_MIN)}px)" style:aspect-ratio="{W} / {H}" style:--k={k} bind:clientWidth={boxW}>
+<div class="circuit stone" class:celebrate class:narrow={k < 0.9} style:width="max(min(100%, {W}px), {Math.round(W * K_MIN)}px)" style:aspect-ratio="{W} / {H}" style:--k={k} bind:clientWidth={boxW}>
   <svg class="wires" viewBox="0 0 {W} {H}" aria-hidden="true">
     {#each paths as w, k (k)}
       <path class="groove" d={w.d} />
@@ -176,7 +181,7 @@
       {#each Array.from({ length: arity(g) }, (_, j) => j) as j (j)}
         {@const key = socketKey(g.id, j)}
         {@const src = wires[key]}
-        <div class="slot-pos" style:left={pct(p.x - 48, W)} style:top={pct(p.y + (arity(g) === 2 ? (j === 0 ? -16 : 16) : 0), H)}>
+        <div class="slot-pos" style:left={pct(p.x - 50, W)} style:top={pct(p.y + (arity(g) === 2 ? (j === 0 ? -16 : 16) : 0), H)}>
           <button
             type="button"
             class="socket"
@@ -200,7 +205,7 @@
         class="stone-rune"
         class:slot={!g.rune}
         class:empty={!r}
-        class:lit={!veiled && values?.[g.id] === 1}
+        class:lit={!veiled && !hiddenLit(g.id) && values?.[g.id] === 1}
         class:veiled
         class:hl={highlight && 'node' in highlight && highlight.node === g.id}
         disabled={!!g.rune || !canPlace || veiled}
@@ -221,7 +226,9 @@
   {/each}
 
   <div class="slot-pos" style:left={pct(lampPos.x, W)} style:top={pct(lampPos.y, H)}>
-    <span class="lamp" class:on={lampOn} role="img" aria-label={staticInputs ? 'Lampa' : `Lampa ${lampOn ? 'svítí' : 'mlčí'}`}></span>
+    <span class="lamp" class:on={lampOn} class:veiled={lampVeiled} role="img" aria-label={staticInputs ? 'Lampa' : lampVeiled ? 'Lampa pod závojem' : `Lampa ${lampOn ? 'svítí' : 'mlčí'}`}
+      >{#if lampVeiled}<span class="veil" aria-hidden="true">?</span>{/if}</span
+    >
   </div>
 </div>
 
@@ -392,17 +399,18 @@
     color: var(--text-muted);
   }
   /* Točitý kámen: malé kolečko, kliknutím se pootočí k dalšímu zdroji světla */
+  /* Točitý kámen: 30 px, aby byl vedle runy vidět (Prapečeť). Plochu pro prst zvětšuje ::after. */
   .socket {
     display: grid;
     place-items: center;
-    width: 26px;
-    height: 26px;
+    width: 30px;
+    height: 30px;
     padding: 0;
     border: 2px dashed rgba(255, 217, 138, 0.5);
     border-radius: 50%;
     background: radial-gradient(circle at 50% 40%, #2a221a, #15100b);
     font-family: var(--font-mono);
-    font-size: 12px;
+    font-size: 13px;
     font-weight: 700;
     color: var(--text-muted);
     cursor: pointer;
@@ -415,6 +423,20 @@
   .socket:disabled {
     cursor: default;
   }
+  /* Na dotykovém displeji má točitý kámen větší neviditelnou plochu pro prst (asi 40 px při plné
+     velikosti desky). Sousední točité kameny u jednoho kamene se překryjí jen v úzkém pásu mezi nimi. */
+  @media (pointer: coarse) {
+    .socket {
+      position: relative;
+    }
+    .socket::after {
+      content: '';
+      position: absolute;
+      inset: -7px;
+      border-radius: 50%;
+    }
+  }
+
   /* Nenastavený točitý kámen se na začátku úlohy třikrát připomene: je malý a snadno se přehlédne. */
   .socket:not(.set):not(:disabled):not(.hl) {
     animation: invite 1.4s ease-in-out 3;
@@ -440,6 +462,10 @@
     font-family: var(--font-mono);
     color: var(--lumen);
   }
+  /* Zmenšená deska: pod kamenem jen jméno runy, moderní značka (· XOR) by se slila se sousedy. */
+  .narrow .modern {
+    display: none;
+  }
   .hl {
     outline: 3px solid var(--ok);
     outline-offset: 3px;
@@ -462,6 +488,18 @@
     transition:
       background var(--t-med),
       box-shadow var(--t-med);
+  }
+  /* Zahalená lampa: výsledek se ukáže až po potvrzení desky. */
+  .lamp.veiled {
+    display: grid;
+    place-items: center;
+    background: repeating-linear-gradient(135deg, #2a221a 0 6px, #1d1813 6px 12px);
+  }
+  .lamp .veil {
+    font-family: var(--font-display);
+    font-size: var(--fs-lg);
+    font-weight: 700;
+    color: var(--text-muted);
   }
   .lamp.on {
     background: radial-gradient(circle at 40% 35%, #fff6d8, #ffd27a 45%, #c98a2a 80%);

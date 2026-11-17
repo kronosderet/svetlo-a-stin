@@ -48,10 +48,19 @@ describe('oltář: odhalování vah', () => {
     expect(r.state.revealed).toBe(0b010);
   });
 
-  it('neodhalí nic, když svítí víc krystalů', () => {
+  it('neodhalí nic, když svítí víc neznámých krystalů', () => {
+    // Cíl 7 by váhy odhalil sám, proto tu oltář žádá jinou váhu.
+    const cfg6: AltarConfig = { ...cfg, goal: { kind: 'value', targets: [4] } };
+    const st = { ...initAltar(cfg6), mask: 0b011 };
+    const r = toggle(cfg6, st, 2);
+    expect(r.events.some((e) => e.type === 'reveal')).toBe(false);
+  });
+
+  it('dopočítá váhu, když je ze svítících neznámý jen jeden (6 − 2 = 4)', () => {
     const st = play(cfg, [1]);
     const r = toggle(cfg, st, 2);
-    expect(r.events.some((e) => e.type === 'reveal')).toBe(false);
+    expect(r.events).toContainEqual({ type: 'reveal', bit: 2, allRevealed: false, source: 'deduce', known: 0b010 });
+    expect(r.state.revealed).toBe(0b110);
   });
 
   it('ohlásí odhalení všech vah', () => {
@@ -61,11 +70,11 @@ describe('oltář: odhalování vah', () => {
   });
 
   it('přijatá váha odhalí váhy zúčastněných krystalů', () => {
-    const cfg5: AltarConfig = { bits: 3, goal: { kind: 'value', targets: [5, 7] }, reveal: 'solo' };
-    const st = play(cfg5, [0]);
+    const cfg5: AltarConfig = { bits: 3, goal: { kind: 'value', targets: [7] }, reveal: 'solo' };
+    const st = { ...initAltar(cfg5), mask: 0b011 };
     const r = toggle(cfg5, st, 2);
     expect(r.events).toContainEqual({ type: 'reveal', bit: 2, allRevealed: false, source: 'altar' });
-    expect(r.state.revealed).toBe(0b101);
+    expect(r.state.revealed).toBe(0b111);
   });
 
   it('always odhalí vše hned', () => {
@@ -163,5 +172,34 @@ describe('oltář: tichý krok (Grayův kód)', () => {
     let guard = 0;
     while (!st.complete && guard++ < 40) st = toggle(c, st, hintBit(c, st)!).state;
     expect(st.complete).toBe(true);
+  });
+});
+
+describe('oltář: skupiny čísel (Sudé a liché)', () => {
+  const all = Array.from({ length: 16 }, (_, v) => v);
+  const cfg: AltarConfig = {
+    bits: 4,
+    goal: {
+      kind: 'class',
+      targets: [
+        { say: 'Liché', values: all.filter((v) => v % 2 === 1) },
+        { say: 'Dělitelné osmi', values: [8] },
+      ],
+    },
+    reveal: 'never',
+  };
+
+  it('přijme kterékoli číslo skupiny a zapamatuje si ho', () => {
+    const r = toggle(cfg, initAltar(cfg), 0);
+    expect(r.events).toContainEqual({ type: 'step', index: 0, target: 1 });
+    expect(r.state.found).toEqual([1]);
+  });
+
+  it('nápověda dovede k řešení v ideálu (1, pak 8 = dva doteky)', () => {
+    let st = initAltar(cfg);
+    for (let guard = 0; !st.complete && guard < 20; guard++) st = toggle(cfg, st, hintBit(cfg, st)!).state;
+    expect(st.complete).toBe(true);
+    expect(st.moves).toBe(par(cfg));
+    expect(par(cfg)).toBe(3);
   });
 });

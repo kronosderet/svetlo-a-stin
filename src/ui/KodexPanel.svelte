@@ -145,7 +145,7 @@
     top: 0;
     right: 0;
     bottom: 0;
-    width: min(480px, 100vw);
+    width: min(600px, 100vw);
     display: flex;
     padding: 14px 14px 14px 22px;
     background:

@@ -80,16 +80,15 @@ export const KODEX: KodexEntry[] = [
       'Postup zleva se jmenuje Hornerovo schéma. Počítač ho používá, když čte číslo napsané v textu, jen místo dvojkou násobí desítkou.',
   },
   {
-    id: 'preliti',
+    id: 'parita',
     glyph: 0b0100,
-    ancientName: 'Předání',
-    modernName: 'Přenos (carry)',
-    ancient: 'Když krystal přeteče, zhasne a předá světlo sousedovi vlevo.',
+    ancientName: 'Sudá a lichá',
+    modernName: 'Parita a dělitelnost',
+    ancient: 'Lichost nese jediný krystal, ten nejlehčí. Všechny ostatní váhy jsou sudé.',
     modern:
-      'Přičtení jedničky: zprava měň jedničky na nuly, dokud nenarazíš na nulu, a tu změň na jedničku. Jednička, která se tak posouvá doleva, se jmenuje přenos. V desítkové soustavě je to totéž: 0999 + 1 = 1000.',
-    formula: '0111₂ + 1 = 1000₂   (7 + 1 = 8)',
-    today:
-      'Počítadlo kilometrů v autě předává desítky stejně: 0999 → 1000. Procesor si přenos pamatuje ve zvláštním bitu, kterému se říká příznak přenosu (carry flag).',
+      'Číslo je liché, právě když má nejnižší bit 1. Každá nula vpravo znamená jedno dělení dvěma beze zbytku: končí-li zápis dvěma nulami, je číslo dělitelné čtyřmi, třemi nulami osmi.',
+    formula: '1100₂ = 12: dvě nuly vpravo, 12 : 4 = 3',
+    today: 'Počítač pozná sudé číslo pohledem na nejnižší bit (n AND 1), bez dělení. Stejně rychle pozná dělitelnost čtyřmi nebo osmi.',
   },
   {
     id: 'venec',
@@ -170,20 +169,22 @@ export const KODEX: KodexEntry[] = [
     modernName: 'Sčítání bitů',
     ancient: 'Jedna a jedna se do jednoho krystalu nevejdou. Přetečou k sousedovi.',
     modern:
-      'Sčítání ve dvojkové soustavě má jen čtyři případy: 0 + 0 = 0, 0 + 1 = 1, 1 + 1 = 10 a 1 + 1 + 1 = 11. Jakmile součet ve sloupci dosáhne dvou, jednička přeteče do sloupce vlevo, kde váží dvakrát víc.',
-    formula: '1 + 1 = 10₂   ·   1 + 1 + 1 = 11₂',
-    today: 'V desítkové soustavě se přetéká až při deseti (5 + 5 = 10). Ve dvojkové stačí dvě světla.',
+      'Sčítání ve dvojkové soustavě má jen čtyři případy: 0 + 0 = 0, 0 + 1 = 1, 1 + 1 = 10 a 1 + 1 + 1 = 11. Jakmile součet ve sloupci dosáhne dvou, jednička přeteče do sloupce vlevo, kde váží dvakrát víc. Delší čísla se sčítají pod sebou po sloupcích, stejně jako v desítkové soustavě.',
+    formula: '1 + 1 = 10₂   ·   0101₂ + 0010₂ = 0111₂',
+    today:
+      'V desítkové soustavě se přetéká až při deseti (5 + 5 = 10). Ve dvojkové stačí dvě světla. Když se dvě čísla v žádném bitu nepřekrývají, dá sčítání stejný výsledek jako bitové OR, které potkáš v Zahradě Bran.',
   },
   {
-    id: 'proudy',
-    glyph: 0b10101,
-    ancientName: 'Dvě řady',
-    modernName: 'Sčítání pod sebou',
-    ancient: 'Každý sloupec teče sám za sebe, zprava doleva.',
+    id: 'preliti',
+    glyph: 0b11000,
+    ancientName: 'Předání',
+    modernName: 'Přenos (carry)',
+    ancient: 'Když krystal přeteče, zhasne a předá světlo sousedovi vlevo.',
     modern:
-      'Čísla se sčítají pod sebou po sloupcích, stejně jako v desítkové soustavě. Dokud v žádném sloupci nejsou dvě jedničky, výsledek je prostě sjednocení jedniček obou čísel.',
-    formula: '0101₂ + 0010₂ = 0111₂   (5 + 2 = 7)',
-    today: 'Když se dvě čísla v žádném bitu nepřekrývají, sčítání dá stejný výsledek jako bitové OR. To potkáš v Zahradě Bran.',
+      'Přičtení jedničky: zprava měň jedničky na nuly, dokud nenarazíš na nulu, a tu změň na jedničku. Jednička, která se tak posouvá doleva, se jmenuje přenos. V desítkové soustavě je to totéž: 0999 + 1 = 1000.',
+    formula: '0111₂ + 1 = 1000₂   (7 + 1 = 8)',
+    today:
+      'Počítadlo kilometrů v autě předává desítky stejně: 0999 → 1000. Procesor si přenos pamatuje ve zvláštním bitu, kterému se říká příznak přenosu (carry flag).',
   },
   {
     id: 'sloupec',

@@ -16,6 +16,8 @@ import {
   decoderTarget,
   mux,
   muxTarget,
+  runCounter,
+  runScript,
   shiftLeftScript,
   shiftRegister,
   shiftRightScript,
@@ -88,6 +90,10 @@ export function subtractTask(mode: 'invert' | 'switch'): MachineTask {
     mode: 'build',
     machine,
     target: subtractTarget(machine, mode),
+    say:
+      mode === 'invert'
+        ? 'Natoč točité kameny tak, aby stroj odčítal podle brány. Pak spusť Zkoušku.'
+        : 'Natoč točité kameny a do prázdných kamenů vlož runy, ať stroj sčítá i odčítá podle brány. Pak spusť Zkoušku.',
     rule:
       mode === 'invert'
         ? 'Lampy mají ukázat A − B. Záporný výsledek se přetočí jako v Doplňku (−1 je 7).'
@@ -98,10 +104,16 @@ export function subtractTask(mode: 'invert' | 'switch'): MachineTask {
 /** Pravidlo voliče operace slovy: „Kód 0 = Pouto, 1 = Rozcestí…“. */
 export const aluRule = (ops: Rune[]): string => 'Kód ' + ops.map((r, k) => `${k} = ${RUNE_NAME[r]}`).join(', ') + '.';
 
-export function aluTask(ops: Rune[], open: 'runes' | 'selectors'): MachineTask {
+/** Voliče výhybek: kódy 0 až 3 shora dolů, nebo přehozené (0, 2, 1, 3). */
+export const ALU_WIRING = { straight: ['O0', 'O0', 'O1'], crossed: ['O1', 'O1', 'O0'] } as const;
+
+export function aluTask(ops: Rune[], open: 'runes' | 'selectors', wiring: keyof typeof ALU_WIRING = 'straight'): MachineTask {
   const machine =
     open === 'runes'
-      ? alu(ops.map(() => ['and', 'or', 'xor', 'nand'] as Rune[]))
+      ? alu(
+          ops.map(() => ['and', 'or', 'xor', 'nand'] as Rune[]),
+          [...ALU_WIRING[wiring]],
+        )
       : alu(ops, [
           ['O1', 'O0'],
           ['O1', 'O0'],
@@ -131,16 +143,23 @@ export const genIV7Compare = (rng: Rng): MachineConfig => ({
 
 /* ───────────── velká brána Hlubiny (IV-15) ───────────── */
 
-export const genIV15Register = (rng: Rng): MachineConfig => ({
-  tasks: [shiftTask(pick(rng, ['left', 'right'] as const))],
+/** Počítadlo s chodem: paměť, sčítačka a Pouta v jednom stroji. Zkouška zhasne chod pokaždé jinde. */
+export function runTask(a = 3, b = 2): MachineTask {
+  return {
+    mode: 'build',
+    machine: runCounter(['and', 'or', 'xor'], [SHADOW, LIGHT, 'C']),
+    script: runScript(a, b),
+    rule: 'Dokud svítí chod C, každý tep přičte jedničku. Tep při zhasnutém C počítadlo vynuluje.',
+  };
+}
+
+export const genIV15Run = (rng: Rng): MachineConfig => ({
+  tasks: [runTask(int(rng, 2, 5), int(rng, 1, 4))],
 });
 
-export const genIV15Subtract = (rng: Rng): MachineConfig => ({
-  tasks: [subtractTask(pick(rng, ['invert', 'switch'] as const))],
-});
-
+/** Volič s jinými kódy i jinak zapojenými voliči výhybek: pořadí run se musí vyčíst z cest. */
 export const genIV15Alu = (rng: Rng): MachineConfig => ({
-  tasks: [aluTask(shuffled(rng, ['and', 'or', 'xor', 'nand'] as Rune[]), 'runes')],
+  tasks: [aluTask(shuffled(rng, ['and', 'or', 'xor', 'nand'] as Rune[]), 'runes', pick(rng, ['straight', 'crossed'] as const))],
 });
 
 /* ───────────── kvízy s losovanými čísly ───────────── */
@@ -162,10 +181,20 @@ export function qChainSum(rng: Rng): QuizQuestion {
   const a = int(rng, 3, 7);
   const b = int(rng, 8 - a, 7);
   const sum = a + b;
-  const options = [sum, ...wrongs(sum, [sum % 8, a | b, a ^ b], 15)].map((v) => bin(v, 4));
+  const ws = wrongs(sum, [sum % 8, a | b, a ^ b], 15);
+  const reason = (v: number) =>
+    v === sum % 8
+      ? 'Chybí nejtěžší lampa. Přenos z poslední sčítačky ji rozsvítí.'
+      : v === (a ^ b)
+        ? 'Sečteno sloupec po sloupci bez přenosů.'
+        : v === (a | b)
+          ? 'Tohle by ukázalo Rozcestí po sloupcích. Sčítačka posílá přenos doleva.'
+          : '';
+  const options = [sum, ...ws].map((v) => bin(v, 4));
   return {
     question: `Řetěz tří sčítaček sčítá A = ${bin(a, 3)} a B = ${bin(b, 3)}. Co ukážou čtyři lampy součtu?`,
     options,
+    why: ['', ...ws.map(reason)],
     correct: 0,
     hint: `Sečti ${a} + ${b} a zapiš výsledek čtyřmi krystaly s vahami 8, 4, 2, 1.`,
     explain: `${a} + ${b} = ${sum} = ${bin(sum, 4)}. Přenos z poslední sčítačky rozsvítí čtvrtou lampu.`,
@@ -177,10 +206,20 @@ export function qCounter(rng: Rng): QuizQuestion {
   const start = int(rng, 4, 7);
   const beats = int(rng, 2, 4);
   const end = (start + beats) % 8;
-  const options = [end, ...wrongs(end, [start + beats, start - beats, (end + 1) % 8], 15)].map(String);
+  const ws = wrongs(end, [start + beats, start - beats, (end + 1) % 8], 15);
+  const reason = (v: number) =>
+    v === start + beats
+      ? 'Tři krystaly unesou nejvýš 7. Po sedmičce počítadlo přeteče na 0.'
+      : v === start - beats
+        ? 'Tep přičítá, neodčítá.'
+        : v === (end + 1) % 8
+          ? 'O jeden tep víc. Počítej tepy od čísla, které počítadlo ukazuje teď.'
+          : '';
+  const options = [end, ...ws].map(String);
   return {
     question: `Tříbitové počítadlo hvězd ukazuje ${start}. Co ukáže po ${beats} tepech?`,
     options,
+    why: ['', ...ws.map(reason)],
     correct: 0,
     hint: 'Každý tep přičte jedna. Tři krystaly unesou nejvýš 7, pak počítadlo přeteče na 0.',
     explain: `Po sedmičce přijde 0. ${start} + ${beats} = ${start + beats}, tři krystaly ale unesou nejvýš 7, takže po přetečení zbude ${end}.`,

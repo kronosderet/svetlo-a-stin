@@ -8,7 +8,7 @@
   import Quiz from './Quiz.svelte';
   import Tally from './Tally.svelte';
   import { combinations, isBitSet, patternWords, toBinaryString } from '../../core/bits';
-  import { currentTarget } from '../../core/puzzles/altar';
+  import { currentClass, currentTarget, goalCount } from '../../core/puzzles/altar';
   import { settings } from '../../game/settings.svelte.ts';
   import type { AltarGame } from '../../game/altarGame.svelte.ts';
 
@@ -21,10 +21,18 @@
   const digits = $derived(level.presentation.showDigits || settings.alwaysDigits);
   const counter = $derived(!!level.presentation.counter);
   const target = $derived(currentTarget(cfg, st));
-  const steps = $derived(cfg.goal.kind === 'all' ? [] : cfg.goal.targets);
-  const solvedTargets = $derived(steps.slice(0, st.step));
+  const steps = $derived(cfg.goal.kind === 'all' || cfg.goal.kind === 'class' ? [] : cfg.goal.targets);
+  /** Skupina čísel, kterou oltář žádá (Sudé a liché); po vyřešení ta poslední. */
+  const group = $derived(cfg.goal.kind === 'class' ? (currentClass(cfg, st) ?? cfg.goal.targets[cfg.goal.targets.length - 1]) : null);
+  const pips = $derived(goalCount(cfg));
+  /** Zápisník: přijaté váhy, u skupin čísla, která hráč rozsvítil. */
+  const solvedTargets = $derived(cfg.goal.kind === 'class' ? st.found.slice(0, st.step) : steps.slice(0, st.step));
   const shownPattern = $derived(target ?? steps[steps.length - 1] ?? 0);
   const slots = $derived(Array.from({ length: combinations(bits) }, (_, p) => p));
+  /** Plná deska kombinací se rozdělí podle levého krystalu (I-3). */
+  const split = $derived(!!level.presentation.splitBoard && st.found.length === slots.length);
+  /** Některá váha je ještě neznámá: pod krystaly je popisek, jak ji zjistit. */
+  const unknownWeights = $derived(cfg.reveal === 'solo' && slots.length - 1 !== st.revealed);
   /** Počítadlo: kolik poutníků už je vyrytých. */
   const counted = $derived(st.step > 0 ? steps[st.step - 1] : (cfg.initial ?? 0));
   const m = $derived(settings.reducedMotion ? 0 : 1);
@@ -72,12 +80,32 @@
             {/key}
           </span>
         </div>
+      {:else if group}
+        <!-- Oltář žádá kterékoli číslo ze skupiny: slovy, ne číslem. -->
+        <div class="tablet stone">
+          <span class="tablet-label carved">Oltář žádá</span>
+          {#key group}
+            <span class="claim" in:fly={{ y: -12, duration: 360 * m }}>{group.say}</span>
+          {/key}
+        </div>
       {:else if cfg.goal.kind === 'value'}
         <!-- Kamenné kolo oltáře se s každou přijatou váhou pootočí. -->
         <Disc value={target} turn={st.step * 60} label="Požadovaná váha" />
       {:else}
-        <div class="registry stone" class:dense={slots.length > 8} role="list" aria-label="Deska kombinací: nalezeno {st.found.length} z {slots.length}">
+        <div
+          class="registry stone"
+          class:dense={slots.length > 8}
+          class:split
+          role="list"
+          aria-label="Deska kombinací: nalezeno {st.found.length} z {slots.length}"
+        >
           {#each slots as p (p)}
+            {#if split && p % (slots.length / 2) === 0}
+              <!-- Plná deska: horní polovina má levý krystal ve stínu, dolní ve světle. -->
+              <p class="half-cap carved" in:fly={{ y: -6, duration: 300 * m }}>
+                Levý krystal {p ? 've světle' : 've stínu'}: {slots.length / 2} kombinace ostatních
+              </p>
+            {/if}
             <div class="niche stone-inset" class:found={st.found.includes(p)} class:current={p === st.mask} role="listitem">
               {#if st.found.includes(p)}
                 <span in:fly={{ y: -10, duration: 320 * m }}><MiniPattern mask={p} {bits} size={slots.length > 8 ? 'sm' : 'md'} {digits} label={patternLabel(p)} /></span>
@@ -91,7 +119,7 @@
 
       </div>
 
-      <Pips total={steps.length} done={st.step} />
+      <Pips total={pips} done={st.step} />
     </header>
 
     <CrystalRow
@@ -107,6 +135,9 @@
       {crystalLabel}
       onToggle={(i) => game.toggle(i)}
     />
+    {#if unknownWeights && game.phase === 'play'}
+      <p class="weight-note">? = váha zatím neznámá. Rozsviť krystal samotný, nebo ji dopočítej ze součtu.</p>
+    {/if}
 
     {#if game.phase === 'quiz' && game.question}
       {#key game.quizIndex}
@@ -186,6 +217,14 @@
     gap: 8px;
     padding: 10px 18px 16px;
   }
+  .claim {
+    max-width: 22ch;
+    font-family: var(--font-display);
+    font-size: var(--fs-lg);
+    font-weight: 700;
+    color: var(--lumen);
+    text-align: center;
+  }
   .tablet-label {
     font-family: var(--font-display);
     font-size: var(--fs-xs);
@@ -235,6 +274,27 @@
       0 0 0 1px rgba(255, 217, 138, 0.5);
   }
   /* Tichý krok: šestnáct výklenků ve dvou řadách */
+  .half-cap {
+    grid-column: 1 / -1;
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: var(--fs-xs);
+    font-weight: 700;
+    letter-spacing: var(--ls-label);
+    text-transform: uppercase;
+    color: var(--lumen);
+    text-align: left;
+  }
+  .registry.split .half-cap + .niche,
+  .registry.split .half-cap ~ .niche {
+    border-color: transparent;
+  }
+  .weight-note {
+    margin: -6px 0 0;
+    font-size: var(--fs-sm);
+    color: var(--text-muted);
+    text-align: center;
+  }
   .registry.dense {
     grid-template-columns: repeat(8, minmax(0, 1fr));
     gap: 6px;

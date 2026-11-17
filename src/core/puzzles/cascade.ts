@@ -28,6 +28,11 @@ export interface CascadeConfig {
   pickCopies?: boolean;
   /** Tři řady: kromě přenosu o jedno místo i přenos o dvě místa (čtyři světla ve sloupci = 100). */
   farCarries?: boolean;
+  /**
+   * Ukázková úloha (pořadí): přenosy nebo výpůjčky v ní jsou předem na místě a hráč jen dopočítá
+   * výsledek. Echo je okomentuje (Odliv: kam se výpůjčka zapisuje).
+   */
+  demo?: number;
   tasks: CascadeTask[];
 }
 
@@ -179,8 +184,14 @@ export function farColumns(cfg: CascadeConfig): number[] {
   return Array.from({ length: Math.max(0, cfg.width - 2) }, (_, k) => k + 2);
 }
 
-export function initCascade(): CascadeState {
-  return { step: 0, result: 0, carries: 0, far: 0, copies: 0, moves: 0, mistakes: 0, wrong: null, complete: false };
+export function initCascade(cfg?: CascadeConfig): CascadeState {
+  return { step: 0, result: 0, ...preset(cfg, 0), far: 0, copies: 0, moves: 0, mistakes: 0, wrong: null, complete: false };
+}
+
+/** Přenosy na začátku úlohy: u ukázkové úlohy hotové, jinak žádné. */
+function preset(cfg: CascadeConfig | undefined, step: number): { carries: number } {
+  const task = cfg?.tasks[step];
+  return { carries: cfg && task && cfg.demo === step ? answer(cfg, task).carries : 0 };
 }
 
 export function currentTask(cfg: CascadeConfig, st: CascadeState): CascadeTask | null {
@@ -290,7 +301,7 @@ export function confirm(cfg: CascadeConfig, st: CascadeState): Result {
     // Poslední výsledek zůstává rozsvícený (kvíz, závěrečná obrazovka).
     return { state: { ...st, step, moves, wrong: null, complete }, events };
   }
-  return { state: { ...st, step, moves, result: 0, carries: 0, far: 0, copies: 0, wrong: null, complete }, events };
+  return { state: { ...st, step, moves, result: 0, ...preset(cfg, step), far: 0, copies: 0, wrong: null, complete }, events };
 }
 
 /** Ideál: každý výsledek napoprvé. */

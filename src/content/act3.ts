@@ -19,7 +19,7 @@ import {
   secretSpeech,
   single,
 } from './generators3';
-import { qTableLit, qTableRows } from './quizzes';
+import { qAdd, qRead, qShiftLeft, qTableLit, qTableRows } from './quizzes';
 import type { ActDef, LevelDef } from './types';
 
 const SLOT_HINT = 'Zvýrazněný kámen potřebuje jinou runu. Klikni na něj.';
@@ -49,7 +49,11 @@ const levels: LevelDef[] = [
       'Zvýrazněný vstup vede k nové kombinaci.',
     ],
     echo: {
-      intro: ['Zahrada Bran. Lumenité tu světlu stavěli cesty.', 'Světlovod vede od krystalu k lampě. Co lampa udělá?'],
+      intro: [
+        'Zahrada Bran. Lumenité tu světlu stavěli cesty.',
+        'Nejjednodušší kámen v cestě jmenovali {{Obraceč|obracec}}.',
+        'Světlovod vede od krystalu k lampě. Co lampa udělá?',
+      ],
       solved: ['Lampa ukazuje, co k ní doteče: světlo, nebo stín.', 'Do cest se tu vkládají runy. Každá se světlem něco udělá.'],
       skill: 'Jediný dotek.',
     },
@@ -346,7 +350,13 @@ const levels: LevelDef[] = [
         { mode: 'slots', circuit: chain(), target: runeTable('nand') },
         { mode: 'slots', circuit: chain(), target: runeTable('nor') },
         { mode: 'slots', circuit: chain(), target: [1, 0, 0, 1] },
-        { mode: 'slots', circuit: branch(), target: [0, 1, 0, 0] },
+        // Než hráč větvení osadí, jednou hotové větvení prozkoumá: první obvod se dvěma cestami.
+        {
+                mode: 'explore',
+                circuit: branch({ a: 'not', b: 'id', join: 'and' }),
+                say: 'Tohle je větvení: jeden vstup se obrátí, než se cesty sejdou. Vyzkoušej všechny čtyři kombinace. Kdy lampa svítí?',
+              },
+        { mode: 'slots', circuit: branch(), target: [1, 0, 1, 1] },
       ],
     },
     generate: genIII6,
@@ -368,6 +378,7 @@ const levels: LevelDef[] = [
         0: 'Runa a za ní Obraceč: deska runy se obrátí.',
         1: 'Pouto s Obracečem je Zlomené pouto, Rozcestí s Obracečem Zavřené rozcestí.',
         2: 'Výluka a za ní Obraceč: lampa svítí, když jsou vstupy stejné. Lumenité tomu říkali Rovnost. Teď větvení.',
+        3: 'Lampa svítila jen v řádku 0 1: obrácené A a k tomu B. Teď větvení postav sám.',
       },
       wrong: 'Brána se nepohnula. Ve kterých řádcích lampa nesedí? Přepni na ně vstupy.',
       complete: 'Řetězy drží.',
@@ -416,14 +427,21 @@ const levels: LevelDef[] = [
           ],
         },
         generate: genIII7Fill,
-        presentation: { task: 'První zkouška: vyplň desku zákona pro obvod vlevo.', showDigits: true, showSum: false, sizes: 'equal', ledger: false },
+        presentation: {
+          task: 'První zkouška: vyplň desku zákona pro obvod vlevo. Lampa je pod závojem, výsledek slož z run.',
+          showDigits: true,
+          showSum: false,
+          sizes: 'equal',
+          ledger: false,
+          veilLamp: true,
+        },
         hints: [
           'Pro každý řádek pusť v duchu světlo obvodem zleva doprava.',
           'Nejdřív urči, co vyjde z první runy, a teprve pak, co s tím udělá další.',
           'Zvýrazněná buňka nesedí.',
         ],
         echo: {
-          intro: ['První zkouška: deska zákona obvodu.'],
+          intro: ['První zkouška: deska zákona obvodu. Lampu jsem zahalil, dokud desku nepotvrdíš. Co z ní vyjde, slož z run.'],
           wrong: 'Deska nesedí. Projdi ten řádek runou po runě.',
           solved: ['Deska sedí. Teď kameny.'],
         },
@@ -495,7 +513,14 @@ const levels: LevelDef[] = [
         title: 'První obvod',
         kind: 'table',
         config: { tasks: [{ mode: 'fill', circuit: chain('and', 'not') }] },
-        presentation: { task: 'Vyplň desku zákona pro Pouto s Obracečem.', showDigits: true, showSum: false, sizes: 'equal', ledger: false },
+        presentation: {
+          task: 'Vyplň desku zákona pro Pouto s Obracečem. Lampa je pod závojem, výsledek slož z run.',
+          showDigits: true,
+          showSum: false,
+          sizes: 'equal',
+          ledger: false,
+          veilLamp: true,
+        },
         hints: [
           'Pro každý řádek: co vyjde z Pouta a co z toho udělá Obraceč?',
           'Pouto svítí jen v řádku 1 1. Obraceč to obrátí.',
@@ -508,7 +533,14 @@ const levels: LevelDef[] = [
         title: 'Druhý obvod',
         kind: 'table',
         config: { tasks: [{ mode: 'fill', circuit: branch({ a: 'not', b: 'not', join: 'or' }) }] },
-        presentation: { task: 'A teď deska obvodu, kde se obrací každý vstup zvlášť.', showDigits: true, showSum: false, sizes: 'equal', ledger: false },
+        presentation: {
+          task: 'A teď deska obvodu, kde se obrací každý vstup zvlášť. Lampa je zase pod závojem.',
+          showDigits: true,
+          showSum: false,
+          sizes: 'equal',
+          ledger: false,
+          veilLamp: true,
+        },
         hints: [
           'Nejdřív obrať A i B, pak je pusť Rozcestím.',
           'Rozcestí svítí, když svítí aspoň jeden z obrácených vstupů, tedy když aspoň jeden původní mlčí.',
@@ -713,11 +745,11 @@ const levels: LevelDef[] = [
     config: {
       bits: 8,
       tasks: [
-        { value: 0b10110110, op: 'and', target: 0b00000110, say: 'Nech svítit jen pravou čtveřici.' },
+        { value: 0b10110110, op: 'and', target: 0b00000110, ideal: 0b00001111, say: 'Nech svítit jen pravou čtveřici.' },
         { value: 0b11011010, op: 'and', target: 0b01001000, say: 'Nech svítit jen ta světla, která žádá oltář.' },
-        { value: 0b00000101, op: 'or', target: 0b11110101, say: 'Rozsviť celou levou čtveřici.' },
+        { value: 0b00000101, op: 'or', target: 0b11110101, ideal: 0b11110000, say: 'Rozsviť celou levou čtveřici.' },
         { value: 0b00100100, op: 'or', target: 0b10100110, say: 'Přidej světla, která žádá oltář. Svítící zůstanou.' },
-        { value: 0b01101001, op: 'xor', target: 0b10010110, say: 'Převrať všechny krystaly.' },
+        { value: 0b01101001, op: 'xor', target: 0b10010110, ideal: 0b11111111, say: 'Převrať všechny krystaly.' },
         { value: 0b11001010, op: 'xor', target: 0b11100011, say: 'Přepni jen ty krystaly, které se mají změnit.' },
       ],
     },
@@ -763,7 +795,7 @@ const levels: LevelDef[] = [
     id: 'III-13',
     title: 'Tajná řeč',
     kind: 'mask',
-    config: secretSpeech(0b10110001),
+    config: secretSpeech(0b10110001, 0b01011010),
     generate: genIII13,
     presentation: {
       task: 'Lumenité psali tajně: každé písmeno přepnuli klíčem. Nastav masku na klíč.',
@@ -773,16 +805,20 @@ const levels: LevelDef[] = [
       ledger: false,
     },
     hints: [
-      'Klíč je napsaný vpravo. Rozsviť masku přesně podle něj.',
-      'Výluka s klíčem písmeno zašifruje, a když ji pustíš na šifru se stejným klíčem znovu, vrátí původní písmeno.',
+      'Klíč je napsaný vpravo. Rozsviť masku přesně podle něj. U neznámého klíče porovnej šifru s písmenem E krystal po krystalu.',
+      'Výluka s klíčem písmeno zašifruje a stejný klíč ho vrátí. Neznámý klíč svítí právě tam, kde se šifra a písmeno E liší.',
       'Zvýrazněný krystal masky je potřeba přepnout.',
     ],
     echo: {
       intro: ['Tajná řeč. Tady si Lumenité posílali zprávy, které nikdo jiný nepřečetl.', 'Nejdřív jedno písmeno zašifruj.'],
-      step: { 0: 'Písmeno je k nepoznání. Teď ho stejným klíčem vrať.', 1: 'E. Výluka dvakrát vrací původní světlo.', 3: 'Ještě jedno.' },
-      complete: 'E, C, H, O. To jsem já. Tak mě Lumenité pojmenovali.',
+      step: {
+        0: 'Písmeno je k nepoznání. Klíč nechám v masce. Sleduj, co udělá se zprávou.',
+        1: 'E. Stejný klíč, který písmeno zamkl, ho zase odemkl.',
+        4: 'E, C, H, O. To jsem já. Tak mě Lumenité pojmenovali.',
+      },
+      complete: 'Stačilo jedno známé písmeno a klíč byl venku. Proto se dobrý klíč nepoužívá dvakrát.',
       solved: ['Výluka s klíčem šifruje a stejný klíč šifru zase odemkne.', 'Písmena jsou jen čísla: E je 69, tedy 0100 0101.'],
-      skill: 'Každý klíč napoprvé.',
+      skill: 'Oba klíče napoprvé.',
     },
     quiz: [
       {
@@ -905,4 +941,7 @@ export const ACT_III: ActDef = {
   theme: 'Logika',
   glyphBase: 32,
   levels,
+  lore: 'Schody vyvedou do zahrady kamenných bran. Runa v každé z nich rozhoduje, kudy světlo projde.',
+  preview: 'Runy Obraceč, Pouto, Rozcestí a Výluka, deska zákona a první obvody z run.',
+  review: [qAdd, qShiftLeft, qRead],
 };

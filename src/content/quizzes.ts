@@ -3,8 +3,11 @@
  * „šestnáct“. Pojmové otázky (1 + 1 = 10, barva #FF8800…) zůstávají v obsahu pevné.
  * Každý generátor vrací správnou odpověď a tři různé špatné; pořadí zamíchá hra.
  */
+import { popcount } from '../core/bits';
+import type { Rune } from '../core/logic';
 import { inNum, plural, withNum } from '../game/text';
 import { int, pick, shuffled, type Rng } from './random';
+import { RUNE_NAME, RUNE_RULE } from './runes';
 import type { QuizQuestion } from './types';
 
 const bin = (v: number, bits: number): string => v.toString(2).padStart(bits, '0');
@@ -27,11 +30,24 @@ const terms = (v: number): string =>
 const krystaly = (n: number) => `${n} ${plural(n, 'krystal', 'krystaly', 'krystalů')}`;
 const bitLength = (v: number): number => v.toString(2).length;
 
+/** Špatná možnost, případně s vysvětlením, proč je to typická chyba: [hodnota, proč]. */
+type Wrong = string | number | readonly [string | number, string];
+
 /** Otázka se správnou odpovědí na prvním místě a třemi různými špatnými. */
-function make(question: string, correct: string | number, wrong: (string | number)[], hint: string, explain: string): QuizQuestion {
+function make(question: string, correct: string | number, wrong: Wrong[], hint: string, explain: string): QuizQuestion {
   const c = String(correct);
-  const ws = [...new Set(wrong.map(String))].filter((w) => w !== c).slice(0, 3);
-  return { question, options: [c, ...ws], correct: 0, hint, explain };
+  const seen = new Set([c]);
+  const options = [c];
+  const why = [''];
+  for (const w of wrong) {
+    const [value, reason] = Array.isArray(w) ? [String(w[0]), w[1] as string] : [String(w), ''];
+    if (seen.has(value)) continue;
+    seen.add(value);
+    options.push(value);
+    why.push(reason);
+    if (options.length === 4) break;
+  }
+  return { question, options, correct: 0, hint, explain, ...(why.some(Boolean) ? { why } : {}) };
 }
 
 // --- Akt I ---
@@ -43,7 +59,12 @@ export function qCombosNext(rng: Rng): QuizQuestion {
   return make(
     `Řada ${n} krystalů má ${c} kombinací. Kolik kombinací má řada ${n + 1} krystalů?`,
     c * 2,
-    [c, c + 4, c * 4, (n + 1) ** 2],
+    [
+      [c, `${c} má řada ${n} krystalů. Nový krystal přidá ke každé kombinaci dvě možnosti.`],
+      [c + 4, 'Kombinací nepřibývá pořád stejně. Každý krystal jejich počet zdvojí.'],
+      [c * 4, 'Čtyřikrát víc by bylo se dvěma krystaly navíc. Jeden krystal počet jen zdvojí.'],
+      [(n + 1) ** 2, 'Počet kombinací není počet krystalů na druhou. Každý krystal ho zdvojí.'],
+    ],
     `Přidej v duchu další krystal. Každá z ${c} kombinací ho teď může mít zhasnutý, nebo rozsvícený.`,
     `Každý nový krystal zdvojí počet kombinací: ${c} · 2 = ${c * 2}.`,
   );
@@ -55,13 +76,17 @@ export function qCombosOf(rng: Rng): QuizQuestion {
   return make(
     `Kolik kombinací má řada ${n} krystalů${n === 8 ? ', celá oktáva' : ''}?`,
     2 ** n,
-    [2 ** (n - 1), 2 ** (n + 1), 2 * n],
+    [
+      [2 ** (n - 1), `To je o jeden krystal míň. Zdvojuj ${n}×, začni u jednoho krystalu se dvěma kombinacemi.`],
+      [2 ** (n + 1), 'To je o jeden krystal víc. Zdvojuj jednou za každý krystal.'],
+      [2 * n, 'Kombinace se nesčítají po dvou, s každým krystalem se násobí dvěma.'],
+    ],
     'Začni u jednoho krystalu (2 kombinace) a s každým dalším zdvojnásob.',
     `2 · 2 · … · 2 (${n}×) = 2${sup(n)} = ${2 ** n}. Obecně: n krystalů má 2ⁿ kombinací.`,
   );
 }
 
-/** I-9: co následuje po čísle (přičtení jedničky). */
+/** II-1 (Počítadlo poutníků): co následuje po čísle (přičtení jedničky). */
 export function qNextCount(rng: Rng): QuizQuestion {
   const v = pick(rng, [3, 5, 7, 9, 11, 13]);
   const wrong = [v - 1, v + 2, v ^ 0b1000, v + 3, 15, 0].filter((w) => w >= 0 && w <= 15 && w !== v + 1).map((w) => bin(w, 4));
@@ -74,7 +99,7 @@ export function qNextCount(rng: Rng): QuizQuestion {
   );
 }
 
-/** I-9: kolik krystalů se změní při předání přes k jedniček. */
+/** II-1 (Počítadlo poutníků): kolik krystalů se změní při předání přes k jedniček. */
 export function qFlips(rng: Rng): QuizQuestion {
   const k = int(rng, 2, 7);
   const high = int(rng, 0, 2 ** (7 - k) - 1);
@@ -82,7 +107,11 @@ export function qFlips(rng: Rng): QuizQuestion {
   return make(
     `Kolik krystalů se změní, když k ${oct(v)} přičteš jedničku?`,
     k + 1,
-    [1, k, k + 2 > 8 ? k - 1 : k + 2],
+    [
+      [1, 'Přičtení jedničky nemusí změnit jen jeden krystal. Předání běží přes všechny jedničky vpravo.'],
+      [k, `Zhasne ${k} jedniček, ale rozsvítí se ještě nula za nimi.`],
+      k + 2 > 8 ? k - 1 : k + 2,
+    ],
     'Předání běží zprava přes všechny jedničky, dokud nenarazí na nulu.',
     `${k} jedniček vpravo zhasne a nula za nimi se rozsvítí: ${oct(v)} + 1 = ${oct(v + 1)}. Změní se ${krystaly(k + 1)}.`,
   );
@@ -94,7 +123,11 @@ export function qMaxValue(rng: Rng): QuizQuestion {
   return make(
     `Jaké je největší číslo, které zapíšeš ${n} krystaly?`,
     2 ** n - 1,
-    [2 ** n, 2 ** (n - 1), n * n],
+    [
+      [2 ** n, `${2 ** n} je počet kombinací. Jedna z nich je ale tma, nula, a tak největší číslo je o jedna menší.`],
+      [2 ** (n - 1), `${2 ** (n - 1)} je váha nejtěžšího krystalu. K ní přidej i všechny lehčí.`],
+      [n * n, 'Krystaly se nenásobí. Sečti váhy všech, když svítí.'],
+    ],
     `Rozsviť v duchu všech ${n}: ${terms(2 ** n - 1)}.`,
     `${'1'.repeat(n)}${sub(2)} = 2${sup(n)} − 1 = ${2 ** n - 1}. Na číslo ${2 ** n} už je potřeba další krystal.`,
   );
@@ -107,7 +140,11 @@ export function qBitsFor(rng: Rng): QuizQuestion {
   return make(
     `Kolik krystalů je potřeba na zápis čísla ${x}?`,
     n,
-    [n - 1, n + 1, n + 2],
+    [
+      [n - 1, `${krystaly(n - 1)} unese nejvýš ${2 ** (n - 1) - 1}, na ${x} to nestačí.`],
+      [n + 1, `I ${krystaly(n)} unese až ${2 ** n - 1}, ${x} se vejde. Hledá se nejmenší počet.`],
+      n + 2,
+    ],
     `Hledej nejmenší počet krystalů, který unese aspoň ${x}. Pomůže řada 128, 256, 512, 1024, 2048, 4096.`,
     `${krystaly(n - 1)} unese nejvýš 2${sup(n - 1)} − 1 = ${2 ** (n - 1) - 1}, ${n} už ${2 ** n - 1}. Na ${x} je tedy potřeba ${krystaly(n)}.`,
   );
@@ -120,7 +157,11 @@ export function qGrayMoves(rng: Rng): QuizQuestion {
   return make(
     `Kolik doteků nejméně potřebuješ, abys prošel všech ${all} kombinací řady ${n} krystalů?`,
     all - 1,
-    [all, n, all * 2],
+    [
+      [all, 'První kombinaci, tmu, už máš bez doteku. Doteků je o jeden míň než kombinací.'],
+      [n, 'Jedním dotekem přibude jen jedna nová kombinace. Na všechny je potřeba víc doteků.'],
+      all * 2,
+    ],
     'První kombinaci (tmu) už máš. Každý dotek přidá nejvýš jednu novou.',
     `Tma je první kombinace a každý dotek přidá jednu novou: ${all} − 1 = ${all - 1} doteků.`,
   );
@@ -159,7 +200,11 @@ export function qGlyphWeight(rng: Rng): QuizQuestion {
   return make(
     `Kolik váží glyf ${hex(v)}?`,
     v,
-    [v + 1, v - 1, 16 - v],
+    [
+      [v + 1, 'O jedna vedle. A je 10, B 11, C 12, D 13, E 14 a F 15.'],
+      [v - 1, 'O jedna vedle. A je 10, B 11, C 12, D 13, E 14 a F 15.'],
+      16 - v,
+    ],
     'A je 10, B 11 a tak dál až po F.',
     `${hex(v)}${sub(16)} = ${bin(v, 4)}${sub(2)} = ${terms(v)} = ${v}.`,
   );
@@ -177,7 +222,11 @@ export function qByteHex(rng: Rng): QuizQuestion {
   return make(
     `Jak se oktáva ${oct(v)} zapíše dvěma glyfy?`,
     hex(v, 2),
-    [hex(b) + hex(a), String(v), hex(a) + hex(b ^ 1)],
+    [
+      [hex(b) + hex(a), 'Glyfy jsou prohozené. Levá čtveřice dá levý glyf.'],
+      [String(v), 'Tohle je desítkový zápis. Glyfy jsou dva, jeden na každou čtveřici.'],
+      hex(a) + hex(b ^ 1),
+    ],
     `Levá čtveřice je ${bin(a, 4)}, pravá ${bin(b, 4)}. Každá je jeden glyf.`,
     `${bin(a, 4)} = ${hex(a)} a ${bin(b, 4)} = ${hex(b)}, tedy ${hex(v, 2)}${sub(16)}. Desítkově ${a} · 16 + ${b} = ${v}.`,
   );
@@ -194,7 +243,11 @@ export function qSumBits(rng: Rng): QuizQuestion {
   return make(
     `Kolik krystalů nejvýš potřebuje součet dvou ${MISTNYCH[n]} dvojkových čísel?`,
     n + 1,
-    [n, n + 2, 2 * n],
+    [
+      [n, `Největší součet ${max} + ${max} = ${2 * max} se do ${krystaly(n)} nevejde.`],
+      n + 2,
+      [2 * n, 'Krystaly se nesčítají. Součet přidá nejvýš jedno místo vlevo, kam přeteče přenos.'],
+    ],
     `Největší součet je ${max} + ${max}. Kolik krystalů unese ${2 * max}?`,
     `Součet dvou n-bitových čísel má nejvýš n + 1 bitů: ${max} + ${max} = ${2 * max} = ${bin(2 * max, n + 1)}${sub(2)} se vejde do ${n + 1} krystalů.`,
   );
@@ -207,7 +260,14 @@ export function qHalve(rng: Rng): QuizQuestion {
   return make(
     `Světla ${oct(v)} (${v}) posuneš o jedno místo vpravo. Kolik budou vážit?`,
     h,
-    [h + 1, h - 1, v * 2 > 255 ? Math.floor(v / 4) : v * 2],
+    [
+      h + 1,
+      h - 1,
+      [
+        v * 2 > 255 ? Math.floor(v / 4) : v * 2,
+        v * 2 > 255 ? 'To by byly dva posuny vpravo. Jeden posun rozpůlí.' : 'Posun vpravo nezdvojí, rozpůlí. Zdvojí posun vlevo.',
+      ],
+    ],
     'Posun vpravo rozpůlí.',
     `${oct(v)} → ${oct(h)} = ${h}. Nejpravější krystal byl ve stínu, takže se nic neztratilo.`,
   );
@@ -220,7 +280,11 @@ export function qShiftMul(rng: Rng): QuizQuestion {
   return make(
     `Co udělá posun o ${words} vlevo?`,
     `vynásobí ${2 ** k}`,
-    [`přičte ${k}`, `vynásobí ${k}`, `přičte ${2 ** k}`],
+    [
+      [`přičte ${k}`, 'Posun nepřičítá. Každé místo vlevo číslo zdvojí.'],
+      [`vynásobí ${k}`, `Každé místo zdvojí zvlášť: ${Array(k).fill('2').join(' · ')} = ${2 ** k}, ne ${k}.`],
+      [`přičte ${2 ** k}`, 'Posun nepřičítá, násobí. Zkus to s jedničkou a s trojkou.'],
+    ],
     'Jeden posun zdvojí. A další?',
     `Každý posun vlevo násobí dvěma: ${Array(k).fill('2').join(' · ')} = ${2 ** k}. Obecně posun o k míst násobí 2ᵏ.`,
   );
@@ -238,7 +302,14 @@ export function qOverflow(rng: Rng): QuizQuestion {
   return make(
     `Nádoba unese čtyři krystaly. Co v ní zůstane po ${bin(a, 4)} + ${bin(b, 4)} (${a} + ${b})?`,
     bin(r, 4),
-    [bin(a + b, 5), '1111', bin(a, 4), bin(b, 4), bin(r ^ 1, 4), bin(r ^ 2, 4)],
+    [
+      [bin(a + b, 5), 'Tohle je pět krystalů. Nádoba unese jen čtyři, páté světlo vyteče.'],
+      ['1111', 'Nádoba nezůstane plná. Co se nevejde, vyteče, a zbude jen to, co je ve čtyřech krystalech.'],
+      [bin(a, 4), 'To je jen první sčítanec. Sečti oba.'],
+      [bin(b, 4), 'To je jen druhý sčítanec. Sečti oba.'],
+      bin(r ^ 1, 4),
+      bin(r ^ 2, 4),
+    ],
     'Sečti a podívej se, jestli se výsledek vejde do čtyř krystalů.',
     `${a} + ${b} = ${a + b} = ${bin(a + b, 5)}${sub(2)}. Páté světlo (16) se do nádoby nevejde a vyteče, zůstane ${bin(r, 4)} = ${r}.`,
   );
@@ -252,7 +323,12 @@ export function qShiftLeft(rng: Rng): QuizQuestion {
   return make(
     `Světla ${oct(v)} (${v}) posuneš o ${k} místa vlevo. Kolik budou vážit?`,
     r,
-    [v * k, v << (k - 1), v + 2 ** k, v << (k + 1)],
+    [
+      [v * k, `Posun nenásobí počtem míst. Každé místo zdvojí: ${v} · ${2 ** k}.`],
+      [v << (k - 1), 'O jeden posun méně. Zdvojuj za každé místo.'],
+      [v + 2 ** k, 'Posun nepřičítá, násobí.'],
+      v << (k + 1),
+    ],
     'Každý posun vlevo zdvojí.',
     `${v} · ${Array(k).fill('2').join(' · ')} = ${r} = ${oct(r)}${sub(2)}. Posun o ${k} místa násobí 2${sup(k)} = ${2 ** k}.`,
   );
@@ -289,7 +365,12 @@ export function qPowerSteps(rng: Rng): QuizQuestion {
   return make(
     `Kolik tahů nejméně potřebuješ z 1 na ${2 ** k}?`,
     k,
-    [k + 1, 2 ** (k - 1), 2 ** k - 1, k - 1],
+    [
+      [k + 1, 'Start na 1 už je hotový, první tah ho zdvojí na 2. Počítej jen zdvojení.'],
+      [2 ** (k - 1), 'Přičítat po jedné je pomalé. Páka ×2 zdvojí celé číslo naráz.'],
+      [2 ** k - 1, 'Tolik tahů by stálo přičítání po jedné. Zdvojování je mnohem rychlejší.'],
+      k - 1,
+    ],
     `${2 ** k} = 1${'0'.repeat(k)}${sub(2)}.`,
     `${Array.from({ length: k + 1 }, (_, i) => 2 ** i).join(' → ')}: za každou nulu jeden tah ×2, tedy ${k} ${plural(k, 'tah', 'tahy', 'tahů')}.`,
   );
@@ -304,7 +385,12 @@ export function qCopies(rng: Rng): QuizQuestion {
   return make(
     `Kolik kopií prvního čísla sčítáš při násobení číslem ${bin(m, len)}?`,
     p,
-    [p + 1, p - 1, len, m],
+    [
+      p + 1,
+      p - 1,
+      [len, 'Kopie nepatří ke každému místu, jen k místu s jedničkou.'],
+      [m, 'Kopií není tolik, kolik je druhé číslo. Stačí jedna za každou jedničku jeho zápisu.'],
+    ],
     'Kopie přibude za každou jedničku.',
     `${bin(m, len)} má ${p} ${plural(p, 'jedničku', 'jedničky', 'jedniček')}: kopie posunuté o ${shifts.join(', ')} míst (×${shifts.map((s) => 2 ** s).join(', ×')}). ${shifts.map((s) => 2 ** s).join(' + ')} = ${m}.`,
   );
@@ -322,7 +408,10 @@ export function qRemainder(rng: Rng): QuizQuestion {
   return make(
     `Jaký zbytek zůstane po dělení ${oct(v)} (${v}) ${d === 16 ? 'šestnácti' : 'osmi'}?`,
     `${bin(rem, k)} (${rem})`,
-    [quo, rem ^ 1, 0, d - 1, rem ^ 2].map((x, i) => `${bin(x, i === 0 ? 8 - k : k)} (${x})`),
+    [
+      [`${bin(quo, 8 - k)} (${quo})`, 'Tohle je podíl, co zůstane na krystalech. Zbytek jsou krystaly, které spadnou vpravo.'],
+      ...[rem ^ 1, 0, d - 1, rem ^ 2].map((x) => `${bin(x, k)} (${x})`),
+    ],
     `${d} = 2${sup(k)}, tedy ${k} posuny vpravo. Které krystaly spadnou?`,
     `${k} posuny shodí ${k} krystaly vpravo: ${bin(rem, k)} = ${rem}. Na krystalech zbude ${bin(quo, 8 - k)} = ${quo}. Opravdu: ${quo} · ${d} + ${rem} = ${v}.`,
   );
@@ -353,7 +442,11 @@ export function qNegative(rng: Rng): QuizQuestion {
   return make(
     `Jak se ve čtyřech krystalech zapíše −${b}?`,
     bin(comp, 4),
-    [bin(b, 4), bin(b ^ 15, 4), bin((comp + 1) & 15, 4)],
+    [
+      [bin(b, 4), `Tohle je kladné ${b}. Záporné číslo je doplněk: převrátit a přidat jednu.`],
+      [bin(b ^ 15, 4), 'Jen převrácené. Ještě přidej jednu.'],
+      [bin((comp + 1) & 15, 4), 'Jednička je navíc dvakrát. Převrať a přidej jednu jen jednou.'],
+    ],
     `${b} = ${bin(b, 4)}. Převrať a přidej jednu.`,
     `${bin(b, 4)} převrácené je ${bin(b ^ 15, 4)}, plus jedna ${bin(comp, 4)}. Kontrola: ${bin(b, 4)} + ${bin(comp, 4)} = 1 0000, v nádobě zbude 0000.`,
   );
@@ -369,7 +462,11 @@ export function qComplementSum(rng: Rng): QuizQuestion {
   return make(
     `Kolik je ${bin(a, 4)} + ${bin(c, 4)} v nádobě se čtyřmi krystaly?`,
     bin(r, 4),
-    [full, bin((a + b) & 15, 4), bin((r + 1) & 15, 4)],
+    [
+      [full, 'Tohle je pět krystalů. Přetečení se do nádoby nevejde a vyteče.'],
+      [bin((a + b) & 15, 4), `To je ${a} + ${b}. Doplněk ale znamená −${b}, takže se odčítá.`],
+      bin((r + 1) & 15, 4),
+    ],
     `${bin(c, 4)} je doplněk čísla ${b}, tedy −${b}.`,
     `${bin(a, 4)} + ${bin(c, 4)} = ${full[0]} ${full.slice(1)}. Přetečení zahodíme a zbude ${bin(r, 4)} = ${r}, což je ${a} − ${b}.`,
   );
@@ -387,7 +484,13 @@ export function qSubtract(rng: Rng): QuizQuestion {
   return make(
     `Kolik je ${bin(a, 4)} − ${bin(b, 4)}?`,
     bin(r, 4),
-    [(a + b) & 15, a ^ b, r > 0 ? r - 1 : r + 1, r + 1, r ^ 8].map((x) => bin(x & 15, 4)),
+    [
+      [bin((a + b) & 15, 4), 'Tohle je součet, ne rozdíl.'],
+      [bin((a ^ b) & 15, 4), 'Odečteno sloupec po sloupci bez výpůjčky. Kde nebylo z čeho brát, je potřeba si půjčit od souseda.'],
+      bin((r > 0 ? r - 1 : r + 1) & 15, 4),
+      bin((r + 1) & 15, 4),
+      bin((r ^ 8) & 15, 4),
+    ],
     'Kde nemáš z čeho brát, půjč si od souseda.',
     `${bin(a, 4)} − ${bin(b, 4)} = ${bin(r, 4)}, tedy ${a} − ${b} = ${r}.`,
   );
@@ -402,7 +505,11 @@ export function qFastMul(rng: Rng): QuizQuestion {
   return make(
     `Jak nejrychleji spočítáš ${bin(v, 4)} × ${m}?`,
     `posunem o ${places(k)} vlevo`,
-    [`sečtením ${m} kopií`, `posunem o ${places(m === 2 ? 2 : m)} vlevo`, `přičtením ${bin(m, k + 1)}`],
+    [
+      [`sečtením ${m} kopií`, 'Jde to, ale pomalu. Násobení mocninou dvou je jen posun.'],
+      [`posunem o ${places(m === 2 ? 2 : m)} vlevo`, `Posun o jedno místo zdvojí. Na ×${m} stačí ${places(k)}.`],
+      [`přičtením ${bin(m, k + 1)}`, 'Přičítání nenásobí.'],
+    ],
     `${m} = ${bin(m, k + 1)}${sub(2)}.`,
     `Násobit ${m} znamená ${k}× zdvojit, tedy posunout o ${places(k)}: ${bin(v, 4)} → ${(v << k).toString(2)} = ${v * m}.`,
   );
@@ -419,7 +526,11 @@ export function qTableLit(rng: Rng): QuizQuestion {
     return make(
       `Pouto ${withNum(n)} ${n} vstupy pustí světlo, jen když svítí všechny. V kolika řádcích desky zákona svítí lampa?`,
       1,
-      [n, rows / 2, rows - 1],
+      [
+        [n, 'Lampa nesvítí jednou za každý vstup. Všechny vstupy svítí naráz jen v jednom řádku.'],
+        [rows / 2, 'V polovině řádků svítí jeden vstup. Pouto chce všechny naráz.'],
+        [rows - 1, 'Tak často svítí Rozcestí. Pouto svítí, jen když svítí všechno.'],
+      ],
       'Kolik řádků desky má světlo na všech vstupech?',
       `Všechny vstupy svítí jen v jediném řádku, ${'1'.repeat(n)}. V ostatních ${rows - 1} řádcích lampa mlčí.`,
     );
@@ -427,7 +538,11 @@ export function qTableLit(rng: Rng): QuizQuestion {
   return make(
     `Rozcestí ${withNum(n)} ${n} vstupy pustí světlo, když svítí aspoň jeden. V kolika řádcích desky zákona svítí lampa?`,
     rows - 1,
-    [rows, n, rows / 2],
+    [
+      [rows, `V řádku ${'0'.repeat(n)} nesvítí žádný vstup, a tak lampa mlčí.`],
+      [n, 'Rozcestí nechce právě jeden vstup, stačí mu aspoň jeden.'],
+      [rows / 2, 'V polovině řádků svítí první vstup. Rozcestí ale stačí kterýkoli.'],
+    ],
     'Ve kterém řádku desky mlčí všechny vstupy?',
     `Lampa mlčí jen v řádku ${'0'.repeat(n)}. Svítí tedy ${inNum(rows - 1)} ${rows - 1} řádcích z ${rows}.`,
   );
@@ -438,8 +553,135 @@ export function qTableRows(rng: Rng): QuizQuestion {
   return make(
     `Kolik řádků má deska zákona pro runu ${withNum(n)} ${n} vstupy?`,
     2 ** n,
-    [2 * n, 2 ** (n - 1), 2 ** (n + 1), n + 1],
+    [
+      [2 * n, 'Řádků nepřibývá po dvou. Každý vstup jejich počet zdvojí, jako krystal kombinace.'],
+      [2 ** (n - 1), 'To je o jeden vstup méně.'],
+      [2 ** (n + 1), 'To je o jeden vstup víc.'],
+      n + 1,
+    ],
     'Každý řádek je jedna kombinace vstupů. Kolik kombinací má n krystalů?',
     `Každý vstup je světlo, nebo stín, takže řádků je 2${sup(n)} = ${2 ** n}. Stejně jako kombinací ${n} krystalů v Předsíni.`,
+  );
+}
+
+// --- Strážce schodů: opakování na schodech mezi patry ---
+
+/** Zrcadlový obraz čtveřice (nejlehčí krystal vlevo). */
+const mirror4 = (v: number): number => parseInt([...bin(v, 4)].reverse().join(''), 2);
+
+/** Schody: přečti nápis. Čtení čísel z Předsíně se jinak do konce základní cesty vypaří. */
+export function qRead(rng: Rng): QuizQuestion {
+  let v = 0;
+  do v = int(rng, 5, 14);
+  while (mirror4(v) === v || popcount(v) < 2);
+  return make(
+    `Kolik váží nápis ${bin(v, 4)}?`,
+    v,
+    [
+      [mirror4(v), 'Čteš zrcadlově. Nejtěžší krystal, osmička, stojí vlevo.'],
+      [popcount(v), 'To je počet světel. Každé ale váží jinak: zprava 1, 2, 4, 8.'],
+      v ^ 1,
+      v + 2,
+    ],
+    'Zprava váží 1, 2, 4, 8. Sečti váhy svítících krystalů.',
+    `${bin(v, 4)} = ${terms(v)} = ${v}.`,
+  );
+}
+
+/** Schody: zapiš číslo krystaly. */
+export function qWrite(rng: Rng): QuizQuestion {
+  let v = 0;
+  do v = int(rng, 5, 14);
+  while (mirror4(v) === v);
+  return make(
+    `Jak se čtyřmi krystaly zapíše ${v}?`,
+    bin(v, 4),
+    [
+      [bin(mirror4(v), 4), 'Zrcadlově. Nejtěžší krystal stojí vlevo.'],
+      [bin(v - 1, 4), `To je ${v - 1}.`],
+      [bin(v + 1, 4), `To je ${v + 1}.`],
+    ],
+    'Začni vlevo: vejde se osmička? Pak čtyřka, dvojka a jednička.',
+    `${v} = ${terms(v)}, tedy ${bin(v, 4)}.`,
+  );
+}
+
+/** Schody: sečti dvě čtveřice s přenosem. */
+export function qAdd(rng: Rng): QuizQuestion {
+  let a = 0;
+  let b = 0;
+  do {
+    a = int(rng, 3, 9);
+    b = int(rng, 3, 15 - a);
+  } while ((a & b) === 0);
+  const s = a + b;
+  return make(
+    `Kolik je ${bin(a, 4)} + ${bin(b, 4)}?`,
+    bin(s, 4),
+    [
+      [bin(a ^ b, 4), 'Sečteno bez přenosů. Dvě světla ve sloupci dají 10: dole stín a jedno přeteče doleva.'],
+      [bin(a | b, 4), 'Kde svítí obě světla, nezůstane jedno. Přeteče do sousedního sloupce.'],
+      bin((s + 1) & 15, 4),
+      bin(s - 1, 4),
+    ],
+    'Sčítej zprava po sloupcích. Dvě světla ve sloupci: dole stín a přenos doleva.',
+    `${a} + ${b} = ${s} = ${bin(s, 4)}.`,
+  );
+}
+
+/** Schody: pozná runu podle zákona. */
+export function qRuneByRule(rng: Rng): QuizQuestion {
+  const runes: Rune[] = ['and', 'or', 'xor', 'nand', 'nor'];
+  const rune = pick(rng, runes);
+  const others = shuffled(
+    rng,
+    runes.filter((r) => r !== rune),
+  ).slice(0, 3);
+  return make(
+    `Která runa ${RUNE_RULE[rune]}?`,
+    RUNE_NAME[rune],
+    others.map((r) => [RUNE_NAME[r], `${RUNE_NAME[r]} ${RUNE_RULE[r]}.`] as const),
+    'Vzpomeň si na desky zákona ze Zahrady.',
+    `${RUNE_NAME[rune]} ${RUNE_RULE[rune]}.`,
+  );
+}
+
+// --- Sudé a liché (I-9) ---
+
+/** I-9: které číslo je liché (pozná se podle pravého krystalu). */
+export function qOdd(rng: Rng): QuizQuestion {
+  const odd = int(rng, 0, 127) * 2 + 1;
+  const evens = shuffled(
+    rng,
+    Array.from({ length: 40 }, () => int(rng, 1, 127) * 2),
+  ).filter((v, k, all) => all.indexOf(v) === k);
+  // Typická chyba: sudé číslo s mnoha světly vypadá „liše“.
+  const busy = evens.sort((x, y) => popcount(y) - popcount(x));
+  return make(
+    'Které z těchto čísel je liché?',
+    oct(odd),
+    busy.slice(0, 3).map((v) => [oct(v), `${oct(v)} končí stínem, takže je sudé. O lichosti rozhoduje jen pravý krystal.`] as const),
+    'Lichost pozná jediný krystal. Který?',
+    `${oct(odd)} má rozsvícený pravý krystal s váhou 1, všechny ostatní váhy jsou sudé.`,
+  );
+}
+
+/** I-9: kolikrát jde číslo vydělit dvěma beze zbytku (počet nul vpravo). */
+export function qTrailing(rng: Rng): QuizQuestion {
+  const k = int(rng, 1, 4);
+  const v = ((int(rng, 0, 7) << 1) | 1) << k;
+  const zeros = (n: number) => `${n} ${plural(n, 'stín', 'stíny', 'stínů')}`;
+  return make(
+    `Kolikrát za sebou jde ${oct(v & 0xff)} vydělit dvěma beze zbytku?`,
+    k,
+    [
+      [popcount(v & 0xff), 'To je počet světel. Dělení dvěma ale hlídá stíny vpravo.'],
+      [k + 1, `Vpravo jsou jen ${zeros(k)}. Potom přijde světlo a půlit beze zbytku už nejde.`],
+      [k - 1 || k + 2, 'Počítej stíny vpravo, dokud nepřijde první světlo.'],
+      k + 2,
+      k + 3,
+    ],
+    'Každý stín vpravo je jedno půlení beze zbytku.',
+    `${oct(v & 0xff)} končí ${k === 1 ? 'jedním stínem' : `${k} stíny`}, takže jde ${k}× vydělit dvěma: ${v} : ${2 ** k} = ${v >> k}.`,
   );
 }

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { covers, fileNameFor, parseProgress, roomCount, serializeProgress } from './progressFile';
+import { LAYOUT } from './migrate';
 import type { ProgressData } from './progress.svelte.ts';
 
 const LEVELS = ['I-0', 'I-1', 'I-2', 'I-3', 'I-6', 'I-7', 'I-8', 'II-6', 'II-14'];
@@ -7,7 +8,7 @@ const KODEX = ['jiskra', 'svit-stin', 'podoby'];
 
 const sample: ProgressData = {
   version: 1,
-  layout: 3,
+  layout: LAYOUT,
   name: 'Jana',
   stats: { 'I-1': { entered: 2, solved: 1, extra: 0, hints: 1, stepHints: 0, quizMistakes: 0 } },
   levels: {
@@ -45,7 +46,7 @@ describe('soubor s postupem', () => {
     // Soubor bez rozvržení je z nejstaršího číslování: Probuzení tehdy bylo I-1, dnes je I-0.
     expect(r.ok && r.data).toEqual({
       version: 1,
-      layout: 3,
+      layout: LAYOUT,
       name: '',
       stats: {},
       levels: { 'I-0': { seals: { solved: true, skill: false, pure: true } } },

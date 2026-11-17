@@ -21,6 +21,8 @@
     hasNext: boolean;
     /** Otevřela se brána patra: schody vedou dál (nebo prototyp končí) a otevřely se Hlubší síně. */
     floorDone: { numeral: string; next: string | null } | null;
+    /** Po bráně patra: rovnocenná cesta do první nehotové Hlubší síně (vedle Dalšího patra). */
+    onDeep?: () => void;
     onNext: () => void;
     onMap: () => void;
     onReplay: () => void;
@@ -28,7 +30,7 @@
     onBack?: () => void;
   }
 
-  let { level, result, lines, kodex, hasNext, floorDone, onNext, onMap, onReplay, onBack }: Props = $props();
+  let { level, result, lines, kodex, hasNext, floorDone, onDeep, onNext, onMap, onReplay, onBack }: Props = $props();
 
   /** Escape zavře výsledek a vrátí hráče do otevřené komnaty. */
   function onKey(e: KeyboardEvent) {
@@ -39,21 +41,11 @@
   }
 
   const m = $derived(settings.reducedMotion ? 0 : 1);
-  /** Kde se výsledek potvrzuje (kotouče, Kaskáda), počítají se pokusy, ne tahy. */
-  const onlyReading = $derived(
-    level.kind === 'cascade' ||
-      level.kind === 'table' ||
-      (level.kind === 'gate' && level.config.tasks.every((t) => t.mode === 'slots')) ||
-      (level.kind === 'inscription' && level.config.tasks.every((t) => t.dir === 'read')),
-  );
-  /** Smíšená brána sčítá tahy i pokusy dohromady jako kroky. */
-  const unit = $derived(
-    level.kind === 'mixed'
-      ? plural(result.moves, 'krok', 'kroky', 'kroků')
-      : onlyReading
-        ? plural(result.moves, 'pokus', 'pokusy', 'pokusů')
-        : plural(result.moves, 'tah', 'tahy', 'tahů'),
-  );
+  /**
+   * Pečeť přesnosti počítá kroky stejně ve všech komnatách: dotek krystalu, páky nebo kotouče,
+   * potvrzení a Zkoušku. Vkládání run a natáčení kamenů se nepočítá.
+   */
+  const unit = $derived(plural(result.moves, 'krok', 'kroky', 'kroků'));
   const movesText = $derived(
     `${result.moves} ${unit} · ideál ${result.par}${result.quizMistakes ? ` · kvíz ${result.quizMistakes}× vedle` : ''}`,
   );
@@ -123,9 +115,16 @@
       <button type="button" class="btn btn-ghost" onclick={onReplay}>Hrát znovu</button>
       {#if hasNext}
         <button type="button" class="btn btn-ghost" onclick={onMap}>Mapa</button>
+        {#if onDeep}
+          <!-- Po bráně patra dvě rovnocenné cesty: dolů do Hlubších síní, nebo nahoru do dalšího patra. -->
+          <button type="button" class="btn btn-primary" onclick={onDeep}>Do Hlubších síní</button>
+        {/if}
         <button type="button" class="btn btn-primary" onclick={onNext} use:autofocus>
           {floorDone ? 'Další patro' : 'Další komnata'}
         </button>
+      {:else if onDeep}
+        <button type="button" class="btn btn-ghost" onclick={onMap}>Mapa</button>
+        <button type="button" class="btn btn-primary" onclick={onDeep} use:autofocus>Do Hlubších síní</button>
       {:else}
         <button type="button" class="btn btn-primary" onclick={onMap} use:autofocus>Zpět na mapu</button>
       {/if}
@@ -144,7 +143,7 @@
 
     {#if floorDone && hasNext}
       <p class="proto">
-        Brána patra {floorDone.numeral} je otevřená. Schody vedou dál: {floorDone.next}. Na mapě se otevřely i Hlubší síně tohoto patra.
+        Brána patra {floorDone.numeral} je otevřená. Schody vedou dál: {floorDone.next}. Otevřely se i Hlubší síně tohoto patra, nepovinné komnaty pro zvídavé.
       </p>
     {:else if floorDone}
       <p class="proto">

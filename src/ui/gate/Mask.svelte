@@ -20,11 +20,20 @@
   const task = $derived(view.task);
   const result = $derived(applyMask(task.op, task.value, view.mask));
   const m = $derived(settings.reducedMotion ? 0 : 1);
-  /** Rozšifrovaná zpráva: znak podle ASCII (když jde o písmeno). */
-  const letter = $derived(view.done && task.key !== undefined && !task.encrypt && result >= 32 && result < 127 ? String.fromCharCode(result) : null);
+  /** Šifra (Tajná řeč): u řad je i číslo a znak podle ASCII, nahoře přibývá rozluštěné slovo. */
+  const cipher = $derived(cfg.tasks.some((t) => t.key !== undefined));
+  const ascii = (v: number) => `${v} · ${v >= 33 && v < 127 ? String.fromCharCode(v) : '–'}`;
+  /** Rozšifrovaná písmena: hotové úlohy, které zprávu odemykaly, a prázdná místa pro ty, co čekají. */
+  const word = $derived.by(() => {
+    if (!cipher) return [];
+    const done = game.state.step;
+    return cfg.tasks.flatMap((t, k) =>
+      t.key !== undefined && !t.encrypt ? [k < done ? String.fromCharCode(t.value ^ t.key) : null] : [],
+    );
+  });
   /** Popisky řádků: u šifry podle toho, jestli se šifruje, nebo rozšifrovává. */
-  const topLabel = $derived(task.key === undefined ? 'Nápis' : task.encrypt ? 'Zpráva' : 'Šifra');
-  const bottomLabel = $derived(task.key === undefined ? 'Výsledek' : task.encrypt ? 'Šifra' : 'Zpráva');
+  const topLabel = $derived(task.encrypt ? 'Zpráva' : task.key !== undefined || cipher ? 'Šifra' : 'Nápis');
+  const bottomLabel = $derived(task.encrypt ? 'Šifra' : task.key !== undefined || cipher ? 'Zpráva' : 'Výsledek');
 </script>
 
 <div class="mask-room">
@@ -45,7 +54,7 @@
   <div class="work">
     <div class="mask-rows stone" style:--bits={bits}>
       <div class="mrow">
-        <span class="mlabel carved">{topLabel}</span>
+        <span class="mlabel carved">{topLabel}{#if cipher}<span class="ascii">{ascii(task.value)}</span>{/if}</span>
         <MiniPattern mask={task.value} {bits} size="lg" digits={true} label="Nápis {toBinaryString(task.value, bits)}" />
       </div>
       <div class="mrow op">
@@ -71,7 +80,7 @@
       </div>
       <div class="rule" aria-hidden="true"></div>
       <div class="mrow">
-        <span class="mlabel carved">{bottomLabel}</span>
+        <span class="mlabel carved">{bottomLabel}{#if cipher}<span class="ascii" class:hit={view.done}>{ascii(result)}</span>{/if}</span>
         <MiniPattern mask={result} {bits} size="lg" digits={true} label="Výsledek {toBinaryString(result, bits)}" />
       </div>
     </div>
@@ -88,15 +97,21 @@
             <MiniPattern mask={task.key} {bits} size="md" digits={true} label="Klíč {toBinaryString(task.key, bits)}" />
             <span class="hex">{toHex(task.key, Math.ceil(bits / 4))}</span>
           </div>
-          {#if letter}
-            <p class="side-title carved">Rozšifrováno</p>
-            <span class="letter" in:fly={{ y: 10, duration: 400 * m }}>{letter}</span>
-          {/if}
         {:else if task.target !== undefined}
-          <p class="side-title carved">Oltář žádá</p>
+          <p class="side-title carved">{cipher ? 'Má vyjít' : 'Oltář žádá'}</p>
           <div class="goal stone-inset">
             <MiniPattern mask={task.target} {bits} size="md" digits={true} label="Cíl {toBinaryString(task.target, bits)}" />
+            {#if cipher}<span class="hex">{ascii(task.target)}</span>{/if}
           </div>
+        {/if}
+        {#if word.length}
+          <!-- Rozluštěné slovo roste s každým písmenem: E, EC, ECH… -->
+          <p class="side-title carved">Rozšifrováno</p>
+          <p class="word" aria-label="Rozšifrováno: {word.filter(Boolean).join('') || 'zatím nic'}">
+            {#each word as ch, k (k)}
+              {#if ch}<span class="letter" in:fly={{ y: 10, duration: 400 * m }}>{ch}</span>{:else}<span class="letter blank">·</span>{/if}
+            {/each}
+          </p>
         {/if}
       </div>
     {/if}
@@ -220,6 +235,27 @@
     font-family: var(--font-mono);
     font-weight: 700;
     color: var(--lumen);
+  }
+  .ascii {
+    display: block;
+    margin-top: 2px;
+    font-family: var(--font-mono);
+    font-size: var(--fs-sm);
+    letter-spacing: 0;
+    text-transform: none;
+    color: var(--stone-200);
+  }
+  .ascii.hit {
+    color: var(--lumen);
+  }
+  .word {
+    display: flex;
+    gap: 6px;
+    margin: 0;
+  }
+  .letter.blank {
+    color: var(--stone-400);
+    text-shadow: none;
   }
   .letter {
     font-family: var(--font-display);

@@ -19,7 +19,13 @@ export function onAltar(ctx: LevelCtx, ev: AltarEvent, state: AltarState): void 
     }
     case 'reveal':
       sound.playReveal();
-      if (ev.allRevealed && level.echo.allRevealed) ctx.echo.say([level.echo.allRevealed]);
+      if (ev.source === 'deduce') {
+        // Váha dopočtená ze součtu: Echo ukáže, jak se uvažuje (odměna za dedukci).
+        const w = 2 ** ev.bit;
+        const known = ev.known ?? 0;
+        ctx.echo.say([`${known + w} − ${known} = ${w}. Kámen váhu dopočítal ze součtu.${ev.allRevealed && level.echo.allRevealed ? ` ${level.echo.allRevealed}` : ''}`]);
+        ctx.said.firstReveal = true;
+      } else if (ev.allRevealed && level.echo.allRevealed) ctx.echo.say([level.echo.allRevealed]);
       else if (!ctx.said.firstReveal && level.echo.firstReveal) {
         ctx.echo.say([level.echo.firstReveal]);
         ctx.said.firstReveal = true;
@@ -56,6 +62,11 @@ export function onAltar(ctx: LevelCtx, ev: AltarEvent, state: AltarState): void 
       ctx.stepFx('.row');
       const line = level.echo.step?.[ev.index];
       if (line) ctx.echo.say([line]);
+      if (cfg.goal.kind === 'class') {
+        const nextGroup = cfg.goal.targets[state.step];
+        ctx.announce(nextGroup ? `Přijato: ${ev.target}. Oltář žádá ${nextGroup.say.toLowerCase()}` : `Přijato: ${ev.target}.`);
+        break;
+      }
       const targets = cfg.goal.kind === 'all' ? [] : cfg.goal.targets;
       const upcoming = targets[state.step];
       if (upcoming === undefined) ctx.announce('Přijato.');

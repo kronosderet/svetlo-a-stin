@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { inNum, plural, richParts, typoCz, withNum } from './text';
+import { inNum, plainLength, plainText, plural, richParts, segments, typoCz, withNum } from './text';
 
 describe('sazba textu', () => {
   it('indexy převede na sub/sup a šipky vyčlení', () => {
@@ -53,5 +53,19 @@ describe('sazba textu', () => {
 
   it('skloňuje podle počtu', () => {
     expect([1, 2, 5].map((n) => plural(n, 'tah', 'tahy', 'tahů'))).toEqual(['tah', 'tahy', 'tahů']);
+  });
+});
+
+describe('nečitelná slova se záznamem Kodexu', () => {
+  it('slovo se záznamem nese klíč a délka počítá jen slovo', () => {
+    const segs = segments('Jsem {{Echo|sifra}}.');
+    expect(segs[1]).toEqual({ kind: 'glyph', value: 'Echo', start: 5, key: 'sifra' });
+    expect(plainLength('Jsem {{Echo|sifra}}.')).toBe('Jsem Echo.'.length);
+  });
+
+  it('čtečka přečte jen přeložené slovo', () => {
+    expect(plainText('Jsem {{Echo|sifra}}.')).toBe('Jsem (nečitelné).');
+    expect(plainText('Jsem {{Echo|sifra}}.', (k) => k === 'sifra')).toBe('Jsem Echo.');
+    expect(plainText('…{{ticho}}…', () => true)).toBe('…(nečitelné)…');
   });
 });

@@ -1,16 +1,21 @@
-const GARBLED = /\{\{(.+?)\}\}/g;
+/**
+ * Nečitelné slovo v řeči Echa: {{slovo}}, nebo {{slovo|záznam}}. Slovo se záznamem Kodexu se dá
+ * přečíst, až ho Kodex přeloží: Echova řeč se tak s každým zákonem trochu spraví.
+ */
+const GARBLED = /\{\{([^|}]+)(?:\|([^}]+))?\}\}/g;
 
 /** Délka repliky bez značek {{…}} (pro postupné vypisování). */
 export function plainLength(text: string): number {
   return text.replace(GARBLED, '$1').length;
 }
 
-/** Text pro čtečku obrazovky. */
-export function plainText(text: string): string {
-  return text.replace(GARBLED, '(nečitelné)');
+/** Text pro čtečku obrazovky. known: přeložené záznamy Kodexu (jejich slova se přečtou). */
+export function plainText(text: string, known: (key: string) => boolean = () => false): string {
+  return text.replace(GARBLED, (_, word: string, key?: string) => (key && known(key) ? word : '(nečitelné)'));
 }
 
-export type Segment = { kind: 'text' | 'glyph'; value: string; start: number };
+/** key: záznam Kodexu, který slovo přeloží. */
+export type Segment = { kind: 'text' | 'glyph'; value: string; start: number; key?: string };
 
 /** Rozdělí repliku na čitelné části a nečitelná slova. */
 export function segments(text: string): Segment[] {
@@ -25,7 +30,7 @@ export function segments(text: string): Segment[] {
       out.push({ kind: 'text', value, start: pos });
       pos += value.length;
     }
-    out.push({ kind: 'glyph', value: m[1], start: pos });
+    out.push({ kind: 'glyph', value: m[1], start: pos, ...(m[2] ? { key: m[2] } : {}) });
     pos += m[1].length;
     last = m.index + m[0].length;
   }

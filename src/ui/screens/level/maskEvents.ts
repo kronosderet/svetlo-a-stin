@@ -21,8 +21,16 @@ export function onMask(ctx: LevelCtx, ev: MaskEvent, state: MaskState): void {
       const line = level.echo.step?.[ev.index];
       if (line) ctx.echo.say([line]);
       const solvedTask = cfg.tasks[ev.index];
-      const letter = solvedTask.key !== undefined && ev.result >= 32 && ev.result < 127 ? String.fromCharCode(ev.result) : null;
-      ctx.announce(letter ? `Klíč sedí. Rozšifrované písmeno: ${letter}.` : state.complete ? 'Výsledek sedí.' : 'Výsledek sedí. Ve stěně je další nápis.');
+      const letter = solvedTask.key !== undefined && !solvedTask.encrypt && ev.result >= 32 && ev.result < 127 ? String.fromCharCode(ev.result) : null;
+      ctx.announce(
+        letter
+          ? `Klíč sedí. Rozšifrované písmeno: ${letter}.`
+          : solvedTask.encrypt
+            ? 'Písmeno je zašifrované. Klíč zůstává v masce.'
+            : state.complete
+              ? 'Výsledek sedí.'
+              : 'Výsledek sedí. Ve stěně je další nápis.',
+      );
       break;
     }
     case 'complete':

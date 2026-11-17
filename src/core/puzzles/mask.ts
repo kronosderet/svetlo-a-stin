@@ -21,6 +21,16 @@ export interface MaskTask {
   say?: string;
   /** Šifra: ve stěně je čitelná zpráva a výsledkem je šifra (jinak naopak). */
   encrypt?: boolean;
+  /**
+   * Maska zůstane z minulé úlohy. Když už úlohu splní (stejný klíč), úloha se vyřeší sama,
+   * jakmile se objeví: hráč vidí, že tentýž klíč šifru zase odemkne.
+   */
+  carry?: boolean;
+  /**
+   * Maska, kterou zadání popisuje („pravá čtveřice“ = 0000 1111). Ideál se počítá podle ní,
+   * takže pečeť přesnosti dostane i ten, kdo masku nastaví přesně podle zadání.
+   */
+  ideal?: number;
 }
 
 export interface MaskConfig {
@@ -92,25 +102,54 @@ export function toggle(cfg: MaskConfig, st: MaskState, bit: number): Result {
   const events: MaskEvent[] = [{ type: 'toggle', bit, on: isBitSet(mask, bit), result }];
   const next = { ...st, mask, moves: st.moves + 1 };
   if (!solved(task, mask)) return { state: next, events };
+  return advance(cfg, next, events, result);
+}
+
+/** Splněná úloha: další přijde s prázdnou maskou, nebo s maskou z minulé úlohy (carry). */
+function advance(cfg: MaskConfig, st: MaskState, events: MaskEvent[], result: number): Result {
   events.push({ type: 'step', index: st.step, result });
   const step = st.step + 1;
   if (step >= cfg.tasks.length) {
     events.push({ type: 'complete' });
-    return { state: { ...next, step, complete: true }, events };
+    return { state: { ...st, step, complete: true }, events };
   }
-  return { state: { ...next, step, mask: 0 }, events };
+  return { state: { ...st, step, mask: cfg.tasks[step].carry ? st.mask : 0 }, events };
 }
 
-/** Ideál: u každé úlohy jen krystaly masky, které opravdu musí svítit. */
+/**
+ * Úloha s maskou z minulé úlohy, kterou ta maska už splní (tentýž klíč): vyřeší se sama.
+ * Hra ji zavolá po pauze, ve které zůstal vidět předchozí výsledek.
+ */
+export function arrive(cfg: MaskConfig, st: MaskState): Result {
+  const task = currentTask(cfg, st);
+  if (!task?.carry || !solved(task, st.mask)) return { state: st, events: [] };
+  return advance(cfg, st, [], applyMask(task.op, task.value, st.mask));
+}
+
+/**
+ * Ideál: u každé úlohy jen krystaly masky, které opravdu musí svítit (nebo maska ze zadání).
+ * Úloha s maskou z minulé úlohy počítá jen krystaly, které je potřeba přepnout.
+ */
 export function par(cfg: MaskConfig): number {
-  return cfg.tasks.reduce((sum, t) => sum + popcount(closestMask(t, cfg.bits, 0) ?? 0), 0);
+  let sum = 0;
+  let prev = 0;
+  for (const t of cfg.tasks) {
+    const start = t.carry ? prev : 0;
+    const goal = t.ideal ?? closestMask(t, cfg.bits, start) ?? start;
+    sum += popcount(goal ^ start);
+    prev = goal;
+  }
+  return sum;
 }
 
-/** Nápověda 3. stupně: krystal masky, který se liší od nejbližšího řešení (od nejtěžšího). */
+/**
+ * Nápověda 3. stupně: krystal masky, který se liší od nejbližšího řešení (od nejtěžšího).
+ * Když zadání masku popisuje („pravá čtveřice“), vede nápověda k ní.
+ */
 export function hintBit(cfg: MaskConfig, st: MaskState): number | null {
   const task = currentTask(cfg, st);
   if (!task) return null;
-  const goal = closestMask(task, cfg.bits, st.mask);
+  const goal = task.ideal ?? closestMask(task, cfg.bits, st.mask);
   if (goal === null) return null;
   const diff = goal ^ st.mask;
   for (let i = cfg.bits - 1; i >= 0; i--) if (isBitSet(diff, i)) return i;

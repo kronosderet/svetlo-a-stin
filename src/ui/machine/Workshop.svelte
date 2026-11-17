@@ -11,16 +11,21 @@
   import type { MachineGame } from '../../game/machineGame.svelte.ts';
   import { rowWords } from '../screens/level/machineEvents';
   import { scrollable } from '../scrollable';
+  import { PART_ABBR, PART_FULL } from './layout';
 
   let { game, pulse }: { game: MachineGame; pulse: number } = $props();
   /** Deska se na úzkém displeji nevejde a jde posouvat do strany. */
   let wide = $state(false);
+  /** Měřítko desky: pod 0,8 ukazuje zkratky součástek a pod deskou je jejich legenda. */
+  let boardScale = $state(1);
 
   const level = $derived(game.level);
   const cfg = $derived(level.config);
   const view = $derived(game.view);
   const task = $derived(view.task);
   const machine = $derived(task.machine);
+  /** Zadání: úloha může mít vlastní (třeba jen u té, kde se vkládají i runy). */
+  const taskText = $derived(task.say ?? level.presentation.task);
   const n = $derived(machine.inputs.length);
   const rows = $derived(Array.from({ length: rowCount(n) }, (_, r) => r));
   const modern = $derived(level.presentation.showDigits || settings.alwaysDigits);
@@ -50,6 +55,10 @@
     })),
   );
   const bigTable = $derived(!task.script && rows.length > 8);
+  /** Legenda zkratek součástek, které na desce opravdu jsou. */
+  const legend = $derived(
+    [...new Set(machine.nodes.flatMap((g) => (g.part ? [g.part] : [])))].map((p) => [PART_ABBR[p], PART_FULL[p]] as const),
+  );
   /** Váha krystalu, který patří k číslu (v hlavičce desky odliší krystaly se stejným jménem). */
   const weightOf = $derived.by(() => {
     const out: Record<string, number> = {};
@@ -66,14 +75,14 @@
   {/key}
 
   <header class="task">
-    <p class="task-text carved">{level.presentation.task}</p>
+    <p class="task-text carved">{taskText}</p>
     <Pips total={cfg.tasks.length} done={game.state.step} />
   </header>
 
   <!-- Telefon na šířku: zadání stojí v bočním panelu vedle desky (hlavička nahoře je skrytá). -->
   {#snippet sideTask()}
     <div class="side-task">
-      <p class="task-text carved">{level.presentation.task}</p>
+      <p class="task-text carved">{taskText}</p>
       <Pips total={cfg.tasks.length} done={game.state.step} />
       {#if (readouts.length && values) || game.canBeat}
         <div class="under">{@render underRow()}</div>
@@ -127,12 +136,18 @@
             {weights}
             highlight={hl}
             celebrate={game.phase === 'solved'}
+            bind:scale={boardScale}
             onInput={(i) => game.toggleInput(i)}
             onSlot={(id) => game.cycleRune(id)}
             onSocket={(key) => game.cycleWire(key)}
           />
         </div>
       {/key}
+      {#if boardScale < 0.8 && legend.length}
+        <p class="legend-short">
+          {#each legend as [abbr, full], k (abbr)}{#if k}<span aria-hidden="true">{' · '}</span>{/if}<span><strong>{abbr}</strong> {full}</span>{/each}
+        </p>
+      {/if}
       {#if wide}
         <p class="scroll-hint portrait"><Icon name="rotate" size={18} /> Deska je širší než displej. Otoč telefon na šířku, nebo desku posouvej do strany.</p>
         <p class="scroll-hint landscape">Deska je širší než displej, desku jde posunout do strany.</p>
@@ -596,6 +611,16 @@
     .trow {
       min-height: 24px;
     }
+  }
+  .legend-short {
+    margin: 4px 0 0;
+    font-size: var(--fs-sm);
+    color: var(--text-muted);
+    text-align: center;
+  }
+  .legend-short strong {
+    font-family: var(--font-display);
+    color: var(--stone-200);
   }
   .scroll-hint {
     display: flex;

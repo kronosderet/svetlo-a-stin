@@ -73,5 +73,10 @@ export function sequence<T>(
 /** Otázka kvízu s možnostmi v náhodném pořadí (index správné odpovědi se přepočítá). */
 export function shuffleOptions(q: QuizQuestion, rng: Rng = Math.random): QuizQuestion {
   const order = shuffled(rng, q.options.map((_, k) => k));
-  return { ...q, options: order.map((k) => q.options[k]), correct: order.indexOf(q.correct) };
+  return {
+    ...q,
+    options: order.map((k) => q.options[k]),
+    correct: order.indexOf(q.correct),
+    ...(q.why ? { why: order.map((k) => q.why![k] ?? '') } : {}),
+  };
 }

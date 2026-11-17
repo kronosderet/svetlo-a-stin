@@ -2,14 +2,24 @@
  * Archetyp „Oltář“: hráč přepíná krystaly (bity) a plní cíle.
  *  - pattern: napodobit kombinaci vyrytou ve stěně,
  *  - value:   dosáhnout požadované váhy (hodnoty),
- *  - all:     najít všech 2ⁿ kombinací.
+ *  - all:     najít všech 2ⁿ kombinací,
+ *  - class:   rozsvítit kterékoli číslo ze skupiny (liché, dělitelné čtyřmi…): hráč hledá,
+ *             co mají čísla skupiny společného (Sudé a liché).
  * Čistě funkční: každá operace vrací nový stav a seznam událostí pro UI.
  */
 import { combinations, flipBit, hamming, isBitSet, popcount } from '../bits';
 
+/** Skupina čísel, ze které oltář přijme kterékoli (say = jak ji oltář žádá, hint = proč). */
+export interface AltarClass {
+  say: string;
+  values: number[];
+  hint?: string;
+}
+
 export type AltarGoal =
   | { kind: 'pattern'; targets: number[] }
   | { kind: 'value'; targets: number[] }
+  | { kind: 'class'; targets: AltarClass[] }
   | { kind: 'all' };
 
 /** never = váhy se neukazují; solo = váha se odhalí, když svítí krystal sám; always = známé od začátku. */
@@ -35,7 +45,7 @@ export interface AltarState {
   mask: number;
   /** Index aktuálního cíle (pattern/value). */
   step: number;
-  /** Nalezené kombinace (all). */
+  /** Nalezené kombinace (all), u skupin čísla, která oltář přijal (class). */
   found: number[];
   /** Pozice, jejichž váha je odhalená. */
   revealed: number;
@@ -45,8 +55,11 @@ export interface AltarState {
 
 export type AltarEvent =
   | { type: 'toggle'; bit: number; on: boolean }
-  /** source: solo = krystal svítil sám; altar = oltář přijal váhu a vyryl váhy zúčastněných krystalů. */
-  | { type: 'reveal'; bit: number; allRevealed: boolean; source: 'solo' | 'altar' }
+  /**
+   * source: solo = krystal svítil sám; altar = oltář přijal váhu a vyryl váhy zúčastněných krystalů;
+   * deduce = ostatní svítící váhy jsou známé a součet ukáže i tu poslední (6 − 2 = 4).
+   */
+  | { type: 'reveal'; bit: number; allRevealed: boolean; source: 'solo' | 'altar' | 'deduce'; known?: number }
   | { type: 'found'; pattern: number; count: number }
   | { type: 'repeat'; pattern: number }
   /** Tichý krok se přerušil: deska se vymaže a krystaly se vrátí na začátek. */
@@ -57,7 +70,18 @@ export type AltarEvent =
 const fullMask = (bits: number): number => combinations(bits) - 1;
 
 export function targetsOf(cfg: AltarConfig): number[] {
-  return cfg.goal.kind === 'all' ? [] : cfg.goal.targets;
+  return cfg.goal.kind === 'all' || cfg.goal.kind === 'class' ? [] : cfg.goal.targets;
+}
+
+/** Kolik cílů oltář má (u skupin čísel počet skupin). */
+export function goalCount(cfg: AltarConfig): number {
+  return cfg.goal.kind === 'all' ? 0 : cfg.goal.targets.length;
+}
+
+/** Skupina, kterou oltář právě žádá (jen class). */
+export function currentClass(cfg: AltarConfig, st: AltarState): AltarClass | null {
+  if (cfg.goal.kind !== 'class' || st.complete) return null;
+  return cfg.goal.targets[st.step] ?? null;
 }
 
 export function initAltar(cfg: AltarConfig): AltarState {
@@ -73,7 +97,7 @@ export function initAltar(cfg: AltarConfig): AltarState {
 }
 
 export function currentTarget(cfg: AltarConfig, st: AltarState): number | null {
-  if (cfg.goal.kind === 'all' || st.complete) return null;
+  if (cfg.goal.kind === 'all' || cfg.goal.kind === 'class' || st.complete) return null;
   return cfg.goal.targets[st.step] ?? null;
 }
 
@@ -92,6 +116,17 @@ export function toggle(
   if (cfg.reveal === 'solo' && popcount(mask) === 1 && (revealed & mask) === 0) {
     revealed |= mask;
     events.push({ type: 'reveal', bit: Math.log2(mask), allRevealed: revealed === fullMask(cfg.bits), source: 'solo' });
+  } else if (cfg.reveal === 'solo' && popcount(mask & ~revealed) === 1 && popcount(mask) > 1) {
+    // Svítí víc krystalů a neznámý je jen jeden: součet minus známé váhy dá jeho váhu.
+    const unknown = mask & ~revealed;
+    revealed |= unknown;
+    events.push({
+      type: 'reveal',
+      bit: Math.log2(unknown),
+      allRevealed: revealed === fullMask(cfg.bits),
+      source: 'deduce',
+      known: mask & ~unknown,
+    });
   }
 
   if (cfg.goal.kind === 'all') {
@@ -107,6 +142,15 @@ export function toggle(
       events.push({ type: 'found', pattern: mask, count: found.length });
       if (found.length === combinations(cfg.bits)) complete = true;
     }
+  } else if (cfg.goal.kind === 'class') {
+    // Oltář přijme kterékoli číslo skupiny. Patří-li i do další skupiny, přijme ho rovnou znovu.
+    const targets = cfg.goal.targets;
+    while (step < targets.length && targets[step].values.includes(mask)) {
+      events.push({ type: 'step', index: step, target: mask });
+      found = [...found, mask];
+      step++;
+    }
+    if (step >= targets.length) complete = true;
   } else {
     const targets = cfg.goal.targets;
     while (step < targets.length && targets[step] === mask) {
@@ -133,6 +177,7 @@ export function toggle(
 /** Nejmenší možný počet doteků k vyřešení (pro pečeť přesnosti). */
 export function par(cfg: AltarConfig): number {
   if (cfg.goal.kind === 'all') return combinations(cfg.bits) - 1; // Grayův kód
+  if (cfg.goal.kind === 'class') return classCosts(cfg)[0][cfg.initial ?? 0];
   let prev = cfg.initial ?? 0;
   let sum = 0;
   for (const t of cfg.goal.targets) {
@@ -179,9 +224,53 @@ export function hintBit(cfg: AltarConfig, st: AltarState): number | null {
     return best === null ? null : highestDiff(best, st.mask, cfg.bits);
   }
 
+  if (cfg.goal.kind === 'class') {
+    // Krystal, po jehož přepnutí zbývá nejméně doteků (od nejtěžšího).
+    const costs = classCosts(cfg)[st.step];
+    let best: number | null = null;
+    for (let i = cfg.bits - 1; i >= 0; i--) if (best === null || costs[flipBit(st.mask, i)] < costs[flipBit(st.mask, best)]) best = i;
+    return best;
+  }
+
   const target = currentTarget(cfg, st);
   if (target === null) return null;
   return cfg.hintOrder === 'low' ? lowestDiff(target, st.mask, cfg.bits) : highestDiff(target, st.mask, cfg.bits);
+}
+
+const classMemo = new WeakMap<AltarConfig, number[][]>();
+
+/**
+ * Skupiny čísel: costs[s][m] = kolik doteků nejméně zbývá, když krystaly ukazují m a oltář žádá
+ * skupinu s. Číslo skupiny posune oltář dál (i když na něj hráč narazí cestou), proto se počítá
+ * po celé desce kombinací, ne jen vzdálenost k nejbližšímu číslu.
+ */
+function classCosts(cfg: AltarConfig): number[][] {
+  const known = classMemo.get(cfg);
+  if (known) return known;
+  const targets = cfg.goal.kind === 'class' ? cfg.goal.targets : [];
+  const size = combinations(cfg.bits);
+  const costs: number[][] = new Array(targets.length + 1);
+  costs[targets.length] = new Array<number>(size).fill(0);
+  for (let s = targets.length - 1; s >= 0; s--) {
+    const accept = new Set(targets[s].values);
+    const d = Array.from({ length: size }, (_, m) => (accept.has(m) ? costs[s + 1][m] : Infinity));
+    for (let changed = true; changed; ) {
+      changed = false;
+      for (let m = 0; m < size; m++) {
+        if (accept.has(m)) continue;
+        for (let i = 0; i < cfg.bits; i++) {
+          const c = 1 + d[flipBit(m, i)];
+          if (c < d[m]) {
+            d[m] = c;
+            changed = true;
+          }
+        }
+      }
+    }
+    costs[s] = d;
+  }
+  classMemo.set(cfg, costs);
+  return costs;
 }
 
 /**

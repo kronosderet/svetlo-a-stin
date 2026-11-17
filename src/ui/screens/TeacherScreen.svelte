@@ -132,7 +132,7 @@
         <h2>Komnaty</h2>
         <p class="lead">
           Zvýrazněné komnaty dělají třídě potíže: víc než třetina se v nich zasekla, nebo v průměru potřebovali ukázat krok.
-          Ukázky kroku jsou průměr na studenta, který do komnaty vstoupil; tahy navíc a chyby v kvízu na jedno dokončení.
+          Ukázky kroku jsou průměr na studenta, který do komnaty vstoupil; kroky nad ideál a chyby v kvízu na jedno dokončení.
         </p>
         <div class="scroll">
           <table class="rooms">
@@ -142,7 +142,7 @@
                 <th scope="col">Prošlo</th>
                 <th scope="col">Zaseklo se</th>
                 <th scope="col">Ø ukázek kroku</th>
-                <th scope="col">Ø tahů navíc</th>
+                <th scope="col">Ø kroků nad ideál</th>
                 <th scope="col">Ø chyb v kvízu</th>
               </tr>
             </thead>

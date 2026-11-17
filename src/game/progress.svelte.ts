@@ -1,5 +1,6 @@
-import { BASIC_PATH, actOf, advancedRooms, gateOf, isAdvanced } from '../content/levels';
-import { LAYOUT, migrateLevelIds } from './migrate';
+import { BASIC_PATH, GATE, actOf, advancedRooms, gateOf, isAdvanced, roomNumber } from '../content/levels';
+import type { ActDef } from '../content/types';
+import { LAYOUT, mergeCounts, mergeSeals, migrateKodexIds, migrateLevelIds } from './migrate';
 import { settings } from './settings.svelte.ts';
 import { emptyStats, type RoomStats } from './roomStats';
 
@@ -47,8 +48,10 @@ function load(): ProgressData {
     const loaded: ProgressData = { ...empty(), ...data };
     if (data.layout !== LAYOUT) {
       // Postup ze staršího rozvržení komnat: komnaty dostanou nová čísla a hned se uloží.
-      loaded.levels = migrateLevelIds(loaded.levels, data.layout);
-      loaded.stats = migrateLevelIds(loaded.stats, data.layout);
+      loaded.levels = migrateLevelIds(loaded.levels, data.layout, mergeSeals);
+      loaded.stats = migrateLevelIds(loaded.stats, data.layout, mergeCounts);
+      loaded.kodex = migrateKodexIds(loaded.kodex);
+      loaded.seen = migrateKodexIds(loaded.seen);
       loaded.layout = LAYOUT;
       localStorage.setItem(KEY, JSON.stringify(loaded));
     }
@@ -145,6 +148,22 @@ export function isCompleted(id: string): boolean {
   return !!progress.levels[id];
 }
 
+/** Kolik prvních komnat patra musí hráč zvládnout v ideálu a bez ukázky kroku, aby smel rovnou k bráně. */
+export const FAST_ROOMS = 3;
+
+/**
+ * Zkusit bránu hned: kdo vyřeší komnaty 1 až 3 patra v ideálním počtu kroků a bez ukázky kroku
+ * (pečeť přesnosti i odvahy), tomu se brána otevře hned. Když ji projde, patro je otevřené
+ * a komnaty 4 až 6 může dohrát později kvůli pečetím.
+ */
+export function fastGate(act: ActDef): boolean {
+  const gate = gateOf(act);
+  if (isCompleted(gate) || isCompleted(`${act.numeral}-${GATE - 1}`)) return false;
+  return Array.from({ length: FAST_ROOMS }, (_, k) => progress.levels[`${act.numeral}-${k + 1}`]).every(
+    (r) => !!r?.seals.skill && !!r?.seals.pure,
+  );
+}
+
 /**
  * Základní cesta se otevírá po jedné komnatě napříč patry (brána otevře další patro).
  * Hlubší síně patra se otevřou po jeho bráně a pak zase po jedné. Hotová komnata je vždy otevřená.
@@ -159,6 +178,7 @@ export function isUnlocked(id: string): boolean {
     const i = rooms.findIndex((l) => l.id === id);
     return i === 0 || (i > 0 && isCompleted(rooms[i - 1].id));
   }
+  if (roomNumber(id) === GATE && fastGate(actOf(id))) return true;
   const i = BASIC_PATH.findIndex((l) => l.id === id);
   return i === 0 || (i > 0 && isCompleted(BASIC_PATH[i - 1].id));
 }

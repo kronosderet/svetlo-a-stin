@@ -2,6 +2,7 @@ import { ACT_I } from './act1';
 import { ACT_II } from './act2';
 import { ACT_III } from './act3';
 import { ACT_IV } from './act4';
+import { kodexById } from './kodex';
 import type { Rng } from './random';
 import type { ActDef, LevelDef, PuzzleLevel } from './types';
 
@@ -94,7 +95,11 @@ function instantiatePuzzle(level: PuzzleLevel, rng: Rng): PuzzleLevel {
 
 /** Komnata připravená ke hraní: u komnat na procvičování s nově vylosovanými úlohami. */
 export function instantiate(level: LevelDef, rng: Rng = Math.random): LevelDef {
-  if (level.kind === 'mixed') return { ...level, parts: level.parts.map((p) => instantiatePuzzle(p, rng)) };
+  if (level.kind === 'mixed') {
+    // Kvíz části nese jméno celé komnaty (záznam Kodexu), ne obecnou „Zkoušku“.
+    const quizTitle = (level.kodex && kodexById(level.kodex)?.ancientName) || level.title;
+    return { ...level, parts: level.parts.map((p) => ({ ...instantiatePuzzle(p, rng), quizTitle: p.quizTitle ?? quizTitle })) };
+  }
   return instantiatePuzzle(level, rng);
 }
 

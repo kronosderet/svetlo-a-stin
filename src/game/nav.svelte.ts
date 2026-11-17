@@ -6,7 +6,11 @@ export type Screen =
   /** Přehled třídy z přetažených souborů s postupem (učitelský režim). */
   | { name: 'teacher' }
   /** Shrnutí patra k tisku (act = index patra v ACTS). */
-  | { name: 'summary'; act: number };
+  | { name: 'summary'; act: number }
+  /** Schody do dalšího patra: karta patra a Strážce schodů (act = index patra v ACTS). */
+  | { name: 'stairs'; act: number }
+  /** Pracovní list patra k tisku s klíčem odpovědí (učitelský režim). */
+  | { name: 'worksheet'; act: number };
 
 export const nav: { screen: Screen } = $state({ screen: { name: 'title' } });
 

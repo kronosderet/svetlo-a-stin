@@ -12,8 +12,8 @@
   const total = $derived(game.level.quiz?.length ?? 0);
   /** Dlouhé odpovědi (věty, posloupnosti tahů) se řadí po dvou a menším písmem. */
   const long = $derived(q.options.some((o) => o.length > 8));
-  /** Kvíz nese jméno zákona, který komnata přeloží do Kodexu. */
-  const topic = $derived((game.level.kodex && kodexById(game.level.kodex)?.ancientName) || 'Zkouška');
+  /** Kvíz nese jméno zákona, který komnata přeloží do Kodexu (ve smíšené komnatě jméno celé komnaty). */
+  const topic = $derived(game.level.quizTitle || (game.level.kodex && kodexById(game.level.kodex)?.ancientName) || game.level.title);
 </script>
 
 <div class="quiz panel" in:fly={{ y: 24, duration: settings.reducedMotion ? 0 : 420 }}>
@@ -43,7 +43,8 @@
         {game.quizIndex + 1 < total ? 'Další otázka' : 'Otevřít komnatu'}
       </button>
     {:else if game.quizWrong.length > 0}
-      <p class="try"><Rich text={q.hint} /></p>
+      <!-- Typická chyba má vlastní vysvětlení, jinak společná nápověda. -->
+      <p class="try"><Rich text={q.why?.[game.quizWrong[game.quizWrong.length - 1]] || q.hint} /></p>
     {/if}
   </div>
 </div>

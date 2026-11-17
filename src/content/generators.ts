@@ -25,7 +25,7 @@ const write = (value: number): InscriptionTask => ({ dir: 'write', value });
 /** I-5: první cíl 9 odhalí váhu osmičky, další čtyři se losují do 15. */
 export function genI5(rng: Rng): AltarConfig {
   const rest = until(
-    () => sequence(rng, 4, () => int(rng, 1, 15), (v) => v !== 9),
+    () => sequence(rng, 3, () => int(rng, 1, 15), (v) => v !== 9),
     (vs) => vs.some((v) => v >= 8) && vs.some((v) => v < 8) && vs.some((v) => popcount(v) >= 3),
   );
   return { bits: 4, goal: { kind: 'value', targets: [9, ...rest] }, reveal: 'solo', initialRevealed: 0b0111 };
@@ -64,7 +64,7 @@ function mixedInscription(rng: Rng, bits: number, dirs: ('read' | 'write')[], lo
 
 /** I-12, Velký nápis: oktáva, zápis a čtení střídavě. */
 export function genI12(rng: Rng): InscriptionConfig {
-  return mixedInscription(rng, 8, ['write', 'read', 'write', 'read', 'write'], 40, 250);
+  return mixedInscription(rng, 8, ['write', 'read', 'write', 'read'], 40, 250);
 }
 
 /** I-13, Řeč glyfů: šest čtveřic, aspoň tři glyfy s písmenem (A–F). */
@@ -97,11 +97,11 @@ export function genI15Glyphs(rng: Rng): InscriptionConfig {
 
 // --- Akt II ---
 
-/** II-2: čtyři součty bez přenosu. */
+/** II-2 (Dvě řady): tři součty bez přenosu. */
 export function genII2(rng: Rng): CascadeConfig {
   const tasks = sequence(
     rng,
-    4,
+    3,
     () => add(int(rng, 1, 15), int(rng, 1, 15)),
     (t) => (t.operands[0] & t.operands[1]) === 0 && popcount(t.operands[0] | t.operands[1]) >= 3,
     pairKey,
@@ -219,7 +219,7 @@ export function genII8(rng: Rng): CascadeConfig {
     },
     (t, k) => carryCount(base, t) >= (k === 1 ? 2 : 1),
   );
-  return { ...base, tasks: [sub(0b0111, 0b0010), ...rest] };
+  return { ...base, tasks: [sub(0b0111, 0b0010), ...rest], demo: 1 };
 }
 
 /** II-9: po ukázce 6 tři cíle do 31 seřazené od nejkratší cesty po nejdelší. */

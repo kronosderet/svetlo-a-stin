@@ -41,6 +41,8 @@ export interface GateTask {
   target?: number[];
   /** Starý obvod, který má hráč nahradit kratším (deska brány je jeho deska). */
   reference?: Circuit;
+  /** Zadání úlohy, když se liší od zadání komnaty (třeba zkoumání před stavbou). */
+  say?: string;
 }
 
 export interface GateConfig {

@@ -190,3 +190,22 @@ describe('Kaskáda: tři řady a přenos o dvě místa', () => {
     expect(firstWrong(cfg, st)).toEqual({ row: 'far', column: 3 });
   });
 });
+
+describe('Kaskáda: ukázková úloha', () => {
+  const cfg: CascadeConfig = {
+    width: 4,
+    carries: 'manual',
+    tasks: [
+      { op: 'sub', operands: [0b0111, 0b0010] },
+      { op: 'sub', operands: [0b0110, 0b0011] },
+    ],
+    demo: 1,
+  };
+
+  it('po první úloze jsou výpůjčky ukázkové úlohy na místě', () => {
+    const st = confirm(cfg, fill(cfg, initCascade(cfg), 0b0101, 0)).state;
+    expect(st.step).toBe(1);
+    expect(st.carries).toBe(answer(cfg, cfg.tasks[1]).carries);
+    expect(st.carries).not.toBe(0);
+  });
+});

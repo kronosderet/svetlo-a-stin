@@ -38,7 +38,7 @@
   {/key}
 
   <header class="task">
-    <p class="task-text carved">{level.presentation.task}</p>
+    <p class="task-text carved">{task.say ?? level.presentation.task}</p>
     <Pips total={cfg.tasks.length} done={game.state.step} />
   </header>
 

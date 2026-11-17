@@ -13,7 +13,7 @@
   import EchoBubble from '../EchoBubble.svelte';
   import FxLayer, { type Area, type Point } from '../FxLayer.svelte';
   import Icon from '../Icon.svelte';
-  import { GATE, actOf, getLevel, instantiate, nextLevelId, partsOf, roomNumber } from '../../content/levels';
+  import { ACTS, GATE, actOf, advancedRooms, getLevel, instantiate, nextLevelId, partsOf, roomNumber } from '../../content/levels';
   import type { PuzzleLevel } from '../../content/types';
   import { kodexById } from '../../content/kodex';
   import { patternWords, toBinaryString } from '../../core/bits';
@@ -30,7 +30,7 @@
   import { browse } from '../../game/browse.svelte.ts';
   import { FX, fxState } from '../../game/fx.svelte.ts';
   import { go, openKodex, ui } from '../../game/nav.svelte.ts';
-  import { recordEntry, recordHint, recordResult, unseenKodex } from '../../game/progress.svelte.ts';
+  import { isCompleted, isUnlocked, progress, recordEntry, recordHint, recordResult, unseenKodex } from '../../game/progress.svelte.ts';
   import { saveSettings, settings } from '../../game/settings.svelte.ts';
   import { plainText } from '../../game/text';
   import * as sound from '../../audio/sound';
@@ -70,6 +70,8 @@
   const partResults: LevelResult[] = [];
   /** Výsledek celé komnaty (u smíšené součet všech částí). */
   let result: LevelResult | null = $state(null);
+  /** Po bráně patra: první nehotová Hlubší síň, do které už jde vstoupit. */
+  const deepId = $derived(isGate && result ? (advancedRooms(act).find((l) => !isCompleted(l.id) && isUnlocked(l.id))?.id ?? null) : null);
 
   let announcement = $state('');
   let pulse = $state(0);
@@ -283,21 +285,45 @@
     );
   }
 
+  /**
+   * „Desku znám“ (III-2 až III-4): kdo zákon runy zná, smí zkoumání přeskočit. Desku pak vyplní
+   * zpaměti, s lampou pod závojem, takže ji nemůže opsat z obvodu.
+   */
+  let knownBoard = false;
+  const canKnow = $derived(
+    !ready &&
+      game.phase === 'play' &&
+      game.kind === 'gate' &&
+      level.kind === 'gate' &&
+      level.config.tasks.every((t) => t.mode === 'explore') &&
+      parts[partIndex + 1]?.kind === 'table',
+  );
+  function knowBoard() {
+    if (!canKnow) return;
+    knownBoard = true;
+    game.skip();
+  }
+
   /** Smíšená brána: po splněné části přijde další hádanka. */
   function nextPart() {
-    const done = level.echo.solved;
+    const done = knownBoard ? ['Dobře. Desku napiš zpaměti, lampu zahalím.'] : level.echo.solved;
     if (done.length) echo.say(done);
     const doneSerial = echo.serial;
     const said = Date.now();
     pulse += 1;
     sound.playGrind(0.8);
     stepFx('.row', '.board', '.register', '.wall');
-    announce(`Část ${partIndex + 1} z ${parts.length} splněna. ${done.map(plainText).join(' ')}`);
+    announce(`Část ${partIndex + 1} z ${parts.length} splněna. ${done.map((t) => plainText(t, known)).join(' ')}`);
     partTimer = setTimeout(
       () => {
         finished[partIndex] = game;
         partIndex += 1;
         level = parts[partIndex];
+        if (knownBoard && level.kind === 'table') {
+          const pres = level.presentation;
+          level = { ...level, presentation: { ...pres, veilLamp: true, task: `${pres.task} Lampa je pod závojem: piš zpaměti.` } };
+          knownBoard = false;
+        }
         bits = bitsOf(level);
         ctx.said = freshFlags();
         slips = 0;
@@ -314,6 +340,9 @@
       settings.reducedMotion ? 400 : 1600,
     );
   }
+
+  /** Slova, která Kodex už přeložil, čtečka přečte. */
+  const known = (key: string) => progress.kodex.includes(key);
 
   function announce(text: string) {
     announcement = announcement === text ? `${text} ` : text;
@@ -450,7 +479,7 @@
         finished[partIndex] = game;
         ready = true;
         echo.say([READY_LINE]);
-        announce(`Komnata otevřena. ${solvedLines.map(plainText).join(' ')} Prvky si můžeš dál zkoušet, výsledek a pečetě ukáže tlačítko Pokračovat.`);
+        announce(`Komnata otevřena. ${solvedLines.map((t) => plainText(t, known)).join(' ')} Prvky si můžeš dál zkoušet, výsledek a pečetě ukáže tlačítko Pokračovat.`);
         break;
       }
     }
@@ -592,6 +621,12 @@
       <Icon name="restart" /> <span class="label-xs">Znovu</span>
     </button>
     <span class="spacer"></span>
+    {#if canKnow}
+      <!-- Kdo zákon runy zná (třeba z matematiky), přeskočí zkoumání a desku vyplní zpaměti. -->
+      <button type="button" class="btn btn-ghost" onclick={knowBoard} title="Přeskočit zkoumání a vyplnit desku zákona zpaměti">
+        Desku znám
+      </button>
+    {/if}
     {#if ready}
       <!-- Komnata je vyřešená: hráč pokračuje k výsledku a pečetím, až dozkoumá, co chce. -->
       <button type="button" class="btn btn-primary continue" onclick={openResult} title="Výsledek, pečetě a cesta dál (Enter)">
@@ -623,7 +658,8 @@
     {kodex}
     hasNext={next !== null}
     floorDone={isGate ? { numeral: act.numeral, next: next ? actOf(next).title : (act.nextAct?.title ?? null) } : null}
-    onNext={() => next && go({ name: 'level', id: next })}
+    onDeep={deepId ? () => go({ name: 'level', id: deepId! }) : undefined}
+    onNext={() => next && go(isGate ? { name: 'stairs', act: ACTS.indexOf(actOf(next)) } : { name: 'level', id: next })}
     onMap={() => go({ name: 'map' })}
     onReplay={restart}
     onBack={backToRoom}

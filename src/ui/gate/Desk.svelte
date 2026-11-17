@@ -34,42 +34,38 @@
   const translated = (r: Rune) => !!RUNE_MODERN[r] && (settings.alwaysDigits || progress.kodex.includes(RUNE_KODEX[r] ?? ''));
 
   /**
-   * Při řešení desky obvod sám prochází všechny kombinace vstupů a lampa ukazuje, co k ní doteče:
-   * hráč desku odvodí z toho, co vidí, a odpovídající řádek desky se rozsvítí s ním. Najetí na řádek
-   * obvod na té kombinaci zastaví. Po vyřešení přepíná vstupy hráč sám.
+   * Obvod ukazuje kombinaci vstupů, kterou si hráč vybere: kliknutím na řádek desky (i na jeho buňku),
+   * krystaly vstupů v obvodu, nebo klávesnicí. Najetí myší na řádek jeho kombinaci jen ukáže, po odjetí
+   * se obvod vrátí na vybraný řádek. Sám se nepřepíná: hráč desku prochází svým tempem.
    */
-  const CYCLE_MS = 1400;
-  let cycle = $state(0);
-  let pinned: number | null = $state(null);
-  let freeInputs = $state(0);
-  const cycling = $derived(!game.free);
-  const shownRow = $derived(game.free ? freeInputs : (pinned ?? cycle));
+  let selected = $state(0);
+  let preview: number | null = $state(null);
+  const shownRow = $derived(preview ?? selected);
 
   $effect(() => {
     void task;
-    cycle = 0;
-    pinned = null;
-  });
-  $effect(() => {
-    if (!cycling) return;
-    const count = rows.length;
-    const id = setInterval(() => {
-      if (pinned === null && !document.hidden) cycle = (cycle + 1) % count;
-    }, CYCLE_MS);
-    return () => clearInterval(id);
+    selected = 0;
+    preview = null;
   });
 
   function toggleInput(i: number) {
-    if (game.free) freeInputs ^= 1 << (n - 1 - i);
+    selected ^= 1 << (n - 1 - i);
+    preview = null;
   }
 
-  /** Najetí na řádek desky: obvod ukáže jeho kombinaci (ve volné hře ji rovnou nastaví). */
-  function pin(r: number | null) {
-    if (game.free) {
-      if (r !== null) freeInputs = r;
-      return;
-    }
-    pinned = r;
+  function choose(r: number) {
+    selected = r;
+    preview = null;
+  }
+
+  /** Klávesnice: šipky nahoru a dolů posouvají výběr po řádcích desky (fokus jde s ním). */
+  function rowKey(e: KeyboardEvent, r: number) {
+    if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
+    e.preventDefault();
+    const next = Math.max(0, Math.min(rows.length - 1, r + (e.key === 'ArrowDown' ? 1 : -1)));
+    choose(next);
+    const row = (e.currentTarget as HTMLElement).parentElement?.querySelectorAll<HTMLElement>('.drow:not(.head)')[next];
+    (row?.querySelector<HTMLElement>('button') ?? row)?.focus();
   }
 </script>
 
@@ -90,10 +86,11 @@
           {circuit}
           inputs={shownRow}
           runes={{}}
-          canToggle={game.free}
           canPlace={false}
           {modern}
           veiled={!fill && !view.revealed}
+          lampVeiled={fill && !!level.presentation.veilLamp && game.playing}
+          canToggle
           onInput={toggleInput}
         />
       </div>
@@ -101,8 +98,10 @@
 
     <div class="side">
       <p class="side-title carved">Deska zákona</p>
+      <p class="desk-note">Vyber řádek a obvod vlevo ukáže jeho kombinaci.</p>
       <div class="desk stone" role="table" aria-label="Deska zákona">
         <div class="drow head" role="row">
+          <span role="columnheader" class="rowno" title="Řádek desky je dvojkové číslo: 10 = 2">#</span>
           {#each circuit.inputs as name (name)}<span role="columnheader">{name}</span>{/each}
           <span role="columnheader">lampa</span>
         </div>
@@ -113,11 +112,14 @@
             class:now={shownRow === r}
             role="row"
             tabindex="-1"
-            onpointerenter={() => pin(r)}
-            onpointerleave={() => pin(null)}
-            onfocusin={() => pin(r)}
-            onfocusout={() => pin(null)}
+            onclick={() => choose(r)}
+            onkeydown={(e) => rowKey(e, r)}
+            onpointerenter={(e) => e.pointerType === 'mouse' && (preview = r)}
+            onpointerleave={() => (preview = null)}
+            onfocusin={() => choose(r)}
           >
+            <!-- Řádek je dvojkové číslo ze vstupů (řádek 10 = 2): čtení z Předsíně se vrací. -->
+            <span class="rowno" role="cell" aria-label="řádek {r}">{r}</span>
             {#each circuit.inputs as name, i (name)}
               <span class="bit" class:one={inputBit(r, i, n) === 1} role="cell">{modern ? inputBit(r, i, n) : inputBit(r, i, n) ? '●' : '○'}</span>
             {/each}
@@ -258,6 +260,15 @@
     min-height: 40px;
     border-radius: 6px;
   }
+  /* Číslo řádku: malé a tlumené, ať neruší čtení vstupů. */
+  .rowno {
+    font-family: var(--font-mono);
+    font-size: var(--fs-sm);
+    color: var(--text-muted);
+  }
+  .drow.head .rowno {
+    font-family: var(--font-mono);
+  }
   .drow.head {
     min-height: 26px;
     font-family: var(--font-display);
@@ -266,6 +277,16 @@
     letter-spacing: 0.08em;
     text-transform: uppercase;
     color: var(--text-muted);
+  }
+  .desk-note {
+    margin: -4px 0 2px;
+    max-width: 26ch;
+    font-size: var(--fs-sm);
+    color: var(--text-muted);
+    text-align: center;
+  }
+  .drow[role='row']:not(.head) {
+    cursor: pointer;
   }
   .drow {
     outline: none;

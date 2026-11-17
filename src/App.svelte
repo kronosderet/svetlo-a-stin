@@ -14,6 +14,8 @@
   import Level from './ui/screens/Level.svelte';
   import TeacherScreen from './ui/screens/TeacherScreen.svelte';
   import SummaryScreen from './ui/screens/SummaryScreen.svelte';
+  import StairsScreen from './ui/screens/StairsScreen.svelte';
+  import WorksheetScreen from './ui/screens/WorksheetScreen.svelte';
 
   $effect(() => {
     document.documentElement.dataset.motion = settings.reducedMotion ? 'reduced' : 'full';
@@ -50,6 +52,14 @@
     <TeacherScreen />
   {:else if nav.screen.name === 'summary'}
     <SummaryScreen act={nav.screen.act} />
+  {:else if nav.screen.name === 'stairs'}
+    {#key nav.screen.act}
+      <StairsScreen act={nav.screen.act} />
+    {/key}
+  {:else if nav.screen.name === 'worksheet'}
+    {#key nav.screen.act}
+      <WorksheetScreen act={nav.screen.act} />
+    {/key}
   {/if}
 </main>
 

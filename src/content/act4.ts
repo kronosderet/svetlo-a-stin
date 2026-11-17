@@ -5,14 +5,14 @@ import {
   compareTask,
   decoderTask,
   genIV15Alu,
-  genIV15Register,
-  genIV15Subtract,
+  genIV15Run,
   genIV7Adder,
   genIV7Compare,
   genIV7Route,
   muxTask,
   qChainSum,
   qCounter,
+  runTask,
   shiftTask,
   subtractTask,
 } from './generators4';
@@ -35,6 +35,7 @@ import {
   singleFlip,
   srLatch,
 } from './machines';
+import { qRead, qRuneByRule, qTableRows } from './quizzes';
 import type { ActDef, LevelDef, Presentation } from './types';
 
 const TWO: Rune[] = ['and', 'or', 'xor'];
@@ -84,7 +85,8 @@ const levels: LevelDef[] = [
     id: 'IV-0',
     title: 'Stroj, který počítá',
     kind: 'machine',
-    config: { tasks: [{ mode: 'explore', machine: halfAdder() }] },
+    // Odečet pod deskou je nadepsaný jen „lampy“: „A + B“ by prozradilo, na co se Echo ptá.
+    config: { tasks: [{ mode: 'explore', machine: { ...halfAdder(), numbers: [{ label: 'lampy', bits: ['l2', 'l1'] }] } }] },
     presentation: bench('Přepínej krystaly A a B a sleduj obě lampy. Vyzkoušej všechny čtyři kombinace.'),
     hints: [
       'Každým dotekem přepni jeden krystal a podívej se na obě lampy.',
@@ -92,7 +94,11 @@ const levels: LevelDef[] = [
       'Zvýrazněný krystal vede k nové kombinaci.',
     ],
     echo: {
-      intro: ['Hlubina Strojů. Lumenité tu z run skládali stroje.', 'Tenhle má dvě lampy s vahami 2 a 1. Co asi dělá?'],
+      intro: [
+        'Hlubina Strojů. Lumenité tu z run skládali stroje.',
+        'Hotový stroj pak zabalili do jediného kamene. Říkali tomu {{abstrakce|soucastka}}.',
+        'Tenhle má dvě lampy s vahami 2 a 1. Co asi dělá?',
+      ],
       found: {
         2: 'Lampy ukazují číslo. Jaké, to řeknou váhy pod nimi.',
         4: 'Lampy pokaždé ukážou, kolik krystalů svítí.',
@@ -223,12 +229,13 @@ const levels: LevelDef[] = [
     id: 'IV-3',
     title: 'Řetěz sčítaček',
     kind: 'machine',
-    config: { tasks: [chainTask(2, 0, false), chainTask(4), chainTask(3, 1)] },
+    // Ve druhém řetězu nabízí točitý kámen přenos z kterékoli sčítačky: vzor „od souseda“ se musí rozmyslet.
+    config: { tasks: [chainTask(2, 0, false), chainTask(4, 0, true, true), chainTask(3, 1)] },
     presentation: bench(
       'Úplná sčítačka je teď jediný kámen. Natoč točité kameny přenosu tak, aby lampy ukázaly, co žádá brána. Pak spusť Zkoušku.',
     ),
     hints: [
-      'Klikni na točitý kámen u vstupu P: střídá stín, světlo a přenos ze sousední sčítačky.',
+      'Klikni na točitý kámen u vstupu P: střídá stín, světlo a přenos z jiné sčítačky.',
       'Přenos teče jako v Kaskádě, z každého sloupce do sousedního vlevo. Do nejlehčího sloupce nic nepřitéká, pokud brána nežádá o jednu víc.',
       SOCKET_HINT,
     ],
@@ -239,7 +246,7 @@ const levels: LevelDef[] = [
         'Sčítačky vedle sebe jsou sloupce Kaskády. Kudy teče přenos?',
       ],
       step: {
-        0: 'Dva sloupce, dvě sčítačky. Přenos teče doleva.',
+        0: 'Dva sloupce, dvě sčítačky. Přenos teče doleva. Teď může přenos přitéct z kterékoli sčítačky.',
         1: 'Čtyři sčítačky sečtou čísla až do 15. Kaskáda z run.',
         2: 'Světlo v prvním přenosu přidá jedničku navíc.',
       },
@@ -855,7 +862,7 @@ const levels: LevelDef[] = [
     title: 'Odčítačka',
     kind: 'machine',
     config: { tasks: [subtractTask('invert'), subtractTask('switch')] },
-    presentation: bench('Natoč točité kameny (a vlož runy) tak, aby stroj počítal podle brány. Pak spusť Zkoušku.'),
+    presentation: bench('Natoč točité kameny tak, aby stroj počítal podle brány. Pak spusť Zkoušku.'),
     hints: [
       'Vzpomeň na Doplněk: odečíst B je totéž jako přičíst převrácené B a jedničku.',
       'Do každé sčítačky má téct převrácené B. Jednička navíc přiteče přenosem do nejlehčího sloupce.',
@@ -895,11 +902,12 @@ const levels: LevelDef[] = [
     id: 'IV-13',
     title: 'Volič operace',
     kind: 'machine',
-    config: { tasks: [aluTask(OPS, 'runes'), aluTask(OPS, 'selectors')] },
+    // V první úloze jsou voliče výhybek přehozené: runy nejdou shora dolů v pořadí kódů, cesty se musí přečíst.
+    config: { tasks: [aluTask(OPS, 'runes', 'crossed'), aluTask(OPS, 'selectors')] },
     presentation: bench('Stroj má počítat s A a B podle kódu operace O. Osaď kameny a natoč voliče výhybek. Pak spusť Zkoušku.'),
     hints: [
       'Kód operace je číslo O s vahami 2 a 1. Nastav kód a sleduj, kterou cestou světlo teče.',
-      'Horní výhybky vybírají podle lehčího krystalu O, poslední podle těžšího. Kódy 0 a 1 vedou horní výhybkou, 2 a 3 dolní.',
+      'Výhybka pustí horní vstup A, když její volič mlčí, a dolní B, když svítí. Nastav kód a jdi od lampy zpátky po cestě, kterou výhybky pustí: runa na jejím konci patří k tomu kódu.',
       PIECE_HINT,
     ],
     echo: {
@@ -966,7 +974,7 @@ const levels: LevelDef[] = [
     title: 'Velká brána Hlubiny',
     kind: 'mixed',
     echo: {
-      intro: ['Velká brána Hlubiny. Paměť, odčítání a volič operace.'],
+      intro: ['Velká brána Hlubiny. Žádná kopie komnat: stroje, které spojí, co umíš.'],
       solved: [
         'Velká brána Hlubiny je otevřená.',
         'Paměť, tep, sčítačka a volič operace. Ze stejných součástek je složené Srdce Observatoře.',
@@ -976,51 +984,40 @@ const levels: LevelDef[] = [
     parts: [
       {
         id: 'IV-15',
-        title: 'Registr',
+        title: 'Počítadlo s chodem',
         kind: 'machine',
-        config: { tasks: [shiftTask('right')] },
-        generate: genIV15Register,
-        presentation: bench('První zkouška: natoč točité kameny tak, aby registr prošel zkouškou paměti.'),
+        config: { tasks: [runTask()] },
+        generate: genIV15Run,
+        presentation: bench(
+          'První zkouška: osaď kameny a natoč točitý kámen tak, aby počítadlo počítalo, dokud svítí chod C. Když C zhasne, má ho tep vynulovat.',
+        ),
         hints: [
-          'Přečti pravidlo: má světlo při tepu stoupat, nebo klesat?',
-          'Každá ozvěna bere světlo od sousedky, ze které světlo přichází. Ta první bere ze vstupu X.',
-          SOCKET_HINT,
-        ],
-        echo: {
-          intro: ['První zkouška: posuvný registr.'],
-          solved: ['Registr posouvá.'],
-        },
-      },
-      {
-        id: 'IV-15',
-        title: 'Odčítačka',
-        kind: 'machine',
-        config: { tasks: [subtractTask('switch')] },
-        generate: genIV15Subtract,
-        presentation: bench('Druhá zkouška: natoč točité kameny (a vlož runy) tak, aby stroj počítal podle brány.'),
-        hints: [
-          'Odčítání je přičtení doplňku: převrácené B a jednička navíc.',
-          'B převrátí Obraceč, nebo Výluka s M. Jednička přiteče přenosem do nejlehčího sloupce.',
+          'Když C zhasne, nesmí do sčítaček téct nic z paměti, ani jednička navíc.',
+          'Pouto pustí světlo z paměti jen tehdy, když svítí C. A jednička do nejlehčí sčítačky? I ta má přitékat jen s chodem.',
           PIECE_HINT,
         ],
         echo: {
-          intro: ['Druhá zkouška: odčítačka.'],
-          solved: ['Odčítačka počítá.'],
+          intro: [
+            'První zkouška: počítadlo hvězd s krystalem chodu C. Paměť, sčítačka a runy v jednom stroji.',
+            'Dokud C svítí, počítá. Když zhasne, tep ho vrátí na nulu.',
+          ],
+          wrong: 'Počítadlo nejde podle zkoušky. Projdi kroky tepem a sleduj, co teče do sčítaček, když C zhasne.',
+          solved: ['Počítadlo se vrátí na nulu, kdykoli chod zhasne. Tak se nulují i hodiny.'],
         },
       },
       {
         id: 'IV-15',
         title: 'Volič',
         kind: 'machine',
-        config: { tasks: [aluTask(['xor', 'and', 'nand', 'or'], 'runes')] },
+        config: { tasks: [aluTask(['xor', 'and', 'nand', 'or'], 'runes', 'crossed')] },
         generate: genIV15Alu,
-        presentation: bench('Třetí zkouška: osaď kameny voliče operace podle kódů brány.'),
+        presentation: bench('Druhá zkouška: osaď kameny voliče operace podle kódů brány. Voliče výhybek nemusí jít po pořádku.'),
         hints: [
           'Přečti pravidlo: který kód patří které runě?',
-          'Kódy 0 a 1 vedou horní výhybkou, 2 a 3 dolní. V každé výhybce je nahoře sudý kód.',
+          'Nastav kód krystaly O a jdi od lampy zpátky po cestě, kterou výhybky pustí. Výhybka pustí horní vstup, když její volič mlčí.',
           SLOT_HINT,
         ],
-        echo: { intro: ['Třetí zkouška: volič operace.'], solved: [] },
+        echo: { intro: ['Druhá zkouška: volič operace. Sleduj, který krystal O vede ke které výhybce.'], solved: [] },
         quiz: [
           {
             question: 'Který z těchto strojů potřebuje tep?',
@@ -1043,5 +1040,8 @@ export const ACT_IV: ActDef = {
   theme: 'Obvody a paměť',
   glyphBase: 48,
   levels,
+  lore: 'Nejhlubší patro. Z run tu Lumenité stavěli stroje, které počítají a pamatují si.',
+  preview: 'Sčítačky z run, porovnávač, výhybka, rozdělovač a v Hlubších síních paměť a tep.',
+  review: [qRuneByRule, qTableRows, qRead],
   nextAct: { numeral: 'V', title: 'Archiv Hlasů', theme: 'Kódy' },
 };

@@ -5,7 +5,7 @@ export interface RoomStats {
   entered: number;
   /** Kolikrát ji dokončil. */
   solved: number;
-  /** Tahy a pokusy nad ideál. */
+  /** Kroky (tahy, potvrzení a Zkoušky) nad ideál. */
   extra: number;
   /** Všechny nápovědy. */
   hints: number;

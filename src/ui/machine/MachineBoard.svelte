@@ -22,7 +22,7 @@
   import { progress } from '../../game/progress.svelte.ts';
   import { settings } from '../../game/settings.svelte.ts';
   import { partWords } from '../screens/level/machineEvents';
-  import { G, PIN, frameOf, partSize } from './layout';
+  import { G, PART_ABBR, PIN, frameOf, partSize, sharedLetter } from './layout';
   import { fromWords, seatWords } from '../../game/machineWords';
 
   interface Props {
@@ -40,6 +40,8 @@
     weights: boolean;
     highlight?: { input: number } | { node: string } | { socket: string } | null;
     celebrate?: boolean;
+    /** Měřítko desky (Dílna podle něj pod deskou ukáže legendu zkratek součástek). */
+    scale?: number;
     onInput?: (index: number) => void;
     onSlot?: (node: string) => void;
     onSocket?: (key: string) => void;
@@ -57,6 +59,7 @@
     weights,
     highlight = null,
     celebrate = false,
+    scale = $bindable(1),
     onInput,
     onSlot,
     onSocket,
@@ -67,6 +70,8 @@
    * Telefon na šířku smí jít níž (--k-min z Dílny), aby byla vidět celá deska najednou.
    */
   const K_MIN = 0.7;
+  /** Pod tímhle měřítkem ukazuje deska zkratky součástek (PS, ÚS, VÝH…). */
+  const SHORT_BELOW = 0.8;
 
   type P = { x: number; y: number };
   type PinPos = P & { nx: number; ny: number };
@@ -145,6 +150,9 @@
     return nodeOut(g, Math.max(0, outputsOf(g).indexOf(src)));
   }
 
+  /** Víc vstupů se stejným písmenem (A₂ a A₁): váha patří k písmenu jako index. */
+  const sharedName = (inp: MachineInput) => sharedLetter(machine, inp.id);
+
   /**
    * Krátký název zdroje na točitém kameni. Vstupy se stejným písmenem (A₂ a A₁, O₂ a O₁) dostanou
    * váhu jako index, jinak by kámen ukazoval u obou voleb totéž.
@@ -153,9 +161,7 @@
     if (src === SHADOW || src === LIGHT) return { text: src, sub: '' };
     const inp = machine.inputs.find((i) => i.id === src);
     if (inp) {
-      const name = inp.label ?? inp.id;
-      const shared = machine.inputs.filter((i) => (i.label ?? i.id) === name).length > 1;
-      return { text: name, sub: shared && weightOf[inp.id] ? String(weightOf[inp.id]) : '' };
+      return { text: inp.label ?? inp.id, sub: sharedName(inp) && weightOf[inp.id] ? String(weightOf[inp.id]) : '' };
     }
     const [id, out] = src.split('.');
     return { text: `${nodeNo(id)}${out ?? ''}`, sub: '' };
@@ -204,6 +210,14 @@
   const pct = (x: number, total: number) => `${(x / total) * 100}%`;
   let boxW = $state(0);
   const k = $derived(boxW ? Math.min(1, boxW / W) : 1);
+  $effect(() => {
+    scale = k;
+  });
+  /**
+   * Malá deska (telefon na výšku): místo celých jmen součástek zkratky větším písmem, legenda je
+   * pod deskou. Celé jméno by při 70 % mělo asi 8 px.
+   */
+  const tiny = $derived(k < SHORT_BELOW);
   const inputOn = (i: number) => ((inputs >> (n - 1 - i)) & 1) === 1;
   const lampOn = (l: MachineLamp) => settled.lamps[l.id] === 1;
   const runeOf = (g: MachineNode): Rune | null => g.rune ?? runes[g.id] ?? null;
@@ -238,7 +252,7 @@
     }
     const r = runeOf(g);
     if (!g.rune) return r ? `Kámen ${nodeNo(g.id)} s runou ${RUNE_NAME[r]}. Kliknutím vyber jinou.` : `Prázdný kámen ${nodeNo(g.id)}. Kliknutím vlož runu.`;
-    return `Runa ${RUNE_NAME[r!]}`;
+    return `Runa ${RUNE_NAME[r!]}${g.note ? `, ${g.note}` : ''}`;
   }
 
   function seatLabel(s: Seat): string {
@@ -248,7 +262,7 @@
   const translated = (r: Rune) => !!RUNE_MODERN[r] && (settings.alwaysDigits || progress.kodex.includes(RUNE_KODEX[r] ?? ''));
 </script>
 
-<div class="machine stone" class:celebrate style:width="max(min(100%, {W}px, max(340px, calc((100dvh - var(--bench-reserve, 330px)) * {W / H}))), calc({W}px * var(--k-min, {K_MIN})))" style:aspect-ratio="{W} / {H}" style:--k={k} bind:clientWidth={boxW}>
+<div class="machine stone" class:celebrate class:narrow={k < 0.9} style:width="max(min(100%, {W}px, max(340px, calc((100dvh - var(--bench-reserve, 330px)) * {W / H}))), calc({W}px * var(--k-min, {K_MIN})))" style:aspect-ratio="{W} / {H}" style:--k={k} bind:clientWidth={boxW}>
   <svg class="wires" viewBox="0 0 {W} {H}" aria-hidden="true">
     {#each layout.wires as w, i (i)}
       <path class="groove" d={w.d} />
@@ -261,6 +275,9 @@
 
   {#each machine.inputs as inp, i (inp.id)}
     {@const p = at(inp.x, inp.y)}
+    <!-- Vstupy se stejným písmenem nesou váhu jako index (A₂), jako v hlavičce desky a na točitých
+         kamenech. Pod krystalem by se váha slila s písmenem vstupu pod ním („2 B“). -->
+    {@const indexed = weights && sharedName(inp) && !!weightOf[inp.id]}
     <div class="slot-pos" style:left={pct(p.x, W)} style:top={pct(p.y, H)}>
       <button
         type="button"
@@ -272,11 +289,13 @@
         aria-label="Vstup {inp.label ?? inp.id}{weightOf[inp.id] ? ` s váhou ${weightOf[inp.id]}` : ''}: {inputOn(i) ? 'světlo' : 'stín'}"
         onclick={() => onInput?.(i)}
       >
-        <span class="name carved">{inp.label ?? inp.id}</span>
+        <span class="name carved">{inp.label ?? inp.id}{#if indexed}<sub>{weightOf[inp.id]}</sub>{/if}</span>
         <svg class="gem" viewBox="0 0 20 32" aria-hidden="true">
           <polygon points="10,1.5 18.5,9 18.5,23 10,30.5 1.5,23 1.5,9" />
         </svg>
-        {#if weights && weightOf[inp.id]}
+        {#if indexed}
+          <!-- váha je v indexu u písmene -->
+        {:else if weights && weightOf[inp.id]}
           <span class="under weight">{weightOf[inp.id]}</span>
         {:else if modern}
           <span class="under">{inputOn(i) ? 1 : 0}</span>
@@ -318,9 +337,9 @@
           role="img"
           aria-label={nodeLabel(g)}
         >
-          <span class="part-name">
+          <span class="part-name" class:short={tiny}>
             {#if g.part === 'flip'}<Icon name="heart" size={14} />{/if}
-            {PART_NAME[g.part]}
+            {tiny ? PART_ABBR[g.part] : PART_NAME[g.part]}
           </span>
           {#each pinLabels(g) as pl (pl.text + pl.at.x + pl.at.y)}
             <span class="pin" class:on={pl.on} style:left="calc(50% + {pl.at.x}px)" style:top="calc(50% + {pl.at.y}px)">{pl.text}</span>
@@ -344,7 +363,9 @@
           {#if numbered}<span class="no" aria-hidden="true">{nodeNo(g.id)}</span>{/if}
         </button>
         {#if r}
-          <span class="rune-name">{RUNE_NAME[r]}{#if translated(r)}<span class="modern"> · {RUNE_MODERN[r]}</span>{/if}</span>
+          <span class="rune-name"
+            >{RUNE_NAME[r]}{#if g.note}<span class="note"> · {g.note}</span>{:else if translated(r)}<span class="modern"> · {RUNE_MODERN[r]}</span>{/if}</span
+          >
         {/if}
       {/if}
     </div>
@@ -441,6 +462,12 @@
     font-weight: 700;
     color: var(--text-muted);
   }
+  .name sub {
+    margin-left: 1px;
+    font-family: var(--font-mono);
+    color: var(--lumen);
+    opacity: 0.85;
+  }
   .gem {
     width: 22px;
     height: 34px;
@@ -534,6 +561,15 @@
     font-family: var(--font-mono);
     color: var(--lumen);
   }
+  .note {
+    font-family: var(--font-mono);
+    letter-spacing: 0;
+    color: var(--lumen);
+  }
+  /* Zmenšená deska: pod kamenem jen jméno runy, moderní značka (· XOR) by se slila se sousedy. */
+  .narrow .modern {
+    display: none;
+  }
   /* Součástka: větší kámen s popsanými kolíky */
   .part {
     position: relative;
@@ -596,6 +632,11 @@
   .part.column .part-name {
     max-width: 84px;
   }
+  /* Zkratka na malé desce: větší písmo, aby po zmenšení zůstalo kolem 12 px. */
+  .part-name.short {
+    font-size: 18px;
+    letter-spacing: 0.04em;
+  }
   .part.memory.lit .part-name {
     color: var(--lumen);
   }
@@ -632,6 +673,20 @@
     border-color: #8a6a2a;
     color: var(--stone-200);
   }
+  /* Na dotykovém displeji má točitý kámen větší neviditelnou plochu pro prst (asi 40 px při plné
+     velikosti desky). Sousední točité kameny u jednoho kamene se překryjí jen v úzkém pásu mezi nimi. */
+  @media (pointer: coarse) {
+    .socket {
+      position: relative;
+    }
+    .socket::after {
+      content: '';
+      position: absolute;
+      inset: -7px;
+      border-radius: 50%;
+    }
+  }
+
   .socket.lit {
     color: var(--lumen);
   }

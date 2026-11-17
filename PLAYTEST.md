@@ -7,6 +7,8 @@
 >
 > Verze 3 · 17. 11. 2026: Akt III, Zahrada Bran, zahraný celý v prohlížeči (kap. 9). Kapitoly 2
 > a 3 popisují stejné patro ze simulace podle textů.
+>
+> Verze 4 · 17. 11. 2026: všechny zbývající návrhy z kapitol 4 až 9 jsou ve hře (kap. 10).
 
 ---
 
@@ -567,8 +569,8 @@ jméno runy v ukázce kroku a texty pro čtečku.
   Kaskáda). Čtečka u točitého kamene řekne, kde sedí („u vstupu P úplné sčítačky 2“, „u kamene 3,
   horní vstup“).
 
-Zbývá: větší plocha pro dotek, výzva pro Emu (IV-3, IV-13, IV-15), číslování součástek v IV-11,
-nadpis kvízu ve smíšených komnatách a mezery u popisků vstupů.
+Zbytek (plocha pro dotek, výzva pro Emu, číslování, nadpis kvízu, popisky vstupů) je hotový,
+viz kap. 10.
 
 ### 8.5 Jak to ověřit se třídou
 - **Předpověď simulace:** nejvíc ukázek kroku bude ve stavbě IV-2, v IV-3, IV-4 a IV-6.
@@ -727,5 +729,107 @@ pulz točitých kamenů v Bráně a texty.
   otázku (v kolika řádcích svítí Pouto, nebo Rozcestí se 3 či 4 vstupy).
 - Čtečka čísluje prázdné kameny v Bráně („Prázdný kámen 2 z 3“).
 
-Zbývá: lampa pod závojem v desce brány a Zrcadel, písmena v Tajné řeči, ideál Masek, nadpis kvízu
-ve smíšených komnatách a jednotný název pro pokusy v pečeti přesnosti.
+Zbytek (závoj lampy, Tajná řeč, Masky, nadpis kvízu, pečeť přesnosti) je hotový, viz kap. 10.
+
+---
+
+## 10. Backlog dokončený
+
+> 17. 11. 2026. Všechny návrhy z kapitol 4 až 9, které ještě nebyly ve hře. Ověřeno testy (621),
+> kontrolou typů, sestavením obou verzí a průchodem dotčených komnat v prohlížeči.
+
+### 10.1 Učení a nápověda
+
+- **Ukázka kroku s důvodem** (4.1) ve všech archetypech, ne jen v Dílně a Bráně (`src/game/stepWords.ts`):
+  - Oltář a zápis Nápisu: „Žádáno 13. Těžší krystaly dají 8, zbývá 5. Váha 4 se do toho vejde…“.
+    Dokud hráč váhy teprve objevuje (I-4), zůstane jen zvýraznění.
+  - Čtení Nápisu: které váhy sečíst, součet nechá na hráči.
+  - Kaskáda: kolik světla se ve sloupci slévá, co zůstane dole a co přeteče.
+  - Příliv: nejkratší cesta k cíli (3 → 6 → 12) a její první páka.
+  - Deska zákona: proč lampa v řádku svítí, runa po runě. U runy pod závojem její zákon.
+  - Maska: co má runa na krystalu udělat a jak k tomu musí svítit maska.
+- **Kvíz vysvětlí typickou chybu** (4.10): losované otázky mají u špatných možností vlastní větu
+  („12 by platilo, kdyby kombinací přibývalo stejně…“). Ostatní dál ukážou společnou nápovědu.
+- **Pravidla na desce** (4.4): pod krystaly s neznámou vahou popisek, jak váhu zjistit. U nádoby
+  s přepadem „Nádoba unese nejvýš 15“.
+- **Objev před výkladem** (4.9):
+  - I-3: plná deska se rozdělí podle levého krystalu, je vidět zdvojení.
+  - I-4: váha se dopočítá ze součtu („6 − 2 = 4. Kámen váhu dopočítal.“).
+  - II-13: nejdřív třináct jedniček vyprázdní nádobu se třemi světly, teprve pak páka převrať a +1.
+  - III-6: před stavbou větvení jedna úloha, ve které hráč hotové větvení prozkoumá.
+- **II-8:** druhá úloha je ukázková, výpůjčky jsou předem na místě a Echo je okomentuje.
+- **Staré pojmy v nových komnatách** (4.6): řádky desky zákona mají číslo (řádek 10 = 2).
+
+### 10.2 Mapa a přechody
+
+- **Schody mezi patry** (4.6, 4.8): „Další patro“ po bráně a schody na mapě vedou na kartu patra
+  (věta z příběhu, co čeká, komnaty) se Strážcem schodů. Ten se zeptá na tři zákony minulého
+  patra: čtení a zápis čísel, sčítání, runy. Bez pečetí, jde přeskočit.
+- **Do Hlubších síní** (4.7, 8.3.4): výsledek brány patra má dvě rovnocenná tlačítka.
+- **Zkusit bránu hned** (4.7): kdo má komnaty 1 až 3 patra s pečetí přesnosti i odvahy, tomu mapa
+  otevře bránu. Komnaty 4 až 6 jde dohrát později.
+- **Desku znám** (4.7): v III-2 až III-4 jde zkoumání přeskočit. Desku pak hráč píše zpaměti
+  a lampa je pod závojem.
+
+### 10.3 Uspořádání pater (kap. 5)
+
+- **I-9 Sudé a liché** (nová komnata): oltář žádá druh čísla (liché, sudé větší než 8, dělitelné
+  čtyřmi, osmi). Rozhoduje pravý krystal a stíny vpravo. Nový záznam Kodexu Parita.
+- **II-1 Počítadlo poutníků** (z I-9): přenos je na základní cestě dřív, než ho Síň potřebuje.
+- **II-2 Soutok** (sloučené Soutok a Dvě řady): 1 + 1 = 10, pak tři součty bez přenosu.
+- **I-5** má čtyři cíle, **I-12** čtyři nápisy.
+- Uložený postup i soubory se převedou (rozvržení 4, `src/game/migrate.ts`):
+  - z I-9 na II-1;
+  - Soutok a Dvě řady do II-2 (pečetě jen za obě části, statistiky se sečtou);
+  - přeložený záznam Dvě řady přejde na Soutok.
+
+### 10.4 Příběhová nit (4.8)
+
+- Echo mluví slovy, která jsou nečitelná, dokud je Kodex nepřeloží (`{{slovo|záznam}}`). Pak se
+  v jeho řeči rozsvítí:
+  - jméno Echa v I-0 („Jsem …“, místo jména glyfy, dokud ho nepřeloží Tajná řeč);
+  - podoba v I-2, glyfy na dveřích v I-5;
+  - zákon sloupce v II-0, Obraceč v III-0, abstrakce v IV-0.
+- Karta patra na schodech nese větu z příběhu.
+
+### 10.5 Hlubina Strojů (kap. 8)
+
+- **Větší plocha pro dotek:**
+  - točité kameny v Dílně i v Bráně mají na dotykovém displeji neviditelnou plochu kolem 40 px;
+  - v Bráně jsou kameny větší, 30 px;
+  - na zmenšené desce se schová moderní značka runy.
+- **Výzva pro Emu:**
+  - IV-3: ve druhém řetězu nabízí točitý kámen přenos z kterékoli sčítačky;
+  - IV-13: první úloha má přehozené voliče výhybek, takže runy nejdou shora dolů v pořadí kódů;
+  - IV-15 nekopíruje komnaty. Má počítadlo s chodem (paměť, sčítačka a Pouta, zhasnutý chod
+    tepem vynuluje) a volič s losovanými kódy i zapojením.
+- **IV-11:** ozvěny i sčítačky se číslují stejně, zprava.
+- **Popisky vstupů:** váha je index u písmene (A₂, B₁), jako v hlavičce desky. Popisky se už neslijí
+  („2 B“) a nový test hlídá, že nezasahují do jiných prvků.
+- **IV-12** má zadání podle úlohy, **IV-0** odečet „lampy“ místo „A + B“, **IV-14** pod Pouty
+  „A₂ × B₁“.
+
+### 10.6 Zahrada Bran (kap. 9)
+
+- **Deska zákona se nepřepíná sama:** obvod ukazuje řádek, který hráč vybere kliknutím na řádek
+  nebo krystaly vstupů (najetí myší ho jen ukáže). Hráč desku prochází svým tempem.
+- **Lampa pod závojem** v desce brány (III-7) a Zrcadel (III-8): runy ve vybraném řádku svítí,
+  lampa a poslední runa jsou ale zahalené, dokud hráč desku nepotvrdí.
+- **Tajná řeč:**
+  - u řad je číslo a znak ASCII (69 · E);
+  - klíč po zašifrování zůstane v masce a zprávu rozšifruje sám, písmeno po písmenu (E, EC, ECH, ECHO);
+  - nakonec zpráva s jiným klíčem: z písmene E hráč klíč najde (útok známým textem).
+- **Masky:** ideál počítá i s maskou, kterou zadání popisuje (pravá čtveřice), a nápověda k ní vede.
+- **Nadpis kvízu** ve smíšených komnatách je jméno komnaty ze záznamu Kodexu, ne „Zkouška“.
+- **Pečeť přesnosti** počítá všude „kroky“ (dotek, potvrzení, Zkouška).
+
+### 10.7 Pro učitele
+
+- **Pracovní list** (kap. 7): v učitelském režimu je u každého patra list k tisku s osmi otázkami
+  z kvízů základní cesty. Každý tisk má jiná čísla, klíč odpovědí je na samostatné stránce.
+
+### 10.8 Co zbývá
+
+- Vyzkoušet hru se skutečnou třídou a na školním počítači (kap. 7 a 8.5).
+- Sdílený přehled třídy bez ručního sbírání souborů potřebuje server. Hra je záměrně bez něj.
+

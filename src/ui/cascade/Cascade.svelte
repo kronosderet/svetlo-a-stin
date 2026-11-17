@@ -453,6 +453,10 @@
       </div>
     </div>
 
+    {#if spout && game.phase === 'play'}
+      <p class="vessel-note">Nádoba unese nejvýš {2 ** width - 1}. Co je víc, vyteče do přepadu.</p>
+    {/if}
+
     {#if game.phase === 'quiz' && game.question}
       {#key game.quizIndex}
         <Quiz {game} />
@@ -722,6 +726,12 @@
     box-shadow:
       inset 0 2px 8px rgba(0, 0, 0, 0.7),
       inset 0 0 0 2px rgba(240, 149, 122, 0.75);
+  }
+  .vessel-note {
+    margin: 0;
+    font-size: var(--fs-sm);
+    color: var(--text-muted);
+    text-align: center;
   }
   .chute-label {
     writing-mode: vertical-rl;

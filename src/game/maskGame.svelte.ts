@@ -1,5 +1,6 @@
 import {
   applyMask,
+  arrive,
   closestMask,
   type MaskConfig,
   currentTask,
@@ -14,6 +15,7 @@ import {
 } from '../core/puzzles/mask';
 import type { MaskLevel } from '../content/types';
 import { BaseGame, type GameEvent } from './baseGame.svelte.ts';
+import { maskStep } from './stepWords';
 
 export interface MaskView {
   task: MaskTask;
@@ -54,6 +56,14 @@ export class MaskGame extends BaseGame<MaskLevel> {
     return this.playing && this.hintLevel >= 3 ? hintBit(this.level.config, this.state) : null;
   }
 
+  /** Ukázka kroku s důvodem: co má runa na zvýrazněném krystalu udělat a jak k tomu musí svítit maska. */
+  get stepHint(): string | null {
+    const bit = this.hintTarget;
+    if (bit === null) return null;
+    const on = ((this.state.mask >> bit) & 1) === 1;
+    return maskStep(this.view.task, bit, !on);
+  }
+
   get canUndo(): boolean {
     return false;
   }
@@ -89,15 +99,25 @@ export class MaskGame extends BaseGame<MaskLevel> {
     }
     if (!this.playing) return;
     const before = $state.snapshot(this.state) as MaskState;
-    const r = toggleMask(this.level.config, before, bit);
+    this.#apply(before, before.mask ^ (1 << bit), toggleMask(this.level.config, before, bit));
+  }
+
+  /** Úloha s klíčem z minulé úlohy se vyřeší sama, až zmizí předchozí výsledek (písmeno po písmenu). */
+  protected afterHold(): void {
+    if (this.phase !== 'play') return;
+    const before = $state.snapshot(this.state) as MaskState;
+    this.#apply(before, before.mask, arrive(this.level.config, before));
+  }
+
+  #apply(before: MaskState, mask: number, r: { state: MaskState; events: MaskEvent[] }): void {
     if (r.events.length === 0) return;
     if (r.events.some((e) => e.type === 'step')) {
       this.hintLevel = 0;
-      this.held = { task: shownTask(this.level.config, before), mask: before.mask ^ (1 << bit), done: true };
+      this.held = { task: shownTask(this.level.config, before), mask, done: true };
       this.hold();
     }
     this.state = r.state;
-    for (const event of r.events as MaskEvent[]) this.emit({ kind: 'mask', event, state: r.state });
+    for (const event of r.events) this.emit({ kind: 'mask', event, state: r.state });
     if (r.state.complete) this.solve();
   }
 }

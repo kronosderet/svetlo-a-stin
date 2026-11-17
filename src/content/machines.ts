@@ -143,10 +143,16 @@ export function chainTarget(m: Machine, bits: number, extra = 0) {
   return targetFrom(m, (v) => bitsOf(numberOf(v, ids('A', bits)) + numberOf(v, ids('B', bits)) + extra, ids('S', bits + 1)));
 }
 
-/** Úloha: dosaď přenosy do řetězu sčítaček (točité kameny na vstupech přenosu). */
-/** Řetěz sčítaček k osazení přenosů. first = false: do nejlehčí sčítačky pevně teče stín (úvodní úloha s jediným točitým kamenem). */
-export function chainTask(bits: number, extra = 0, first = true): MachineTask {
-  const carry = (k: number): Pin => (k === 0 ? (first ? [SHADOW, LIGHT] : SHADOW) : [SHADOW, LIGHT, `fa${k - 1}.P`]);
+/**
+ * Řetěz sčítaček k osazení přenosů (točité kameny na vstupech přenosu).
+ * first = false: do nejlehčí sčítačky pevně teče stín (úvodní úloha s jediným točitým kamenem).
+ * any = true: točitý kámen nabízí přenos z kterékoli jiné sčítačky, ne jen ze sousední. Kdo jen
+ * opakuje vzor, musí si rozmyslet, odkud přenos opravdu teče.
+ */
+export function chainTask(bits: number, extra = 0, first = true, any = false): MachineTask {
+  const others = (k: number) => Array.from({ length: bits }, (_, j) => j).filter((j) => j !== k).map((j) => `fa${j}.P`);
+  const carry = (k: number): Pin =>
+    k === 0 ? (first ? [SHADOW, LIGHT] : SHADOW) : [SHADOW, LIGHT, ...(any ? others(k) : [`fa${k - 1}.P`])];
   const machine = adderChain(bits, carry);
   return {
     mode: 'build',
@@ -418,14 +424,17 @@ export function counter(d: [Pin, Pin, Pin] = ['h2.S', 'h1.S', 'h0.S'], one: Pin 
   const xs = [1.8, 6.6, 11.4];
   return {
     inputs: [],
+    // Součástky se číslují zprava od nejlehčího sloupce, ozvěny stejně jako sčítačky pod nimi.
     nodes: [
-      ...xs.map((x, j) => ({
-        id: `f${2 - j}`,
-        part: 'flip' as const,
-        in: [d[j]],
-        x,
-        y: 1.6,
-      })),
+      ...xs
+        .map((x, j) => ({
+          id: `f${2 - j}`,
+          part: 'flip' as const,
+          in: [d[j]],
+          x,
+          y: 1.6,
+        }))
+        .reverse(),
       {
         id: 'h0',
         part: 'half',
@@ -461,6 +470,52 @@ export function counter(d: [Pin, Pin, Pin] = ['h2.S', 'h1.S', 'h0.S'], one: Pin 
     })),
     numbers: [{ label: 'hvězdy', bits: ['Q2', 'Q1', 'Q0'] }],
   };
+}
+
+/**
+ * Počítadlo s chodem (velká brána Hlubiny): počítadlo hvězd, kde krystal chodu C hlídá cestu z paměti
+ * do sčítaček i jedničku navíc. Dokud C svítí, každý tep přičte jedna. Když C zhasne, Pouta cestu
+ * zavřou, do sčítaček nic neteče a tep počítadlo vynuluje.
+ * gate: runa (nebo nabídka run) mezi pamětí a sčítačkou, one: co přitéká do nejlehčí sčítačky.
+ */
+export function runCounter(gate: Rune | Rune[] = 'and', one: Pin = 'C'): Machine {
+  const xs = [1.8, 6.6, 11.4];
+  const col = (j: number) => xs[2 - j];
+  const zx = (j: number) => col(j) + 1.9;
+  const bitsJ = [0, 1, 2];
+  return {
+    inputs: [{ id: 'C', x: -1.4, y: 4.4 }],
+    // Číslování zprava od nejlehčího sloupce: ozvěny, pod nimi Pouta, pod nimi sčítačky.
+    nodes: [
+      ...bitsJ.map((j) => ({ id: `f${j}`, part: 'flip' as const, in: [`h${j}.S`], x: col(j), y: 1.6 })),
+      ...bitsJ.map((j) => ({ id: `z${j}`, ...stone(gate), in: [`f${j}`, 'C'], x: zx(j), y: 4.4, turn: 'down' as const })),
+      ...bitsJ.map((j) => ({
+        id: `h${j}`,
+        part: 'half' as const,
+        in: [`z${j}`, j === 0 ? one : `h${j - 1}.P`],
+        x: zx(j) + 0.6,
+        y: 7.8,
+        turn: 'column' as const,
+      })),
+    ],
+    lamps: [2, 1, 0].map((j) => ({
+      id: `Q${j}`,
+      label: String(2 ** j),
+      in: `f${j}`,
+      x: col(j) + 2.4,
+      y: -1.4,
+      from: 'bottom' as const,
+    })),
+    numbers: [{ label: 'hvězdy', bits: ['Q2', 'Q1', 'Q0'] }],
+  };
+}
+
+/** Zkouška počítadla s chodem: napočítá do a, zhasne chod (nula), pak napočítá do b a zase zhasne. */
+export function runScript(a: number, b: number): ScriptStep[] {
+  const q = ['Q2', 'Q1', 'Q0'];
+  const count = (n: number) => Array.from({ length: n }, (_, k) => ({ set: { C: 1 }, pulse: true, expect: bitsOf(k + 1, q) }));
+  const reset = { set: {}, pulse: true, expect: bitsOf(0, q) };
+  return [...count(a), reset, ...count(b), reset];
 }
 
 /** Zkouška počítadla: osm tepů a počítadlo se vrátí na nulu. */
@@ -566,6 +621,11 @@ export function subtractTarget(m: Machine, mode: 'invert' | 'switch') {
  * Volič operace: čtyři runy počítají z A a B, tři výhybky vyberou podle kódu operace O jednu z nich.
  * runes: runy (nebo nabídky) pro kódy 0–3, sel: odkud berou voliče výhybek (horní, dolní, poslední).
  */
+/**
+ * Volič operace: čtyři kameny s runami, dvě výhybky a třetí, která mezi nimi vybere.
+ * sel: voliče výhybek. Výchozí ['O0', 'O0', 'O1'] dá kódy 0 až 3 shora dolů, přehozené
+ * ['O1', 'O1', 'O0'] pořadí 0, 2, 1, 3: kdo chce runy osadit, musí cesty kódů přečíst.
+ */
 export function alu(runes: (Rune | Rune[])[], sel: [Pin, Pin, Pin] = ['O0', 'O0', 'O1']): Machine {
   const ys = [0, 2.3, 4.6, 6.9];
   return {
@@ -624,10 +684,11 @@ export function multiplier(h1: [Pin, Pin], h2: [Pin, Pin]): Machine {
       { id: 'B0', label: 'B', x: 0, y: 8 },
     ],
     nodes: [
-      { id: 'p11', rune: 'and', in: ['A1', 'B1'], x: 4.6, y: 0.4 },
-      { id: 'p10', rune: 'and', in: ['A1', 'B0'], x: 4.6, y: 2.9 },
-      { id: 'p01', rune: 'and', in: ['A0', 'B1'], x: 4.6, y: 5.4 },
-      { id: 'p00', rune: 'and', in: ['A0', 'B0'], x: 4.6, y: 7.9 },
+      // Poznámka pod Poutem říká, které krystaly kámen násobí (váhy jako index), ať to Ema nemusí zkoušet.
+      { id: 'p11', rune: 'and', in: ['A1', 'B1'], x: 4.6, y: 0.4, note: 'A₂ × B₂' },
+      { id: 'p10', rune: 'and', in: ['A1', 'B0'], x: 4.6, y: 2.9, note: 'A₂ × B₁' },
+      { id: 'p01', rune: 'and', in: ['A0', 'B1'], x: 4.6, y: 5.4, note: 'A₁ × B₂' },
+      { id: 'p00', rune: 'and', in: ['A0', 'B0'], x: 4.6, y: 7.9, note: 'A₁ × B₁' },
       { id: 'h1', part: 'half', in: h1, x: 9.6, y: 4.4 },
       { id: 'h2', part: 'half', in: h2, x: 13.8, y: 1.6 },
     ],

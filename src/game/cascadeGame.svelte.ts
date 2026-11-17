@@ -16,6 +16,7 @@ import {
 import type { CascadeLevel } from '../content/types';
 import { flipBit, isBitSet } from '../core/bits';
 import { BaseGame, type GameEvent } from './baseGame.svelte.ts';
+import { cascadeStep } from './cascadeWords';
 
 export interface CascadeView {
   task: CascadeTask;
@@ -29,7 +30,8 @@ export interface CascadeView {
 export class CascadeGame extends BaseGame<CascadeLevel> {
   readonly kind = 'cascade';
 
-  state: CascadeState = $state(initCascade());
+  // Ukázková úloha začíná s přenosy na místě, proto se stav zakládá podle zadání.
+  state: CascadeState = $state(initCascade(this.level.config));
   /** Historie doteků v aktuální úloze (pro undo). */
   history: CascadeState[] = $state([]);
   /** Přijatý výsledek, který během pauzy zůstává na stěně. */
@@ -66,6 +68,11 @@ export class CascadeGame extends BaseGame<CascadeLevel> {
   /** Buňka zvýrazněná nápovědou 3. stupně. */
   get hintCell(): CascadeCell | null {
     return this.playing && this.hintLevel >= 3 ? firstWrong(this.level.config, this.state) : null;
+  }
+
+  /** Ukázka kroku s důvodem: kolik světla se ve sloupci slévá a co z toho zůstane a přeteče. */
+  get stepHint(): string | null {
+    return this.hintCell ? cascadeStep(this.level.config, this.state) : null;
   }
 
   get canUndo(): boolean {

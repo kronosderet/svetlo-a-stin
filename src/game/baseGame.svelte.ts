@@ -203,12 +203,37 @@ export abstract class BaseGame<L extends PuzzleLevel = PuzzleLevel> {
     }
   }
 
+  /**
+   * Přeskočená část smíšené komnaty („Desku znám“): hotová bez tahů i ideálu, takže pečeť přesnosti
+   * neubere ani nepřidá. Nápovědy, které hráč v části vzal, se počítají dál.
+   */
+  skip(): void {
+    if (this.phase !== 'play') return;
+    clearTimeout(this.#holdTimer);
+    this.holding = false;
+    this.showSolved();
+    const base = { moves: 0, par: 0, hintsUsed: this.hintsUsed, stepHints: this.stepHints, quizMistakes: 0 };
+    const result: LevelResult = { ...base, seals: sealsOf(base) };
+    this.result = result;
+    this.phase = 'solved';
+    this.emit({ kind: 'solved', result });
+  }
+
   /** Podrží splněný krok na očích; potomek mezitím nepřijímá tahy. */
   protected hold(): void {
     clearTimeout(this.#holdTimer);
     this.holding = true;
-    this.#holdTimer = setTimeout(() => (this.holding = false), settings.reducedMotion ? 350 : 1100);
+    this.#holdTimer = setTimeout(
+      () => {
+        this.holding = false;
+        this.afterHold();
+      },
+      settings.reducedMotion ? 350 : 1100,
+    );
   }
+
+  /** Po pauze se splněným krokem (Maska tu vyřeší úlohu, kterou maska z minulé úlohy už splňuje). */
+  protected afterHold(): void {}
 
   /** Hádanka je hotová: následuje kvíz, nebo rovnou výsledek. */
   protected solve(): void {

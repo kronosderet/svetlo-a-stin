@@ -15,6 +15,11 @@ export interface QuizQuestion {
   correct: number;
   /** Nápověda po špatné odpovědi. */
   hint: string;
+  /**
+   * Proč je která možnost špatně (ve stejném pořadí jako options, u správné prázdný řetězec).
+   * Typická chyba dostane vlastní vysvětlení místo společné nápovědy.
+   */
+  why?: string[];
   /** Vysvětlení po správné odpovědi. */
   explain: string;
 }
@@ -42,6 +47,11 @@ export interface Presentation {
   columnCounts?: boolean;
   /** Kaskáda: desítkové hodnoty řádků vedle stěny. */
   showValues?: boolean;
+  /**
+   * Oltář (všechny kombinace): plná deska se rozdělí na dvě poloviny podle levého krystalu.
+   * Je vidět, proč krystal zdvojí počet: stejné kombinace jednou se stínem, jednou se světlem.
+   */
+  splitBoard?: boolean;
   /** Příliv: popisky pák. shift = jen směr (posun se teprve objevuje), math = ×2, ÷2, +1, −1. */
   levers?: 'shift' | 'math';
   /** Příliv: místo kamenného kola dvě misky vah (Váhy Osudu). */
@@ -53,6 +63,11 @@ export interface Presentation {
    * weights = váhy pod krystaly, sizes = velikost krystalů podle váhy, counts = počty pod sloupci Kaskády.
    */
   fade?: Partial<Record<FadingAid, number>>;
+  /**
+   * Deska zákona: lampa (i poslední runa před ní) je pod závojem, dokud hráč desku nepotvrdí.
+   * Obvod ukazuje řádek, který hráč vybere, a runy svítí, výsledek ale hráč skládá sám, neopisuje ho z lampy.
+   */
+  veilLamp?: boolean;
 }
 
 export type FadingAid = 'weights' | 'sizes' | 'counts';
@@ -92,6 +107,8 @@ interface LevelBase {
   quiz?: QuizItem[];
   /** Záznam Kodexu, který level odemyká („přeloží“). */
   kodex?: string;
+  /** Nadpis kvízu ve smíšené komnatě: jméno celé komnaty (doplní ho instantiate). */
+  quizTitle?: string;
 }
 
 export interface AltarLevel extends LevelBase {
@@ -181,6 +198,11 @@ export interface ActDef {
   levels: LevelDef[];
   /** Další patro observatoře, které v prototypu ještě není. */
   nextAct?: { numeral: string; title: string; theme: string };
+  /** Karta patra na schodech: věta z příběhu a co v patře čeká. */
+  lore?: string;
+  preview?: string;
+  /** Strážce schodů: tři rychlé otázky ze zákonů minulého patra (bez pečetí, jde přeskočit). */
+  review?: QuizItem[];
 }
 
 export interface KodexEntry {
