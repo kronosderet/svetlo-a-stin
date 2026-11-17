@@ -5,6 +5,7 @@ import type { TableEvent, TableState } from '../core/puzzles/table';
 import type { MaskEvent, MaskState } from '../core/puzzles/mask';
 import type { InscriptionEvent, InscriptionState } from '../core/puzzles/inscription';
 import type { TideEvent, TideState } from '../core/puzzles/tide';
+import type { MachineEvent, MachineState } from '../core/puzzles/machine';
 import type { PuzzleLevel, QuizQuestion } from '../content/types';
 import { shuffleOptions } from '../content/random';
 import { isGateRoom } from '../content/levels';
@@ -43,6 +44,7 @@ export type GameEvent =
   | { kind: 'gate'; event: GateEvent; state: GateState }
   | { kind: 'table'; event: TableEvent; state: TableState }
   | { kind: 'mask'; event: MaskEvent; state: MaskState }
+  | { kind: 'machine'; event: MachineEvent; state: MachineState }
   /** extra: brána za ukázku kroku přidala na konec zkoušku navíc. */
   | { kind: 'hint'; level: number; extra: boolean }
   | { kind: 'quiz'; correct: boolean; question: number }

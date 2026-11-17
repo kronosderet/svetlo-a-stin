@@ -3,7 +3,7 @@
 Didaktická hra o binární matematice, logice a výpočtech v atmosféře zapomenuté civilizace.
 Cílová skupina: sexta gymnázia. Herní design a plán vývoje jsou v [PLAN.md](PLAN.md).
 
-**Stav:** prototyp, Akty I až III, 48 komnat. Každé patro začíná nultou komnatou, která ukáže
+**Stav:** prototyp, Akty I až IV, 64 komnat. Každé patro začíná nultou komnatou, která ukáže
 základní nápad patra jednoduchou hrou, pokračuje základní cestou 1–7 (komnata 7 je brána)
 a má nepovinné Hlubší síně 8–15 (komnata 15 je velká brána).
 Akt I, Předsíň Prvního Světla: základ (bit, kombinace 2ⁿ, poziční hodnota, převody oběma
@@ -14,12 +14,15 @@ zbytkem, tři řady, dvojkový doplněk, Váhy Osudu).
 Akt III, Zahrada Bran: základ (runy NOT, AND, OR, XOR jako spojky výrokové logiky, pravdivostní
 tabulky, skládání run do NAND a NOR, smíšená brána), Hlubší síně (De Morgan, ekvivalence
 a implikace, funkce většiny, univerzalita NAND, bitové masky, šifra XOR, zjednodušení obvodu).
+Akt IV, Hlubina Strojů: základ (poloviční a úplná sčítačka, řetěz sčítaček jako součástky,
+porovnávač, výhybka, rozdělovač, smíšená brána), Hlubší síně (ozvěna a tep, registr a posun,
+počítadlo, odčítání doplňkem, volič operace, násobička).
 
 Archetypy Oltář, Nápis (kotouče, i s glyfy), Počítadlo, Kaskáda (počítání pod sebou), Příliv
-(páky posunu), Brána (obvod s runami a točitými kameny), Deska zákona (pravdivostní tabulka)
-a Maska (bitové operace s oktávou); brány pater jsou
+(páky posunu), Brána (obvod s runami a točitými kameny), Deska zákona (pravdivostní tabulka),
+Maska (bitové operace s oktávou) a Dílna (stroje z run a součástek s pamětí a tepem); brány pater jsou
 smíšené komnaty. Komnaty na procvičování a zkoušky losují úlohy při každém vstupu
-(`src/content/generators.ts`, `generators3.ts`).
+(`src/content/generators.ts`, `generators3.ts`, `generators4.ts`).
 
 ## Spuštění
 

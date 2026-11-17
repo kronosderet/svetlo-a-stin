@@ -1,11 +1,12 @@
 import { ACT_I } from './act1';
 import { ACT_II } from './act2';
 import { ACT_III } from './act3';
+import { ACT_IV } from './act4';
 import type { Rng } from './random';
 import type { ActDef, LevelDef, PuzzleLevel } from './types';
 
 /** Patra observatoře, která prototyp obsahuje. */
-export const ACTS: ActDef[] = [ACT_I, ACT_II, ACT_III];
+export const ACTS: ActDef[] = [ACT_I, ACT_II, ACT_III, ACT_IV];
 
 /** Všechny komnaty: po patrech, v každém patře podle čísla. */
 export const LEVELS: LevelDef[] = ACTS.flatMap((a) => a.levels);
@@ -85,6 +86,8 @@ function instantiatePuzzle(level: PuzzleLevel, rng: Rng): PuzzleLevel {
     case 'table':
       return level.generate ? { ...level, config: level.generate(rng) } : level;
     case 'mask':
+      return level.generate ? { ...level, config: level.generate(rng) } : level;
+    case 'machine':
       return level.generate ? { ...level, config: level.generate(rng) } : level;
   }
 }

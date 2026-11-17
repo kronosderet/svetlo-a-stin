@@ -5,6 +5,7 @@ import type { TableConfig } from '../core/puzzles/table';
 import type { MaskConfig } from '../core/puzzles/mask';
 import type { InscriptionConfig } from '../core/puzzles/inscription';
 import type { TideConfig } from '../core/puzzles/tide';
+import type { MachineConfig } from '../core/puzzles/machine';
 import type { Rng } from './random';
 
 export interface QuizQuestion {
@@ -137,8 +138,14 @@ export interface MaskLevel extends LevelBase {
   generate?: (rng: Rng) => MaskConfig;
 }
 
+export interface MachineLevel extends LevelBase {
+  kind: 'machine';
+  config: MachineConfig;
+  generate?: (rng: Rng) => MachineConfig;
+}
+
 /** Komnata s jedinou hádankou. */
-export type PuzzleLevel = AltarLevel | InscriptionLevel | CascadeLevel | TideLevel | GateLevel | TableLevel | MaskLevel;
+export type PuzzleLevel = AltarLevel | InscriptionLevel | CascadeLevel | TideLevel | GateLevel | TableLevel | MaskLevel | MachineLevel;
 
 /**
  * Smíšená komnata (brány): několik hádanek různých archetypů za sebou.

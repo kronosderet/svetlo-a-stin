@@ -6,9 +6,10 @@ import type { TideGame } from '../../../game/tideGame.svelte.ts';
 import type { GateGame } from '../../../game/gateGame.svelte.ts';
 import type { TableGame } from '../../../game/tableGame.svelte.ts';
 import type { MaskGame } from '../../../game/maskGame.svelte.ts';
+import type { MachineGame } from '../../../game/machineGame.svelte.ts';
 import * as sound from '../../../audio/sound';
 
-export type AnyGame = AltarGame | InscriptionGame | CascadeGame | TideGame | GateGame | TableGame | MaskGame;
+export type AnyGame = AltarGame | InscriptionGame | CascadeGame | TideGame | GateGame | TableGame | MaskGame | MachineGame;
 
 const TIDE_KEYS: Record<string, TideOp> = {
   ArrowLeft: 'shl',
@@ -59,6 +60,18 @@ export function puzzleKey(game: AnyGame, ev: KeyboardEvent): boolean {
       if (game.kind === 'gate' && game.view.task.mode === 'slots') game.test();
       else if (game.kind === 'table' && game.view.task.mode === 'fill') game.confirm();
       else return false;
+      return true;
+    }
+  }
+  if (game.kind === 'machine' && (game.playing || game.free)) {
+    const keyboardFocus = ev.target instanceof HTMLButtonElement && ev.target.matches(':focus-visible');
+    // T = tep Srdce (u strojů s ozvěnami s tepem); Enter spustí Zkoušku, když není vybraný kámen.
+    if ((ev.key === 't' || ev.key === 'T') && game.canBeat) {
+      game.pulse();
+      return true;
+    }
+    if (ev.key === 'Enter' && !keyboardFocus && game.playing && game.view.task.mode === 'build') {
+      game.test();
       return true;
     }
   }

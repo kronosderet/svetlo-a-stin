@@ -282,7 +282,7 @@ Díky tomu je přidávání levelů rychlé a datově řízené.
 | **Smíšená komnata** | brána patra: několik hádanek různých archetypů za sebou (třeba Kaskáda a pak Příliv), nad scénou ukazatel zkoušek; tahy, pokusy i nápovědy se pro pečetě sčítají za celou komnatu | syntéza patra | II |
 | **Brána** | kamenná deska s obvodem: vlevo krystaly vstupů, uprostřed kameny s runami, vpravo lampa, mezi nimi světlovody, které svítí, když nesou světlo. Zkoumání (runy pevné, hráč zkouší všechny kombinace vstupů) a vkládání run do prázdných kamenů (kliknutí runy střídá, Zkouška projde všechny řádky a nesedící rozsvítí okrově) | hradla, skládání | III |
 | **Deska zákona** | pravdivostní tabulka: hráč rozsvítí, ve kterých řádcích lampa svítí, nebo podle hotové desky pozná runu pod závojem. Obvod vedle desky sám dokola prochází všechny kombinace vstupů a lampa ukazuje, co k ní doteče, odpovídající řádek desky svítí s ním (najetí na řádek obvod zastaví); desku jde odvodit z toho, co hráč vidí | tabulky, identifikace | III |
-| **Dílna** | volná stavba obvodu (umísti hradla, propoj vodiče, spusť zkoušku) | návrh obvodů | III–IV |
+| **Dílna** | stroj z run a součástek na kamenné desce: víc lamp (čísla s vahami a živou hodnotou pod deskou), součástky s několika výstupy (poloviční a úplná sčítačka, výhybka, ozvěna, ozvěna s tepem), zpětná vazba a tlačítko Tep. Zkoumání (všechny kombinace vstupů), cíle (dovést stroj vstupy a tepem k cílovému stavu) a stavba: hráč osazuje prázdné kameny runami a točitými kameny vybírá, odkud do kamene, součástky nebo lampy teče světlo. Zkouška projde všechny kombinace (u velkých strojů s pravidlem slovy a prvním příkladem, kde se stroj plete), nebo zkušební posloupnost s tepy od zhasnuté paměti | sčítačky, multiplexor, dekodér, paměť, čítač, ALU | IV |
 | **Maska** | ve stěně svítí oktáva, hráč pod ní rozsvěcí masku a runa AND, OR nebo XOR z nich živě skládá výsledek; oltář žádá cílový výsledek, u šifry má maska odpovídat klíči a výsledkem je rozšifrované písmeno | bitové operace, šifra XOR | III |
 | **Šifra** | kódování/dekódování zpráv | XOR šifra, ASCII, hex | III, V |
 | **Léčitel** | najdi a oprav poškozený bit | parita, Hamming | V |
@@ -301,8 +301,8 @@ glyf jim svítí nejvýš na třech spodních stranách a komnata 7 je brána pa
 vejde zhruba do jedné vyučovací hodiny. **Hlubší síně** 8–15 mají rozsvícenou i horní stranu glyfu,
 jsou nepovinné a otevírají se po bráně patra, pak po jedné. Patří do nich látka, kterou sexta
 nutně nepotřebuje, ale je škoda o ni přijít (odčítání, násobení, dělení, šestnáctková soustava).
-Komnata 15 (glyf 1111) je velká brána patra. Akty I až III jsou rozdělené takto a mají všech
-16 komnat; Akty III–V zatím drží původní osnovu po deseti levelech a rozdělí se, až na ně přijde
+Komnata 15 (glyf 1111) je velká brána patra. Akty I až IV jsou rozdělené takto a mají všech
+16 komnat; Akt V zatím drží původní osnovu po deseti levelech a rozdělí se, až na něj přijde
 řada (chybějící komnaty jsou na mapě zapečetěné). Sloupec *Nové* označuje jediný nový koncept levelu.
 
 ### Akt I — Předsíň Prvního Světla (bit a počítání)
@@ -375,23 +375,35 @@ tesali těmi samými znaky. Moderní značka (NOT, AND…) se pod runou objeví,
 | III-14 | Méně je víc | Brána se vzorem | zjednodušení | Starý obvod Lumenitů o dvou až čtyřech runách se nahradí jedinou runou se stejnou deskou. |
 | III-15 | **Velká brána Zahrady** | smíšená | syntéza | Dvě runy pod závojem ze sedmi, Pouto nebo Rozcestí jen ze Zlomených pout a dvě masky. |
 
-Volná stavba obvodů (Dílna) se přesouvá do Hlubiny Strojů. V Zahradě místo vodičů slouží točité kameny
-u vstupů run, které vybírají, odkud světlo přitéká (runy mají na desce čísla, kámen ukazuje A, B nebo číslo runy).
+V Zahradě místo vodičů slouží točité kameny u vstupů run, které vybírají, odkud světlo přitéká (runy
+mají na desce čísla, kámen ukazuje A, B nebo číslo runy). Stejně staví stroje Dílna v Hlubině Strojů:
+kreslení vodičů by na tabletu a z klávesnice bylo těžké a točitý kámen ukáže volbu jedním kliknutím.
 
 ### Akt IV — Hlubina Strojů (obvody a paměť)
 
+Základní cesta stroje jen počítá a rozhoduje (kombinační obvody), paměť je celá v Hlubších síních.
+Lampy, které tvoří číslo, mají váhy a pod deskou svítí živá hodnota čísel (A, B, součet), takže se
+vrací čtení čísel z Aktu I. Stroje se staví z kamenů a točitých kamenů jako v Prapečeti.
+
 | # | Název | Archetyp | Nové | Popis |
 |---|---|---|---|---|
-| IV-1 | Poloviční sčítačka | Dílna | XOR + AND = sčítání | Velký aha moment: hradla umí sčítat jako v Síni Počtářů. |
-| IV-2 | Úplná sčítačka | Dílna | vstupní přenos | Sčítačka se třemi vstupy. |
-| IV-3 | Řetěz sčítaček | Dílna | **abstrakce** | Hotová úplná sčítačka se stává novou runou-součástkou. Z čtyř postav 4bitovou sčítačku. |
-| IV-4 | Porovnávač | Dílna | rovnost | XNOR a AND: jsou dvě čísla stejná? |
-| IV-5 | Výhybka | Dílna | multiplexor | Volič určí, kterou cestou světlo poteče. |
-| IV-6 | Rozdělovač | Dílna | dekodér | 2 bity rozsvítí právě jednu ze 4 lamp. |
-| IV-7 | Ozvěna | Dílna | zpětná vazba, SR latch | Světlo, které si pamatuje. Smyčka obvodu drží stav. |
-| IV-8 | Tep Srdce | Dílna | hodiny, D klopný obvod | Paměť, která se mění jen v rytmu tepu. |
-| IV-9 | Počítadlo hvězd | Dílna | čítač | Tříbitový čítač z klopných obvodů a sčítačky. |
-| IV-10 | **Srdce počítá** | Dílna | syntéza: mini-ALU | Volič operace (ADD/AND/OR/XOR) přes multiplexor. |
+| IV-0 | Stroj, který počítá | Dílna | (nultá komnata) | Hotová poloviční sčítačka s lampami 2 a 1. Hráč zkouší čtyři kombinace a zjistí, že stroj sčítá: 1 + 1 = 10. |
+| IV-1 | Poloviční sčítačka | Dílna | XOR + AND = sčítání | Hráč sám vloží Výluku na spodní číslici, pak obě runy. Kvíz: proč nestačí Rozcestí, proč ze dvou světel nevyjde 11. |
+| IV-2 | Úplná sčítačka | smíšená (Dílna) | přenos zprava | Zkoumání osmi kombinací (lampy počítají světla, zákon sloupce z II-3), pak doplnění tří run. |
+| IV-3 | Řetěz sčítaček | Dílna | **abstrakce** | Úplná sčítačka je jeden kámen, sčítačky stojí jako sloupce Kaskády. Hráč točí přenosy: dvě, čtyři sčítačky a nakonec A + B + 1 světlem v prvním přenosu. |
+| IV-4 | Porovnávač | Dílna | rovnost | Rovnost pro jeden krystal, pak dvoubitová čísla (Rovnost v každém sloupci a Pouto) a „různé“ (Výluka a Rozcestí). |
+| IV-5 | Výhybka | smíšená (Dílna) | multiplexor | Cíle na hotové výhybce (lampa poslouchá A, pak B), pak stavba: točité kameny voliče a runa, která cesty spojí. |
+| IV-6 | Rozdělovač | Dílna | dekodér | Dva krystaly rozsvítí právě jednu ze čtyř lamp. Nejdřív lampy 0 a 3, pak všechny. |
+| IV-7 | **Brána Hlubiny** | smíšená (Dílna) | syntéza | Losovaný řetěz sčítaček (A + B, nebo A + B + 1), rozdělovač s lampami v jiném pořadí a výhybka (i obrácená), porovnávač „stejné“ nebo „různé“. Kvíz s losovaným součtem. |
+| | *Hlubší síně* | | | *Nepovinné, otevřou se po bráně patra.* |
+| IV-8 | Ozvěna | smíšená (Dílna) | zpětná vazba, klopný obvod RS | Cíle na hotové ozvěně ze dvou Zavřených rozcestí (lampa svítí dál i po zhasnutí S), pak hráč uzavře kruh točitými kameny a zkouška paměti projde šest kroků. |
+| IV-9 | Tep Srdce | smíšená (Dílna) | hodiny, klopný obvod D | Ozvěna je jeden kámen: Pouta před ní pustí D jen se světlem T. Pak ozvěna s tepem a tlačítko Tep (klávesa T). |
+| IV-10 | Registr | smíšená (Dílna) | registr, posun | Tři ozvěny s tepem drží číslo (ulož 5, vstup se mění, paměť drží), pak posuvný registr: každý tep posune světlo o patro výš (×2 jako v Přílivu). |
+| IV-11 | Počítadlo hvězd | smíšená (Dílna) | čítač | Hotové počítadlo: napočítej do 3, do 6 a přetoč ho na 0. Pak stavba: součty sčítaček do ozvěn a stálé světlo jako jednička navíc. |
+| IV-12 | Odčítačka | Dílna | odčítání doplňkem | A − B jako A + převrácené B + 1 (Doplněk z II-13), pak jeden stroj na sčítání i odčítání: Výluka s M a M v prvním přenosu. |
+| IV-13 | Volič operace | Dílna | ALU | Čtyři runy a tři výhybky ve dvou patrech: kód operace O vybere Pouto, Rozcestí, Výluku, nebo Zlomené pouto. Nejdřív runy podle kódů, pak voliče výhybek. |
+| IV-14 | Násobička | Dílna | násobení | Čtyři Pouta jsou kopie z II-10, dvě poloviční sčítačky je sečtou: lampy 8, 4, 2, 1 ukazují A × B. |
+| IV-15 | **Velká brána Hlubiny** | smíšená (Dílna) | syntéza | Posuvný registr nahoru, nebo dolů, odčítačka (jen odčítání, nebo s přepínačem M) a volič operace s losovanými kódy. |
 
 ### Akt V — Archiv Hlasů (kódy)
 
@@ -411,7 +423,7 @@ u vstupů run, které vybírají, odkud světlo přitéká (runy mají na desce 
 
 | # | Název | Archetyp | Nové | Popis |
 |---|---|---|---|---|
-| ✦ | Zpěv Srdce | Zpěv + Dílna | program = bity | Srdce čte 4bitové instrukce (operace + operand). Hráč z karet sestaví 3–5 instrukcí, které spočítají požadovanou hodnotu na mini-ALU z IV-10. Pointa: „I program je jen světlo a stín.“ |
+| ✦ | Zpěv Srdce | Zpěv + Dílna | program = bity | Srdce čte 4bitové instrukce (operace + operand). Hráč z karet sestaví 3–5 instrukcí, které spočítají požadovanou hodnotu na voliči operace z IV-13. Pointa: „I program je jen světlo a stín.“ |
 
 ---
 
@@ -918,4 +930,10 @@ osnovy nejde naučit těmi stávajícími.
     hráč uvízne. Kolo na pozadí ukazuje glyf rozehrané komnaty. Nultá komnata v každém patře
     (I-0 Probuzení, nová I-1 Ticho, II-0 Jedna a jedna, III-0 Cesta světla, postup se převede)
     a světla v Kaskádě se při každém doteku přesouvají do výsledku a přenosů.
-15. Akt IV, Hlubina Strojů: poloviční a úplná sčítačka, Dílna (volná stavba obvodů), paměť.
+15. **Akt IV, Hlubina Strojů ✓:** archetyp Dílna (`src/core/puzzles/machine.ts`, `src/ui/machine/`):
+    stroje s víc lampami a čísly, součástky (sčítačky, výhybka, ozvěny), zpětná vazba s ustálením
+    a hlášením neklidu, tep a zkušební posloupnosti, cíle s nejkratší cestou pro nápovědu a ideál.
+    Základ IV-0 až IV-7 (sčítačky, abstrakce, porovnávač, výhybka, rozdělovač), Hlubší síně IV-8 až
+    IV-15 (ozvěna, tep, registr, čítač, odčítačka, volič operace, násobička), glyfy patra se
+    čtverečkem uprostřed, 15 záznamů Kodexu, losované brány.
+16. Akt V, Archiv Hlasů.

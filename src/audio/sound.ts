@@ -294,3 +294,11 @@ export function playRumble(dur = 1.4): void {
   noiseBurst({ dur, gain: 0.1, freq: 110, q: 0.7, type: 'lowpass', attack: 0.25 });
   tone(41, { dur: dur * 0.9, gain: 0.04, attack: 0.3 });
 }
+
+/** Tep Srdce: dva tupé údery jako tlukot srdce. */
+export function playBeat(): void {
+  tone(55, { dur: 0.22, gain: 0.3, attack: 0.012 });
+  noiseBurst({ dur: 0.12, gain: 0.28, freq: 180, q: 0.8, type: 'lowpass' });
+  tone(48, { at: 0.2, dur: 0.26, gain: 0.22, attack: 0.012 });
+  noiseBurst({ at: 0.2, dur: 0.14, gain: 0.2, freq: 150, q: 0.8, type: 'lowpass' });
+}

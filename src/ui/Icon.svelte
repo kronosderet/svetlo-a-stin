@@ -17,7 +17,8 @@
     | 'teacher'
     | 'print'
     | 'install'
-    | 'info';
+    | 'info'
+    | 'heart';
 
   let { name, size = 20 }: { name: Name; size?: number } = $props();
 
@@ -38,6 +39,7 @@
     save: ['M5 4h11l3 3v13H5z', 'M8 4v5h7V4', 'M8 20v-6h8v6'],
     install: ['M12 4v11', 'M7.5 10.5L12 15l4.5-4.5', 'M5 19h14'],
     info: ['M12 3.5a8.5 8.5 0 1 0 0 17a8.5 8.5 0 1 0 0-17z', 'M12 11v5.5', 'M12 7.6v.4'],
+    heart: ['M12 19.5s-7-4.4-7-9.6a3.9 3.9 0 0 1 7-2.4 3.9 3.9 0 0 1 7 2.4c0 5.2-7 9.6-7 9.6z'],
     teacher: ['M3 9l9-4 9 4-9 4z', 'M7 11v4.5c1.5 1.5 3 2 5 2s3.5-.5 5-2V11', 'M21 9v5'],
     print: ['M7 9V4h10v5', 'M6 17H4v-6h16v6h-2', 'M7 14h10v6H7z'],
   };

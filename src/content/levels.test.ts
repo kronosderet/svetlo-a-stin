@@ -10,7 +10,8 @@ import { ARITY } from '../core/logic';
 import * as gate from '../core/puzzles/gate';
 import * as table from '../core/puzzles/table';
 import * as mask from '../core/puzzles/mask';
-import type { AltarLevel, CascadeLevel, GateLevel, InscriptionLevel, MaskLevel, PuzzleLevel, TableLevel, TideLevel } from './types';
+import * as machine from '../core/puzzles/machine';
+import type { AltarLevel, CascadeLevel, GateLevel, InscriptionLevel, MachineLevel, MaskLevel, PuzzleLevel, TableLevel, TideLevel } from './types';
 
 /** Kolik vylosovaných variant projde každá kontrola u komnat na procvičování. */
 const SEEDS = 150;
@@ -312,6 +313,83 @@ function maskChecks(level: MaskLevel) {
   });
 }
 
+/** Stroj Dílny: zdroje existují, kameny mají správný počet vstupů, nic se nepřekrývá. */
+function machineShape(m: machine.Machine) {
+  const outputs = new Set<string>([machine.SHADOW, machine.LIGHT, ...m.inputs.map((i) => i.id)]);
+  for (const g of m.nodes) machine.outputsOf(g).forEach((k) => outputs.add(k));
+  const ids = [...m.inputs.map((i) => i.id), ...m.nodes.map((g) => g.id), ...m.lamps.map((l) => l.id)];
+  expect(new Set(ids).size).toBe(ids.length);
+  for (const g of m.nodes) {
+    expect([g.rune, g.choices, g.part].filter(Boolean)).toHaveLength(1);
+    expect(g.in).toHaveLength(machine.arityOf(g));
+    if (g.choices) expect(new Set(g.choices.map((r) => ARITY[r])).size).toBe(1);
+    for (const pin of g.in) (Array.isArray(pin) ? pin : [pin]).forEach((src) => expect(outputs.has(src)).toBe(true));
+    if (g.turn === 'column') expect(['half', 'full']).toContain(g.part);
+  }
+  for (const l of m.lamps) (Array.isArray(l.in) ? l.in : [l.in]).forEach((src) => expect(outputs.has(src)).toBe(true));
+  for (const g of m.numbers ?? []) g.bits.forEach((id) => expect(ids).toContain(id));
+  // Prvky stojí aspoň 1,5 jednotky (60 px) od sebe, ať se kameny a krystaly nepřekrývají.
+  const spots = [...m.inputs, ...m.nodes, ...m.lamps].map((p) => [p.x, p.y]);
+  spots.forEach(([x, y], a) =>
+    spots.slice(a + 1).forEach(([x2, y2]) => expect(Math.hypot(x - x2, y - y2)).toBeGreaterThanOrEqual(1.35)),
+  );
+}
+
+function machineChecks(level: MachineLevel) {
+  check(level, 'má platná data', (level) => {
+    level.config.tasks.forEach((t) => {
+      machineShape(t.machine);
+      const n = t.machine.inputs.length;
+      if (t.mode === 'explore') {
+        // Zkoumání je jen u malých strojů bez točitých a prázdných kamenů.
+        expect(n).toBeLessThanOrEqual(3);
+        expect(machine.slotNodes(t.machine).length + machine.sockets(t.machine).length).toBe(0);
+      }
+      if (t.mode === 'goals') {
+        expect(t.goals?.length).toBeGreaterThan(0);
+        expect(machine.slotNodes(t.machine).length + machine.sockets(t.machine).length).toBe(0);
+      }
+      if (t.mode === 'build') {
+        expect(!!t.target !== !!t.script).toBe(true);
+        if (t.target) {
+          for (const l of t.machine.lamps) expect(t.target[l.id]).toHaveLength(2 ** n);
+          // Velký stroj nemá místo pro desku: pravidlo musí říct, co brána chce.
+          if (n > 3) expect(t.rule).toBeTruthy();
+        }
+        expect(machine.slotNodes(t.machine).length + machine.sockets(t.machine).length).toBeGreaterThan(0);
+        expect(machine.solutions(t, 1)).toHaveLength(1);
+      }
+      if (t.script) expect(machine.hasPulse(t.machine) || t.script.every((s) => !s.pulse)).toBe(true);
+    });
+    commonChecks(level);
+  });
+
+  check(level, 'jde vyřešit podle nápověd v ideálním počtu tahů', (level) => {
+    const cfg = level.config;
+    let st = machine.initMachine(cfg);
+    let guard = 0;
+    let goal = -1;
+    while (!st.complete && guard++ < 400) {
+      // Nový cíl nesmí být splněný hned po předchozím (hráč by ho splnil, aniž by cokoli udělal).
+      const task = machine.currentTask(cfg, st)!;
+      if (task.mode === 'goals' && st.goal !== goal) {
+        goal = st.goal;
+        expect(machine.meets(task, task.goals![st.goal], st)).toBe(false);
+      }
+      const h = machine.hint(cfg, st);
+      if (h && 'input' in h) st = machine.toggleInput(cfg, st, h.input).state;
+      else if (h && 'pulse' in h) st = machine.pulse(cfg, st).state;
+      else if (h && 'socket' in h) st = machine.setWire(cfg, st, h.socket, h.source).state;
+      else if (h) st = machine.setRune(cfg, st, h.node, h.rune).state;
+      else st = machine.test(cfg, st).state;
+      if (machine.currentTask(cfg, st) !== task) goal = -1;
+    }
+    expect(st.complete).toBe(true);
+    expect(st.mistakes).toBe(0);
+    expect(st.moves).toBe(machine.par(cfg));
+  });
+}
+
 function puzzleChecks(level: PuzzleLevel) {
   if (level.kind === 'altar') altarChecks(level);
   else if (level.kind === 'inscription') inscriptionChecks(level);
@@ -319,6 +397,7 @@ function puzzleChecks(level: PuzzleLevel) {
   else if (level.kind === 'tide') tideChecks(level);
   else if (level.kind === 'gate') gateChecks(level);
   else if (level.kind === 'mask') maskChecks(level);
+  else if (level.kind === 'machine') machineChecks(level);
   else tableChecks(level);
 }
 
@@ -346,7 +425,7 @@ for (const act of ACTS) {
       it(`${level.id}: losování dává pokaždé jiné úlohy`, () => {
         const variants = new Set(Array.from({ length: 40 }, (_, s) => configs(instantiate(level, seeded(1000 + s)))));
         // Obvodů ze dvou tří run je málo, proto u Zahrady Bran stačí menší pestrost.
-        const logic = partsOf(level).every((p) => p.kind === 'gate' || p.kind === 'table' || p.kind === 'mask');
+        const logic = partsOf(level).every((p) => p.kind === 'gate' || p.kind === 'table' || p.kind === 'mask' || p.kind === 'machine');
         expect(variants.size).toBeGreaterThanOrEqual(logic ? 10 : 25);
       });
     }
@@ -401,7 +480,11 @@ describe('celá observatoř', () => {
     expect(nextLevelId('II-0')).toBe('II-1');
     expect(nextLevelId('II-7')).toBe('III-0');
     expect(nextLevelId('III-0')).toBe('III-1');
-    expect(nextLevelId('III-7')).toBeNull();
+    expect(nextLevelId('III-7')).toBe('IV-0');
+    expect(nextLevelId('IV-0')).toBe('IV-1');
+    expect(nextLevelId('IV-7')).toBeNull();
+    expect(nextLevelId('IV-14')).toBe('IV-15');
+    expect(nextLevelId('IV-15')).toBeNull();
     expect(nextLevelId('III-14')).toBe('III-15');
     expect(nextLevelId('III-15')).toBeNull();
     expect(nextLevelId('I-8')).toBe('I-9');
@@ -410,7 +493,7 @@ describe('celá observatoř', () => {
     expect(nextLevelId('II-10')).toBe('II-11');
     expect(nextLevelId('II-14')).toBe('II-15');
     expect(nextLevelId('II-15')).toBeNull();
-    expect(BASIC_PATH.map((l) => l.id)).toHaveLength(24);
+    expect(BASIC_PATH.map((l) => l.id)).toHaveLength(32);
     expect(actOf('II-3').numeral).toBe('II');
     expect(ACTS[ACTS.length - 1].nextAct).toBeDefined();
     ACTS.slice(0, -1).forEach((a) => expect(a.nextAct).toBeUndefined());

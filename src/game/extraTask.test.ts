@@ -49,7 +49,7 @@ describe('zkouška navíc v bráně', () => {
     .filter((p) => p.generate && Array.isArray((p.config as { tasks?: unknown }).tasks));
 
   it('brány s losováním existují ve všech patrech', () => {
-    expect(new Set(gateParts.map((p) => p.id))).toEqual(new Set(['I-7', 'I-15', 'II-7', 'II-15', 'III-7', 'III-15']));
+    expect(new Set(gateParts.map((p) => p.id))).toEqual(new Set(['I-7', 'I-15', 'II-7', 'II-15', 'III-7', 'III-15', 'IV-7', 'IV-15']));
   });
 
   for (const part of gateParts) {
