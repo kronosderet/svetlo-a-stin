@@ -112,6 +112,8 @@
   const pct = (x: number, total: number) => `${(x / total) * 100}%`;
   /** Na úzké obrazovce se deska zmenší; kameny a krystaly se zmenší s ní, ať se nepřekrývají. */
   let boxW = $state(0);
+  /** Deska se nezmenší pod tenhle zlomek: popisky by byly nečitelné. Užší místo ji posouvá do strany. */
+  const K_MIN = 0.72;
   const k = $derived(boxW ? Math.min(1, boxW / W) : 1);
   const inputOn = (i: number) => ((inputs >> (n - 1 - i)) & 1) === 1;
   const lampOn = $derived(values?.[circuit.output] === 1);
@@ -133,7 +135,7 @@
   const translated = (r: Rune) => !!RUNE_MODERN[r] && (settings.alwaysDigits || progress.kodex.includes(RUNE_KODEX[r] ?? ''));
 </script>
 
-<div class="circuit stone" class:celebrate style:width="min(100%, {W}px)" style:aspect-ratio="{W} / {H}" style:--k={k} bind:clientWidth={boxW}>
+<div class="circuit stone" class:celebrate style:width="max(min(100%, {W}px), {Math.round(W * K_MIN)}px)" style:aspect-ratio="{W} / {H}" style:--k={k} bind:clientWidth={boxW}>
   <svg class="wires" viewBox="0 0 {W} {H}" aria-hidden="true">
     {#each paths as w, k (k)}
       <path class="groove" d={w.d} />
@@ -226,7 +228,8 @@
 <style>
   .circuit {
     position: relative;
-    max-width: 100%;
+    flex: none;
+    margin-inline: auto;
     border-radius: 14px;
   }
   .wires {
@@ -428,9 +431,9 @@
     top: calc(100% + 4px);
     white-space: nowrap;
     font-family: var(--font-display);
-    font-size: var(--fs-xs);
+    font-size: 13px;
     font-weight: 700;
-    letter-spacing: 0.06em;
+    letter-spacing: 0.04em;
     color: var(--text-muted);
   }
   .modern {

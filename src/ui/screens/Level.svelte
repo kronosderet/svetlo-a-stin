@@ -1,5 +1,6 @@
 <script lang="ts">
   import { tick, untrack } from 'svelte';
+  import { fade } from 'svelte/transition';
   import Altar from '../altar/Altar.svelte';
   import LevelComplete from '../altar/LevelComplete.svelte';
   import Inscription from '../inscription/Inscription.svelte';
@@ -130,6 +131,40 @@
     };
   });
 
+  /**
+   * Telefon na šířku: hádanka se posune nahoru (hlavička odjede nad okraj), ať je nad trámem vidět
+   * celá. Stejně po další části komnaty a po otočení telefonu.
+   */
+  const PHONE_LANDSCAPE = '(max-height: 500px) and (orientation: landscape)';
+  /** Hádanky skládané pod sebe (krystaly, nápis, sloupce, páky): celé se vejdou na výšku. */
+  const TALL = ['altar', 'inscription', 'cascade', 'tide'];
+  /** Výzva otočit telefon na výšku: krátce nahoře, když se hádanka na šířku nevejde. */
+  let rotateTip = $state(false);
+  let tipTimer: ReturnType<typeof setTimeout> | undefined;
+  function showStage() {
+    rotateTip = false;
+    clearTimeout(tipTimer);
+    if (!matchMedia(PHONE_LANDSCAPE).matches) return;
+    tick().then(() => {
+      stageEl?.scrollIntoView({ block: 'start', behavior: 'instant' });
+      const content = stageEl?.firstElementChild?.getBoundingClientRect();
+      const bar = document.querySelector('.actionbar')?.getBoundingClientRect();
+      if (TALL.includes(game.kind) && content && bar && content.bottom > bar.top + 4) {
+        rotateTip = true;
+        tipTimer = setTimeout(() => (rotateTip = false), 7000);
+      }
+    });
+  }
+  $effect(() => {
+    void partIndex;
+    showStage();
+  });
+  $effect(() => {
+    const mq = matchMedia(PHONE_LANDSCAPE);
+    mq.addEventListener('change', showStage);
+    return () => mq.removeEventListener('change', showStage);
+  });
+
   /** Co potřebuje obsluha událostí jednotlivých archetypů (src/ui/screens/level). */
   const ctx: LevelCtx = {
     // Hra drží i zkoušku navíc, kterou brána přidá po ukázce kroku.
@@ -227,6 +262,7 @@
   $effect(() => () => {
     clearTimeout(partTimer);
     clearTimeout(readTimer);
+    clearTimeout(tipTimer);
   });
 
   /**
@@ -486,7 +522,7 @@
     <div class="tools">
       <button
         type="button"
-        class="icon-btn"
+        class="icon-btn hide-xs"
         onclick={toggleSound}
         aria-label={settings.sound ? 'Vypnout zvuk' : 'Zapnout zvuk'}
         title={settings.sound ? 'Vypnout zvuk' : 'Zapnout zvuk'}
@@ -538,16 +574,22 @@
     {/key}
   </div>
 
+  {#if rotateTip}
+    <button type="button" class="rotate-tip" onclick={() => (rotateTip = false)} transition:fade={{ duration: settings.reducedMotion ? 0 : 200 }}>
+      <span class="turn"><Icon name="rotate" size={20} /></span> Tahle hádanka se celá vejde na výšku. Otoč telefon.
+    </button>
+  {/if}
+
   <div class="echo-row">
     <EchoBubble {echo} />
   </div>
 
   <footer class="actionbar wood">
     <button type="button" class="btn btn-ghost" onclick={() => game.undo()} disabled={!game.canUndo} title="Zpět (Ctrl+Z)">
-      <Icon name="undo" /> Zpět
+      <Icon name="undo" /> <span class="label-xs">Zpět</span>
     </button>
     <button type="button" class="btn btn-ghost" onclick={restart} title="Začít komnatu znovu">
-      <Icon name="restart" /> Znovu
+      <Icon name="restart" /> <span class="label-xs">Znovu</span>
     </button>
     <span class="spacer"></span>
     {#if ready}
@@ -629,7 +671,7 @@
   .code {
     margin-right: 0.4em;
     font-family: var(--font-mono);
-    font-size: 0.64em;
+    font-size: max(0.64em, 12px);
     font-weight: 700;
     color: var(--stone-200);
     vertical-align: 0.1em;
@@ -688,8 +730,9 @@
     min-height: 76px;
     padding-bottom: 12px;
   }
-  /* Na širší obrazovce zůstává Echo vždy vidět nad trámem, i když se scéna celá nevejde. */
-  @media (min-width: 561px) {
+  /* Na širší obrazovce zůstává Echo vždy vidět nad trámem, i když se scéna celá nevejde.
+     Telefon na šířku (nízká obrazovka) to nedělá: Echo by zakrylo skoro celou desku. */
+  @media (min-width: 561px) and (min-height: 501px) {
     .echo-row {
       position: sticky;
       bottom: var(--bar-h);
@@ -774,7 +817,67 @@
       padding-bottom: 7px;
     }
   }
+  .rotate-tip {
+    position: fixed;
+    top: 8px;
+    left: 50%;
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    max-width: calc(100% - 32px);
+    padding: 8px 14px;
+    transform: translateX(-50%);
+    border: 1.5px solid var(--brass);
+    border-radius: 8px;
+    background: rgba(29, 24, 19, 0.95);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6);
+    font-size: var(--fs-sm);
+    color: var(--text);
+    cursor: pointer;
+  }
+  /* Ikona ukazuje otočení na šířku, zrcadlově tedy na výšku. */
+  .rotate-tip .turn {
+    display: inline-flex;
+    transform: scaleX(-1);
+    color: var(--lumen);
+  }
+  /* Telefon na šířku: tenká hlavička i trám, ať zbude co nejvíc výšky pro hádanku. */
+  @media (max-height: 500px) and (orientation: landscape) {
+    .level {
+      --bar-h: 46px;
+    }
+    .act {
+      display: none;
+    }
+    h1 {
+      font-size: var(--fs-lg);
+    }
+    .trials {
+      margin-top: 0;
+    }
+    .stage {
+      padding: 4px 0;
+    }
+    .actionbar {
+      padding-top: 3px;
+      padding-bottom: 3px;
+    }
+    .actionbar .btn {
+      min-height: 38px;
+    }
+  }
+  /* Úzký displej: název komnaty se zalomí do dvou řádků místo useknutí. */
   @media (max-width: 560px) {
+    h1 {
+      font-size: clamp(var(--fs-md), 4.6vw, var(--fs-xl));
+      line-height: 1.15;
+      white-space: normal;
+      display: -webkit-box;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 2;
+      line-clamp: 2;
+    }
     .actionbar {
       gap: 6px;
     }

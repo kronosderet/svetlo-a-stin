@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { inNum, plural, richParts, withNum } from './text';
+import { inNum, plural, richParts, typoCz, withNum } from './text';
 
 describe('sazba textu', () => {
   it('indexy převede na sub/sup a šipky vyčlení', () => {
@@ -10,7 +10,7 @@ describe('sazba textu', () => {
       { kind: 'sup', value: '0' },
       { kind: 'text', value: ' + 2' },
       { kind: 'sup', value: '2' },
-      { kind: 'text', value: ' ' },
+      { kind: 'text', value: ' ' },
       { kind: 'arrow', dir: 'right' },
       { kind: 'text', value: ' 5' },
     ]);
@@ -36,6 +36,19 @@ describe('sazba textu', () => {
     expect([1, 2, 3, 4, 5, 6, 7, 8, 12, 15, 16, 21, 50, 64, 128].map(withNum)).toEqual([
       's', 'se', 'se', 'se', 's', 'se', 'se', 's', 'se', 's', 'se', 'se', 's', 'se', 'se',
     ]);
+  });
+
+  it('česká sazba: předložky, čísla a znaménka u levého operandu', () => {
+    const nb = (s: string) => s.replace(/~/g, '\u00A0');
+    expect(typoCz('Přepni krystaly A a B a sleduj lampu v Kaskádě.')).toBe(nb('Přepni krystaly A~a~B a~sleduj lampu v~Kaskádě.'));
+    expect(typoCz('Zkouška se zastavila ve 2. kroku a v 8 řádcích.')).toBe(nb('Zkouška se zastavila ve 2.~kroku a~v~8~řádcích.'));
+    expect(typoCz('Stroj sčítá: 1 + 1 = 10, hotovo 8 / 8.')).toBe(nb('Stroj sčítá: 1~+ 1~= 10, hotovo 8~/ 8.'));
+    expect(typoCz('0 → 0 · 1 → 1')).toBe(nb('0~→ 0 · 1~→ 1'));
+    expect(typoCz('„A teď“ (s nápovědou)')).toBe(nb('„A~teď“ (s~nápovědou)'));
+    expect(typoCz('Bez mezer')).toBe('Bez mezer');
+    const once = typoCz('a v z 3 krystaly');
+    expect(typoCz(once)).toBe(once);
+    expect(once.length).toBe('a v z 3 krystaly'.length);
   });
 
   it('skloňuje podle počtu', () => {

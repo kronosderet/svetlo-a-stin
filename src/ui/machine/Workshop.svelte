@@ -10,8 +10,11 @@
   import { settings } from '../../game/settings.svelte.ts';
   import type { MachineGame } from '../../game/machineGame.svelte.ts';
   import { rowWords } from '../screens/level/machineEvents';
+  import { scrollable } from '../scrollable';
 
   let { game, pulse }: { game: MachineGame; pulse: number } = $props();
+  /** Deska se na úzkém displeji nevejde a jde posouvat do strany. */
+  let wide = $state(false);
 
   const level = $derived(game.level);
   const cfg = $derived(level.config);
@@ -67,32 +70,19 @@
     <Pips total={cfg.tasks.length} done={game.state.step} />
   </header>
 
-  <div class="work">
-    <!-- Deska se zmenší podle výšky okna; řada s čísly a tlačítkem Tep pod ní potřebuje místo navíc. -->
-    <div class="bench" style:--bench-reserve="{330 + ((readouts.length && values) || game.canBeat ? 58 : 0)}px">
-      {#key task}
-        <div class="board-wrap" in:fly={{ y: -12, duration: 360 * m }}>
-          <MachineBoard
-            {machine}
-            inputs={view.inputs}
-            runes={view.runes}
-            wires={view.wires}
-            memory={view.memory}
-            canToggle={touch}
-            canPlace={touch && task.mode === 'build'}
-            {modern}
-            {weights}
-            highlight={hl}
-            celebrate={game.phase === 'solved'}
-            onInput={(i) => game.toggleInput(i)}
-            onSlot={(id) => game.cycleRune(id)}
-            onSocket={(key) => game.cycleWire(key)}
-          />
-        </div>
-      {/key}
-
+  <!-- Telefon na šířku: zadání stojí v bočním panelu vedle desky (hlavička nahoře je skrytá). -->
+  {#snippet sideTask()}
+    <div class="side-task">
+      <p class="task-text carved">{level.presentation.task}</p>
+      <Pips total={cfg.tasks.length} done={game.state.step} />
       {#if (readouts.length && values) || game.canBeat}
-      <div class="under">
+        <div class="under">{@render underRow()}</div>
+      {/if}
+    </div>
+  {/snippet}
+
+  <!-- Čísla pod deskou a tlačítko Tep. Na telefonu na šířku stojí v bočním panelu. -->
+  {#snippet underRow()}
       {#if readouts.length && values}
         <div class="readouts" aria-live="off">
           {#each readouts as r (r.label)}
@@ -118,6 +108,39 @@
           </button>
         {/key}
       {/if}
+  {/snippet}
+
+  <div class="work">
+    <!-- Deska se zmenší podle výšky okna; řada s čísly a tlačítkem Tep pod ní potřebuje místo navíc. -->
+    <div class="bench" style:--under="{(readouts.length && values) || game.canBeat ? 58 : 0}px">
+      {#key task}
+        <div class="board-wrap" in:fly={{ y: -12, duration: 360 * m }} use:scrollable={(v) => (wide = v)}>
+          <MachineBoard
+            {machine}
+            inputs={view.inputs}
+            runes={view.runes}
+            wires={view.wires}
+            memory={view.memory}
+            canToggle={touch}
+            canPlace={touch && task.mode === 'build'}
+            {modern}
+            {weights}
+            highlight={hl}
+            celebrate={game.phase === 'solved'}
+            onInput={(i) => game.toggleInput(i)}
+            onSlot={(id) => game.cycleRune(id)}
+            onSocket={(key) => game.cycleWire(key)}
+          />
+        </div>
+      {/key}
+      {#if wide}
+        <p class="scroll-hint portrait"><Icon name="rotate" size={18} /> Deska je širší než displej. Otoč telefon na šířku, nebo desku posouvej do strany.</p>
+        <p class="scroll-hint landscape">Deska je širší než displej, desku jde posunout do strany.</p>
+      {/if}
+
+      {#if (readouts.length && values) || game.canBeat}
+      <div class="under bench-under">
+        {@render underRow()}
       </div>
       {/if}
 
@@ -133,6 +156,7 @@
     {:else if task.mode === 'explore'}
       <!-- Deska objevů: vyzkoušené kombinace vstupů a co udělaly lampy -->
       <div class="side">
+        {@render sideTask()}
         <p class="side-title carved">Vyzkoušeno {view.tried.length} z {rows.length}</p>
         <div class="registry stone" role="list" aria-label="Vyzkoušené kombinace">
           {#each rows as r (r)}
@@ -154,6 +178,7 @@
       </div>
     {:else if task.mode === 'goals'}
       <div class="side">
+        {@render sideTask()}
         <p class="side-title carved">Cíle stroje</p>
         <ol class="goals stone">
           {#each task.goals ?? [] as goal, k (k)}
@@ -166,6 +191,7 @@
       </div>
     {:else}
       <div class="side">
+        {@render sideTask()}
         {#if task.script}
           <!-- Zkušební posloupnost: kroky, které Zkouška projde od zhasnuté paměti -->
           <p class="side-title carved">Zkouška paměti</p>
@@ -276,6 +302,7 @@
     width: 100%;
   }
   .bench {
+    --bench-reserve: calc(330px + var(--under, 0px));
     flex: 0 1 760px;
     min-width: 0;
     display: flex;
@@ -283,10 +310,12 @@
     align-items: center;
     gap: 10px;
   }
+  /* Deska, která se na úzké obrazovce nevejde (nezmenší se pod 70 %), jde posunout do strany. */
   .board-wrap {
     width: 100%;
     display: flex;
-    justify-content: center;
+    justify-content: flex-start;
+    overflow-x: auto;
     padding: 6px 0 10px;
   }
   .under {
@@ -566,6 +595,100 @@
     }
     .trow {
       min-height: 24px;
+    }
+  }
+  .scroll-hint {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin: 0 0 6px;
+    text-align: center;
+    font-size: var(--fs-sm);
+    font-style: italic;
+    color: var(--text-muted);
+  }
+  .scroll-hint :global(svg) {
+    flex: none;
+    color: var(--lumen);
+  }
+  @media (orientation: portrait) {
+    .scroll-hint.landscape {
+      display: none;
+    }
+  }
+  @media (orientation: landscape) {
+    .scroll-hint.portrait {
+      display: none;
+    }
+  }
+  /*
+   * Telefon na šířku: panel s cíli vedle desky a deska tak velká, aby se vešla na výšku celá
+   * (nad trámem). Smí jít až na 60 %: najednou vidět celý stroj je tu důležitější než větší písmo.
+   */
+  .side-task {
+    display: none;
+  }
+  @media (max-height: 500px) and (orientation: landscape) {
+    .workshop {
+      gap: 4px;
+    }
+    .task {
+      display: none;
+    }
+    .side-task {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      text-align: center;
+    }
+    .task-text {
+      font-size: var(--fs-sm);
+    }
+    .work {
+      flex-wrap: nowrap;
+      align-items: flex-start;
+      gap: 16px;
+    }
+    .bench {
+      flex: 1 1 auto;
+      --bench-reserve: 80px;
+      --k-min: 0.6;
+    }
+    .bench-under {
+      display: none;
+    }
+    .niche {
+      min-height: 40px;
+      padding: 3px 8px;
+    }
+    /* Dlouhé zadání a tabulka: panel roluje uvnitř, deska vedle zůstane celá vidět. */
+    .side {
+      flex: 0 1 280px;
+      max-width: min(280px, 34vw);
+      max-height: calc(100dvh - 52px);
+      overflow-y: auto;
+      gap: 6px;
+    }
+    .trow > :global([role='cell']) {
+      line-height: 1;
+    }
+    .trow {
+      min-height: 21px;
+    }
+    .tests {
+      padding: 4px 10px;
+    }
+    .trow .bit {
+      font-size: var(--fs-md);
+      line-height: 1.2;
+    }
+    .board-wrap {
+      padding: 0;
+    }
+    .side :global(.btn-lg) {
+      min-height: 42px;
     }
   }
 </style>

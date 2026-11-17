@@ -79,7 +79,8 @@
     <button type="button" class="icon-btn" onclick={() => go({ name: 'title' })} aria-label="Na úvodní obrazovku">
       <Icon name="back" />
     </button>
-    <span class="place carved">Observatoř Světla a Stínu</span>
+    <span class="place carved hide-xs">Observatoř Světla a Stínu</span>
+    <span class="spacer-xs" aria-hidden="true"></span>
     <div class="tools">
       {#if settings.teacher}
         <button type="button" class="icon-btn" onclick={() => go({ name: 'teacher' })} aria-label="Přehled třídy" title="Přehled třídy">
@@ -130,9 +131,10 @@
               aria-pressed={k === shown}
               disabled={!floorOpen(k)}
               onclick={() => (shown = k)}
+              aria-label="Patro {a.numeral}{floorOpen(k) ? '' : ', zamčeno'}"
             >
               {#if !floorOpen(k)}<Icon name="lock" size={14} />{/if}
-              Patro {a.numeral}
+              <span class="word">Patro</span>&nbsp;{a.numeral}
             </button>
           {/each}
         </div>
@@ -146,10 +148,10 @@
         <p class="stats">
           <span>{done} / {basic.length} komnat</span>
           {#if deep.length}
-            <span aria-hidden="true">·</span>
+            <span class="sep" aria-hidden="true">·</span>
             <span>Hlubší síně {deepDone} / {deep.length}</span>
           {/if}
-          <span aria-hidden="true">·</span>
+          <span class="sep" aria-hidden="true">·</span>
           <span>{sealCount(roomIds)} / {roomIds.length * 3} pečetí</span>
         </p>
         <button type="button" class="summary-btn" onclick={() => go({ name: 'summary', act: shown })}>
@@ -688,15 +690,51 @@
     font-weight: 400;
     font-style: italic;
   }
+  .spacer-xs {
+    display: none;
+  }
+  .floor {
+    white-space: nowrap;
+  }
   @media (max-width: 560px) {
     .deep-grid {
       grid-template-columns: minmax(0, 1fr);
+    }
+    /* Statistika pod sebou: oddělovač by jinak mohl začínat řádek. */
+    .stats {
+      flex-direction: column;
+      align-items: center;
+      gap: 0;
+    }
+    .stats .sep {
+      display: none;
+    }
+    .floors {
+      gap: 6px;
+    }
+    .floor {
+      padding: 0 12px;
     }
     .compass {
       display: none;
     }
     .name {
       font-size: var(--fs-base);
+    }
+  }
+  /* Malý telefon: na liště jen ikony, záložky pater jen římskou číslicí. */
+  @media (max-width: 420px) {
+    .spacer-xs {
+      display: block;
+      flex: 1;
+    }
+    .floor {
+      min-width: 48px;
+      justify-content: center;
+      padding: 0 10px;
+    }
+    .floor .word {
+      display: none;
     }
   }
 </style>

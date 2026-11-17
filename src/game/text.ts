@@ -61,6 +61,25 @@ export function withNum(n: number): 's' | 'se' {
   return [2, 3, 4, 6, 7, 12, 13, 14, 16, 17].includes(head) ? 'se' : 's';
 }
 
+const NB = '\u00A0';
+const ONE_LETTER = /(^|[\s(„‚[])([vszkouaiVSZKOUAI]) (?=\S)/g;
+const NUMBER_WORD = /(\d\.?) (?=\p{L})/gu;
+const OPERATOR = /(\S) (?=[+−×÷=<>≤≥⇒⇔∧∨⊻/→←↔] \S)/g;
+
+/**
+ * Česká sazba: jednopísmenná předložka nebo spojka (v, s, z, k, o, u, a, i) nezůstane na konci
+ * řádku, číslo se neodtrhne od slova za ním (8 krystalů, 1. krok) a znaménko ve výrazu zůstane
+ * u levého operandu (1 + 1 = 10 se smí zlomit jen za znaménkem, jako v matematické sazbě).
+ * Mezery se jen vymění za nezlomitelné, délka textu zůstane stejná.
+ */
+export function typoCz(text: string): string {
+  if (!text.includes(' ')) return text;
+  let out = text.replace(NUMBER_WORD, `$1${NB}`).replace(OPERATOR, `$1${NB}`);
+  // Dvakrát: dvě jednopísmenná slova za sebou („a v Kaskádě“) sdílí mezeru, kterou první náhrada spotřebuje.
+  out = out.replace(ONE_LETTER, `$1$2${NB}`).replace(ONE_LETTER, `$1$2${NB}`);
+  return out;
+}
+
 const SUB = '₀₁₂₃₄₅₆₇₈₉';
 const SUP: Record<string, string> = {
   '⁰': '0',
@@ -95,6 +114,8 @@ export function richParts(text: string): RichPart[] {
   };
   for (const ch of text) {
     if (ch === '→' || ch === '←') {
+      // Šipka zůstane u levého operandu (0 → 1 se smí zlomit jen za šipkou), jako znaménka v typoCz.
+      if (mode === 'text' && buf.endsWith(' ')) buf = buf.slice(0, -1) + NB;
       flush();
       out.push({ kind: 'arrow', dir: ch === '→' ? 'right' : 'left' });
       continue;

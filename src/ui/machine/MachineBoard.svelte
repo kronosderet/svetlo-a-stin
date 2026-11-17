@@ -22,6 +22,7 @@
   import { progress } from '../../game/progress.svelte.ts';
   import { settings } from '../../game/settings.svelte.ts';
   import { partWords } from '../screens/level/machineEvents';
+  import { G, PIN, frameOf, partSize } from './layout';
   import { fromWords, seatWords } from '../../game/machineWords';
 
   interface Props {
@@ -61,10 +62,11 @@
     onSocket,
   }: Props = $props();
 
-  /** Jednotka mřížky: souřadnice v obsahu jsou v násobcích G. */
-  const G = 40;
-  const PAD = 30;
-  const PIN = 26;
+  /**
+   * Deska se nezmenší pod tenhle zlomek: písmo by bylo nečitelné. Užší místo desku posouvá do strany.
+   * Telefon na šířku smí jít níž (--k-min z Dílny), aby byla vidět celá deska najednou.
+   */
+  const K_MIN = 0.7;
 
   type P = { x: number; y: number };
   type PinPos = P & { nx: number; ny: number };
@@ -82,40 +84,10 @@
     return out;
   });
 
-  /* ── rozměry prvků (px) ── */
-  function partSize(g: MachineNode): { w: number; h: number } {
-    if (g.turn === 'column') return { w: 108, h: 78 };
-    const spec = PARTS[g.part!];
-    return { w: g.part === 'flip' ? 118 : 100, h: Math.max(64, Math.max(spec.ins.length, spec.outs.length) * PIN + 26) };
-  }
-  function nodeSize(g: MachineNode): { w: number; h: number } {
-    return g.part ? partSize(g) : { w: 68, h: 68 };
-  }
 
-  const raw = (x: number, y: number): P => ({ x: x * G, y: y * G });
 
   /** Posun, aby celý stroj začínal na okraji desky. */
-  const frame = $derived.by(() => {
-    const boxes: { x0: number; y0: number; x1: number; y1: number }[] = [];
-    for (const i of machine.inputs) {
-      const p = raw(i.x, i.y);
-      boxes.push({ x0: p.x - 30, y0: p.y - 52, x1: p.x + 30, y1: p.y + 50 });
-    }
-    for (const g of machine.nodes) {
-      const p = raw(g.x, g.y);
-      const s = nodeSize(g);
-      boxes.push({ x0: p.x - s.w / 2 - 34, y0: p.y - s.h / 2 - 30, x1: p.x + s.w / 2 + 34, y1: p.y + s.h / 2 + 30 });
-    }
-    for (const l of machine.lamps) {
-      const p = raw(l.x, l.y);
-      boxes.push({ x0: p.x - 30, y0: p.y - 52, x1: p.x + 30, y1: p.y + 52 });
-    }
-    const x0 = Math.min(...boxes.map((b) => b.x0));
-    const y0 = Math.min(...boxes.map((b) => b.y0));
-    const x1 = Math.max(...boxes.map((b) => b.x1));
-    const y1 = Math.max(...boxes.map((b) => b.y1));
-    return { dx: PAD - x0, dy: PAD - y0, W: x1 - x0 + PAD * 2, H: y1 - y0 + PAD * 2 };
-  });
+  const frame = $derived(frameOf(machine));
   const W = $derived(frame.W);
   const H = $derived(frame.H);
   const at = (x: number, y: number): P => ({ x: x * G + frame.dx, y: y * G + frame.dy });
@@ -276,7 +248,7 @@
   const translated = (r: Rune) => !!RUNE_MODERN[r] && (settings.alwaysDigits || progress.kodex.includes(RUNE_KODEX[r] ?? ''));
 </script>
 
-<div class="machine stone" class:celebrate style:width="min(100%, {W}px, max(340px, calc((100dvh - var(--bench-reserve, 330px)) * {W / H})))" style:aspect-ratio="{W} / {H}" style:--k={k} bind:clientWidth={boxW}>
+<div class="machine stone" class:celebrate style:width="max(min(100%, {W}px, max(340px, calc((100dvh - var(--bench-reserve, 330px)) * {W / H}))), calc({W}px * var(--k-min, {K_MIN})))" style:aspect-ratio="{W} / {H}" style:--k={k} bind:clientWidth={boxW}>
   <svg class="wires" viewBox="0 0 {W} {H}" aria-hidden="true">
     {#each layout.wires as w, i (i)}
       <path class="groove" d={w.d} />
@@ -392,7 +364,8 @@
 <style>
   .machine {
     position: relative;
-    max-width: 100%;
+    flex: none;
+    margin-inline: auto;
     border-radius: 14px;
   }
   .wires {
@@ -445,7 +418,7 @@
     position: relative;
     display: grid;
     place-items: center;
-    width: 50px;
+    width: 46px;
     height: 58px;
     padding: 0;
     border: 0;
@@ -598,12 +571,12 @@
     display: inline-flex;
     align-items: center;
     gap: 3px;
-    max-width: 64px;
+    max-width: 76px;
     font-family: var(--font-display);
-    font-size: 9.5px;
+    font-size: 11.5px;
     font-weight: 700;
     line-height: 1.15;
-    letter-spacing: 0.06em;
+    letter-spacing: 0.02em;
     text-align: center;
     text-transform: uppercase;
     color: var(--stone-200);
@@ -621,7 +594,7 @@
     transform: none;
   }
   .part.column .part-name {
-    max-width: 70px;
+    max-width: 84px;
   }
   .part.memory.lit .part-name {
     color: var(--lumen);
@@ -630,7 +603,7 @@
     position: absolute;
     transform: translate(-50%, -50%);
     font-family: var(--font-mono);
-    font-size: 11px;
+    font-size: 13px;
     font-weight: 700;
     color: var(--text-muted);
   }

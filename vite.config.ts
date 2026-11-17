@@ -41,7 +41,7 @@ export default defineConfig(({ mode }) => ({
       workbox: {
         // Celá hra do mezipaměti, ať po první návštěvě běží i bez internetu. Z písem jen latinka
         // a latinka s diakritikou ve woff2 (ostatní abecedy a starší formát hra nepotřebuje).
-        globPatterns: ['**/*.{js,css,html}', '**/*-latin-*.woff2'],
+        globPatterns: ['**/*.{js,css,html}', '**/*-latin-*.woff2', '**/svetlo-logika-*.woff2'],
         cleanupOutdatedCaches: true,
       },
     }),

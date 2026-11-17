@@ -43,10 +43,12 @@
   --ink-muted: #5c4a33;
   --ink-red: #8f2f17;
 
-  --font-display: 'Cinzel', 'Trajan Pro', Georgia, serif;
-  --font-serif: 'Cormorant Garamond', Georgia, serif;
-  --font-body: 'Atkinson Hyperlegible', 'Segoe UI', system-ui, sans-serif;
-  --font-mono: 'JetBrains Mono', Consolas, monospace;
+  /* Svetlo Logika je výřez z Noto Sans Math: jen znaky ∧ ∨ ⊻ ⇔ ⇒ ≈ a pár dalších, které ostatní
+     písma nemají. Stojí v každé sadě hned za hlavním písmem, ať je nekreslí náhodné písmo systému. */
+  --font-display: 'Cinzel', 'Svetlo Logika', 'Trajan Pro', Georgia, serif;
+  --font-serif: 'Cormorant Garamond', 'Svetlo Logika', Georgia, serif;
+  --font-body: 'Atkinson Hyperlegible Next', 'Svetlo Logika', 'Segoe UI', system-ui, sans-serif;
+  --font-mono: 'Atkinson Hyperlegible Mono', 'Svetlo Logika', Consolas, monospace;
 
   /* Typografická škála. Cinzel: nadpisy, popisky velkými písmeny, velká čísla.
      Atkinson: veškerý text a tlačítka. Mono: nuly, jedničky, vzorce.
@@ -96,6 +98,16 @@
   scroll-behavior: auto !important;
 }
 
+/* Výřez z Noto Sans Math (SIL OFL 1.1, viz src/assets/fonts/), vzniká skriptem scripts/subset-logika.py. */
+@font-face {
+  font-family: 'Svetlo Logika';
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url('./assets/fonts/svetlo-logika.woff2') format('woff2');
+  unicode-range: U+03A3, U+2190-2194, U+21D2, U+21D4, U+2227-2228, U+2248, U+2260, U+2264-2265, U+2295, U+22BB, U+25CB, U+25CF, U+2713;
+}
+
 /* ---------- Základ ---------- */
 *,
 *::before,
@@ -126,6 +138,14 @@ h3 {
   font-weight: 700;
   letter-spacing: 0.04em;
   line-height: 1.15;
+  text-wrap: balance;
+}
+
+/* Odstavce bez osamocených slov na posledním řádku (kde to prohlížeč umí). */
+p,
+li,
+blockquote {
+  text-wrap: pretty;
 }
 
 button {
@@ -151,11 +171,12 @@ button {
   border: 0;
 }
 
-/* Indexy (10₂, 2ⁿ) stejným písmem jako okolní text, bez rozhození řádkování. */
+/* Indexy (10₂, 2ⁿ) stejným písmem jako okolní text, bez rozhození řádkování. Ani v malém textu
+   (Shrnutí patra, pergamen) neklesnou pod 10 px. */
 sub,
 sup {
   position: relative;
-  font-size: 0.68em;
+  font-size: max(0.72em, 10px);
   line-height: 0;
   vertical-align: baseline;
 }
@@ -402,6 +423,11 @@ sub {
     padding: 4px 0;
   }
 }
+@media (max-height: 500px) and (orientation: landscape) {
+  .topbar {
+    padding: 0;
+  }
+}
 
 .topbar .tools {
   display: flex;
@@ -437,6 +463,22 @@ sub {
 @media (max-width: 560px) {
   .hide-narrow {
     display: none !important;
+  }
+}
+
+/* Malý telefon (do 420 px): méně ikon v liště, popisky tlačítek jen pro čtečku. */
+@media (max-width: 420px) {
+  .hide-xs {
+    display: none !important;
+  }
+  .label-xs {
+    position: absolute !important;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
   }
 }
 

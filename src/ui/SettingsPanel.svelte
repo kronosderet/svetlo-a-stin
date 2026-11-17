@@ -207,7 +207,7 @@
           a k jiným nekomerčním účelům ji můžete volně používat, upravovat a sdílet, když uvedete autora. Soukromé
           školy, placené kurzy a jiné komerční užití: <a href="mailto:{CONTACT}">{CONTACT}</a>.
         </p>
-        <p class="desc">Písma Cinzel, Cormorant Garamond, Atkinson Hyperlegible a JetBrains Mono: SIL Open Font License.</p>
+        <p class="desc">Písma Cinzel, Cormorant Garamond, Atkinson Hyperlegible Next a Mono a výřez z Noto Sans Math: SIL Open Font License.</p>
       </section>
 
       <div class="danger">

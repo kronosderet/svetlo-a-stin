@@ -112,7 +112,9 @@ v souboru [LICENSE](LICENSE).
 - **PIN učitelského režimu** posílá učitelům autor na stejné adrese.
 
 Písma (SIL Open Font License) a přibalené knihovny (MIT) mají vlastní licence. Webová verze je
-uvádí v souboru `licence-knihoven.md`.
+uvádí v souboru `licence-knihoven.md`. Hra používá Cinzel (nadpisy), Atkinson Hyperlegible Next
+(text), Atkinson Hyperlegible Mono (číslice a vzorce) a Cormorant Garamond (citáty). Logické znaky
+∧ ∨ ⊻ ⇔ ⇒ kreslí výřez z Noto Sans Math (`src/assets/fonts/`, licence vedle písma).
 
 Příspěvky (pull requesty) jsou vítané. Posláním příspěvku souhlasíte, že ho autor smí šířit pod
 licencí projektu i pod komerční licencí.

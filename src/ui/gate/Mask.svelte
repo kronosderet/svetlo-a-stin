@@ -234,6 +234,33 @@
       padding: 8px 14px;
     }
   }
+  /* Telefon na šířku: cíl (oltář, klíč) vedle řad, hustší řady. */
+  @media (max-height: 500px) and (orientation: landscape) {
+    .mask-room {
+      gap: 4px;
+    }
+    .task {
+      gap: 2px;
+    }
+    .task-text {
+      font-size: var(--fs-sm);
+    }
+    .work {
+      flex-wrap: nowrap;
+      align-items: center;
+      gap: 16px;
+    }
+    .mask-rows {
+      gap: 2px;
+      padding: 6px 14px;
+    }
+    .mask-rows :global(.mini.lg svg) {
+      width: 22px !important;
+    }
+    .mask-rows .mask-line :global(.byte .crystals) {
+      --crystal-w: 26px !important;
+    }
+  }
   /*
    * Telefon: popisky nad řadami a v každé řadě stejně široké sloupce, ať krystal masky stojí přesně
    * pod svým krystalem nápisu i výsledku. Maska se nezalamuje do dvou čtveřic.
@@ -249,6 +276,12 @@
     }
     .mrow.op {
       justify-items: center;
+    }
+  }
+  /* Osm stejně širokých sloupců na telefonu na výšku i na šířku (tam zůstávají popisky vlevo). */
+  @media (max-width: 560px), (max-height: 500px) and (orientation: landscape) {
+    .mrow:not(.op) {
+      justify-items: stretch;
     }
     .mask-rows :global(.mini.lg) {
       display: grid;

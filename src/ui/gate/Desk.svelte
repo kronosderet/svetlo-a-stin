@@ -224,7 +224,8 @@
     flex: 0 1 520px;
     min-width: 0;
     display: flex;
-    justify-content: center;
+    justify-content: flex-start;
+    overflow-x: auto;
     padding: 14px 0 24px;
   }
   .side {
@@ -372,12 +373,36 @@
     .many .choice {
       min-height: 34px;
     }
+    .side {
+      gap: 8px;
+    }
+  }
+  /* Menší políčka jen pro myš: na dotykové obrazovce zůstávají velká pro prst. */
+  @media (max-height: 820px) and (pointer: fine) {
     .cell {
       width: 26px;
       height: 26px;
     }
+  }
+  /* Telefon na šířku: panel vedle desky (roluje uvnitř), deska se zmenší do zbylé šířky. */
+  @media (max-height: 500px) and (orientation: landscape) {
+    .task-text {
+      font-size: var(--fs-sm);
+    }
+    .work {
+      flex-wrap: nowrap;
+      align-items: flex-start;
+      gap: 14px;
+    }
+    .board-wrap {
+      flex: 1 1 auto;
+      padding: 0;
+    }
     .side {
-      gap: 8px;
+      flex: 0 1 260px;
+      max-width: min(260px, 34vw);
+      max-height: calc(100dvh - 52px);
+      overflow-y: auto;
     }
   }
 </style>
