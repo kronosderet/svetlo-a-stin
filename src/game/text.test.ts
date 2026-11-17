@@ -69,3 +69,12 @@ describe('nečitelná slova se záznamem Kodexu', () => {
     expect(plainText('…{{ticho}}…', () => true)).toBe('…(nečitelné)…');
   });
 });
+
+describe('verze hry', () => {
+  it('0.4.0-alpha se ukáže jako 0.4 alpha', async () => {
+    const { versionLabel } = await import('../content/about');
+    expect(versionLabel('0.4.0-alpha')).toBe('0.4 alpha');
+    expect(versionLabel('0.4.1')).toBe('0.4.1');
+    expect(versionLabel('1.0.0')).toBe('1.0');
+  });
+});

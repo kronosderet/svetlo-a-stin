@@ -4,7 +4,7 @@
   import { go, ui } from '../../game/nav.svelte.ts';
   import { hasStarted } from '../../game/progress.svelte.ts';
   import { install, pwa } from '../../game/pwa.svelte.ts';
-  import { AUTHOR, LICENSE_NAME, YEAR } from '../../content/about';
+  import { AUTHOR, LICENSE_NAME, VERSION, YEAR } from '../../content/about';
   import { playDoor, unlock } from '../../audio/sound';
 
   const started = $derived(hasStarted());
@@ -89,7 +89,7 @@
       <button type="button" class="icon-btn" onclick={() => (ui.settingsOpen = true)} aria-label="Nastavení" title="Nastavení">
         <Icon name="settings" />
       </button>
-      <span class="carved">Prototyp · Akty I až IV, 64 komnat</span>
+      <span class="carved">Verze {VERSION} · Akty I až IV, 64 komnat</span>
       {#if pwa.canInstall && !pwa.installed}
         <button type="button" class="btn btn-ghost install" onclick={install}>
           <Icon name="install" size={18} /> Nainstalovat hru

@@ -9,7 +9,7 @@
   import { applyUpdate, install, pwa } from '../game/pwa.svelte.ts';
   import { saveSettings, settings, type Settings } from '../game/settings.svelte.ts';
   import { checkTeacherPin } from '../game/pin';
-  import { AUTHOR, CONTACT, LICENSE_NAME, LICENSE_URL } from '../content/about';
+  import { AUTHOR, CONTACT, LICENSE_NAME, LICENSE_URL, VERSION } from '../content/about';
   import { unlock } from '../audio/sound';
 
   let confirmReset = $state(false);
@@ -200,7 +200,7 @@
         <h3 id="about-title"><Icon name="info" size={18} /> O hře</h3>
         <p class="desc">
           Hru vytvořil <strong>{AUTHOR}</strong> ve spolupráci s <strong>Claude</strong>, umělou inteligencí od
-          Anthropic.
+          Anthropic. Verze {VERSION}.
         </p>
         <p class="desc">
           Licence <a href={LICENSE_URL} target="_blank" rel="noopener">{LICENSE_NAME}</a>: ve veřejných školách, doma

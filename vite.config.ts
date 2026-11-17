@@ -1,6 +1,7 @@
 import { defineConfig } from 'vite';
 import { svelte } from '@sveltejs/vite-plugin-svelte';
 import { VitePWA } from 'vite-plugin-pwa';
+import pkg from './package.json' with { type: 'json' };
 
 const BG = '#0F0C1D';
 
@@ -8,6 +9,8 @@ export default defineConfig(({ mode }) => ({
   // Relativní cesty: hra běží z kořene domény (Cloudflare, Netlify) i z podsložky
   // (GitHub Pages /svetlo-a-stin/) bez úprav.
   base: './',
+  // Verze hry z package.json (0.4.0-alpha), hra ji ukáže jako „0.4 alpha“.
+  define: { __APP_VERSION__: JSON.stringify(pkg.version) },
   plugins: [
     svelte(),
     VitePWA({
