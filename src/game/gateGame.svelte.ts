@@ -18,6 +18,7 @@ import {
   type GateTask,
 } from '../core/puzzles/gate';
 import type { GateLevel } from '../content/types';
+import { RUNE_NAME, RUNE_RULE } from '../content/runes';
 import { BaseGame, type GameEvent } from './baseGame.svelte.ts';
 
 export interface GateView {
@@ -62,6 +63,22 @@ export class GateGame extends BaseGame<GateLevel> {
   /** Nápověda 3. stupně: vstup k přepnutí, nebo kámen a runa, která do něj patří. */
   get hintTarget(): ReturnType<typeof hint> {
     return this.playing && this.hintLevel >= 3 ? hint(this.level.config, this.state) : null;
+  }
+
+  /** Ukázka kroku slovy: jaká runa patří do zvýrazněného kamene a proč, nebo že zbývá Zkouška. */
+  get stepHint(): string | null {
+    if (!this.playing || this.hintLevel < 3) return null;
+    const task = currentTask(this.level.config, this.state);
+    if (task?.mode !== 'slots') return null;
+    const h = hint(this.level.config, this.state);
+    if (!h) return 'Obvod je hotový. Spusť Zkoušku.';
+    if ('node' in h) return `Do zvýrazněného kamene patří ${RUNE_NAME[h.rune]}: ${RUNE_RULE[h.rune]}.`;
+    return null;
+  }
+
+  /** Obvod je hotový a ukázka kroku ukazuje na Zkoušku. */
+  get hintTest(): boolean {
+    return this.hintLevel >= 3 && this.playing && currentTask(this.level.config, this.state)?.mode === 'slots' && !this.hintTarget;
   }
 
   get canUndo(): boolean {

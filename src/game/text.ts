@@ -40,6 +40,27 @@ export function plural(n: number, one: string, few: string, many: string): strin
   return many;
 }
 
+/**
+ * Předložka v, nebo ve před číslem (i řadovým): ve 2, ve 3. kroku, ve 14, v 5, v 1.
+ * Řídí se tím, jak číslo zní: ve dvou, třech, čtyřech, dvaceti… ale v jednom, pěti, sedmi.
+ */
+export function inNum(n: number): 'v' | 've' {
+  if (n >= 100 && n < 200) return 've';
+  const head = n >= 200 ? Math.floor(n / 100) : n;
+  return [2, 3, 4, 12, 13, 14].includes(head) || (head >= 20 && head < 50) ? 've' : 'v';
+}
+
+/**
+ * Předložka s, nebo se před číslem v 7. pádě: se 3 vstupy (se třemi), s 5 vstupy (s pěti),
+ * se 6 (se šesti), s 8 (s osmi). Řídí se tím, jak číslo zní.
+ */
+export function withNum(n: number): 's' | 'se' {
+  if (n >= 100 && n < 200) return 'se';
+  const head = n >= 200 ? Math.floor(n / 100) : n;
+  if (head >= 20) return [2, 3, 4, 6, 7].includes(Math.floor(head / 10)) ? 'se' : 's';
+  return [2, 3, 4, 6, 7, 12, 13, 14, 16, 17].includes(head) ? 'se' : 's';
+}
+
 const SUB = '₀₁₂₃₄₅₆₇₈₉';
 const SUP: Record<string, string> = {
   '⁰': '0',

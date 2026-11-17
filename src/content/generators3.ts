@@ -68,18 +68,15 @@ export function genIII5(rng: Rng): TableConfig {
   return { tasks: [identify(veiled[0]), fill(fills[0]), identify(veiled[1]), fill(fills[1]), identify(veiled[2])] };
 }
 
-/** III-6: Zlomené pouto, Zavřené rozcestí, jeden další řetěz a jedno větvení. */
+/** III-6: Zlomené pouto a Zavřené rozcestí v losovaném pořadí, Rovnost a jedno větvení. */
 export function genIII6(rng: Rng): GateConfig {
-  const third = pick(rng, [
-    ['xor', 'not'],
-    ['and', 'id'],
-    ['or', 'id'],
-  ] as [Rune, Rune][]);
+  const [first, second] = shuffled(rng, ['and', 'or'] as Rune[]);
+  // Třetí řetěz je vždy Rovnost (Výluka a Obraceč): Echo ji po něm pojmenuje a Hlubina na ni staví.
   return {
     tasks: [
-      slotsLike(chain(), chain('and', 'not')),
-      slotsLike(chain(), chain('or', 'not')),
-      slotsLike(chain(), chain(...third)),
+      slotsLike(chain(), chain(first, 'not')),
+      slotsLike(chain(), chain(second, 'not')),
+      slotsLike(chain(), chain('xor', 'not')),
       slotsLike(branch(), branch(randomBranch(rng))),
     ],
   };

@@ -43,7 +43,7 @@
   </header>
 
   <div class="work">
-    <div class="mask-rows stone">
+    <div class="mask-rows stone" style:--bits={bits}>
       <div class="mrow">
         <span class="mlabel carved">{topLabel}</span>
         <MiniPattern mask={task.value} {bits} size="lg" digits={true} label="Nápis {toBinaryString(task.value, bits)}" />
@@ -232,6 +232,43 @@
     .mask-rows {
       gap: 4px;
       padding: 8px 14px;
+    }
+  }
+  /*
+   * Telefon: popisky nad řadami a v každé řadě stejně široké sloupce, ať krystal masky stojí přesně
+   * pod svým krystalem nápisu i výsledku. Maska se nezalamuje do dvou čtveřic.
+   */
+  @media (max-width: 560px) {
+    .mask-rows {
+      padding: 10px;
+    }
+    .mrow {
+      grid-template-columns: minmax(0, 1fr);
+      justify-items: stretch;
+      gap: 2px;
+    }
+    .mrow.op {
+      justify-items: center;
+    }
+    .mask-rows :global(.mini.lg) {
+      display: grid;
+      grid-template-columns: repeat(var(--bits), minmax(0, 1fr));
+      justify-items: center;
+      gap: 0;
+      width: 100%;
+    }
+    .mask-rows :global(.mini.lg svg) {
+      width: min(26px, 6.4vw);
+    }
+    .mask-rows .mask-line :global(.byte .crystals) {
+      --per-row: var(--bits);
+      --crystal-w: min(30px, 7vw);
+      grid-template-columns: repeat(var(--bits), minmax(0, 1fr));
+      justify-items: center;
+      column-gap: 0;
+    }
+    .mask-rows .mask-line :global(.byte .crystals > :nth-child(5)) {
+      margin-left: 0;
     }
   }
 </style>

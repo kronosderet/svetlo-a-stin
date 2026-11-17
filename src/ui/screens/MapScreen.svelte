@@ -13,10 +13,28 @@
   const SEALS = ['solved', 'skill', 'pure'] as const;
 
   const open = (id: string) => !progress.levels[id] && isUnlocked(id);
-  /** Nejbližší komnata, která čeká na otevření: na základní cestě, a když je hotová, v Hlubších síních. */
-  const nextId = $derived(BASIC_PATH.find((l) => open(l.id))?.id ?? LEVELS.find((l) => open(l.id))?.id ?? null);
-  /** Zobrazené patro: na začátku to, kde hráč právě je. */
-  let shown = $state(ACTS.indexOf(actOf(untrack(() => nextId) ?? LEVELS[LEVELS.length - 1].id)));
+  /** Nejbližší neotevřená komnata na základní cestě (napříč patry). */
+  const basicNext = $derived(BASIC_PATH.find((l) => open(l.id))?.id ?? null);
+  /**
+   * Zobrazené patro: to s naposledy hranou komnatou (po bráně patra tak hráč hned vidí otevřené
+   * Hlubší síně), po návratu odjinud naposledy prohlížené, jinak patro nejbližší komnaty.
+   */
+  let shown = $state(
+    untrack(() => {
+      const from = ui.lastRoom;
+      ui.lastRoom = null;
+      if (from && LEVELS.some((l) => l.id === from)) return ACTS.indexOf(actOf(from));
+      if (ui.mapAct !== null) return ui.mapAct;
+      return ACTS.indexOf(actOf(basicNext ?? LEVELS.find((l) => open(l.id))?.id ?? LEVELS[LEVELS.length - 1].id));
+    }),
+  );
+  $effect(() => {
+    ui.mapAct = shown;
+  });
+  /** Nejbližší komnata, která čeká na otevření: na základní cestě, a když je hotová, v Hlubších síních tohoto patra. */
+  const nextId = $derived(
+    basicNext ?? ACTS[shown].levels.find((l) => open(l.id))?.id ?? LEVELS.find((l) => open(l.id))?.id ?? null,
+  );
 
   const act = $derived(ACTS[shown]);
   const below = $derived(ACTS[shown + 1] ?? null);

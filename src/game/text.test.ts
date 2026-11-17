@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { plural, richParts } from './text';
+import { inNum, plural, richParts, withNum } from './text';
 
 describe('sazba textu', () => {
   it('indexy převede na sub/sup a šipky vyčlení', () => {
@@ -24,6 +24,18 @@ describe('sazba textu', () => {
 
   it('obyčejný text nechá být', () => {
     expect(richParts('Světlo a stín')).toEqual([{ kind: 'text', value: 'Světlo a stín' }]);
+  });
+
+  it('předložka v, nebo ve podle toho, jak číslo zní', () => {
+    expect([1, 2, 3, 4, 5, 7, 12, 14, 15, 21, 64, 128, 256].map(inNum)).toEqual([
+      'v', 've', 've', 've', 'v', 'v', 've', 've', 'v', 've', 'v', 've', 've',
+    ]);
+  });
+
+  it('předložka s, nebo se podle toho, jak číslo zní', () => {
+    expect([1, 2, 3, 4, 5, 6, 7, 8, 12, 15, 16, 21, 50, 64, 128].map(withNum)).toEqual([
+      's', 'se', 'se', 'se', 's', 'se', 'se', 's', 'se', 's', 'se', 'se', 's', 'se', 'se',
+    ]);
   });
 
   it('skloňuje podle počtu', () => {

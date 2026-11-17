@@ -26,6 +26,13 @@ export class Echo {
     this.serial++;
   }
 
+  /** Přidá repliky za ty, které právě běží: hráč na ně přejde tlačítkem dál (nebo je hra posune sama). */
+  add(lines: string[]): void {
+    if (lines.length === 0) return;
+    this.lines = [...this.lines, ...lines];
+    this.open = true;
+  }
+
   next(): void {
     if (!this.hasMore) return;
     this.index++;

@@ -2,6 +2,11 @@
 
 > Simulovaný průchod Akty I–III (45 komnat) očima tří žáků sexty, model jejich paměti
 > a návrhy úprav komnat, pořadí a přechodů. Verze 1 · 15. 11. 2026
+>
+> Verze 2 · 17. 11. 2026: Akt IV, Hlubina Strojů, zahraný celý v prohlížeči (kap. 8).
+>
+> Verze 3 · 17. 11. 2026: Akt III, Zahrada Bran, zahraný celý v prohlížeči (kap. 9). Kapitoly 2
+> a 3 popisují stejné patro ze simulace podle textů.
 
 ---
 
@@ -389,3 +394,338 @@ Rychlé výhry na jedno odpoledne: cílené hlášky chyb, slovník, mizení opo
   Zkoušky zasvěcení (PLAN 3.8).
 - **Pro „Nikoly“ hned teď:** vytištěné Shrnutí patra jako tahák na lavici nahradí Kodex,
   který neotevřou.
+
+---
+
+## 8. Akt IV: Hlubina Strojů
+
+### 8.0 Jak jsem hrál
+
+- Celé patro IV-0 až IV-15 jsem zahrál v prohlížeči. Začal jsem s postupem, ve kterém je hotová
+  základní cesta Aktů I až III, ale žádná Hlubší síň. S takovým postupem sem přijde většina třídy.
+- Ema hraje všechno, Vojta základní cestu a část Hlubších síní, Nikola základní cestu.
+  - Za Nikolu jsem dělal typické chyby: Zkouška hned po první runě, Rozcestí místo Výluky.
+    Taky jsem bral ukázku kroku a klikal na to, co svítí.
+  - Za Emu jsem hledal ideál a sledoval, kde se nudí.
+- Okno 1110 × 1265 (tablet na výšku). Dvě nejhustší desky jsem zkusil i na telefonu, 375 × 812.
+- Modely paměti navazují na stav po Aktu III (kap. 2).
+
+### 8.1 Průchod základní cestou (8 komnat)
+
+| Komnata | Ema | Vojta | Nikola |
+|---|---|---|---|
+| **IV-0 Stroj, který počítá** | Tři doteky, pečeť přesnosti přijde sama. | Echo se ptá „Co asi dělá?“, ale odpověď už svítí pod deskou v odečtu nadepsaném „A + B“. | Tři doteky a úspěch. Že 1 + 1 = 10, zná ze Síně Počtářů. |
+| **IV-1 Poloviční sčítačka** | Výluka napoprvé. | Rada Echa „Vzpomeň na Zahradu“ funguje. | Zkoušku spustí hned s Poutem, které v kameni nabídne první klik. Deska označí řádek 0 1. V něm protáčí runy a Rozcestí tam svítí správně, takže Zkouška padne až na 1 1. Přesně na tuhle past se ptá kvíz. **Nejlepší chyba patra.** |
+| **IV-2 Úplná sčítačka** | Osm kombinací za sedm doteků. Stavbu složí podle nápovědy 2 (pravidlo přenosu). | Zkoumání v pohodě. Při stavbě sleduje vodiče, kam který kámen vede, a dá se to. | Zkoumání zvládne. Stavbu udělá ukázka kroku: kliká na zvýrazněný kámen, dokud zvýraznění neskočí jinam. Šest kliků a hotovo, bez pochopení. Nápověda pak dál říká „Zvýrazněný kámen potřebuje jinou runu“, ačkoli už nic nesvítí, a o Zkoušce mlčí. |
+| **IV-3 Řetěz sčítaček** | Tři řetězy za minutu. Každý točitý kámen má jen tři polohy (stín, světlo, přenos souseda), takže druhý a třetí řetěz nic nového nepřinesou. | Zabalený kámen a slovo *abstrakce* ho baví. Točité kameny na základní cestě nikdy neviděl, pomůže až nápověda 1. | Točitý kámen je pro Nikolu nový a ozubené kolečko má 19 px. Po nápovědě 1 zopakuje vzor „přenos od souseda“ z prvního řetězu. U A + B + 1 pomůže okénko „Stroj se spletl: A = 0, B = 0“: zkouší, až rozsvítí první přenos. |
+| **IV-4 Porovnávač** | Rovnost zná z III-9, okamžitě. | Rovnost nezná, III-9 je nepovinná. Najde ji protočením kamene, protože ⇔ vypadá jako „stejné“. | V řádku 0 0 protáčí runy, dokud se lampa nerozsvítí, a to je Rovnost. Správně, ale náhodou. Dvoubitová čísla udělá ukázka kroku. V kvízu „dvě oktávy“ tipne 16. |
+| **IV-5 Výhybka** | Čtyři cíle za čtyři doteky. | Echo komentuje každý cíl, výborné. | **Nejlepší komnata patra.** Cíle jdou krok za krokem a Echo hned řekne, co se stalo („Volič svítí a lampa teď poslouchá B“). Ve stavbě nezapojený Obraceč sám napovídá, že ho má někam dovést. |
+| **IV-6 Rozdělovač** | Hned. | Osm točitých kamenů vyřeší lampu po lampě. | Osm kamenů po dvou polohách je 256 možností. Pomůže tabulka, kde v každém řádku svítí jedna lampa, a jde lampa po lampě. Únava. |
+| **IV-7 Brána Hlubiny** | Bez chyby. | Kvíz 110 + 100 chce čtení čísel z Aktu I a jednou se splete. | Ve Sčítačce si vezme ukázku kroku a brána přidá úlohu navíc (A + B). Tu zvládne bez pomoci, protože vzor zná z IV-3. Kvíz tipuje. |
+
+**Model paměti po Aktu IV**
+
+| Pojem | Ema | Vojta | Nikola |
+|---|---|---|---|
+| Runy umí sčítat (poloviční a úplná sčítačka) | ●●● | ●●○ | ●●○ |
+| Řetěz sčítaček, přenos doleva | ●●● | ●●○ | ●●○ (vzor od souseda) |
+| Součástka jako jeden kámen (abstrakce) | ●●● | ●●● (slovo z Kodexu) | ●○○ |
+| Porovnávač, Rovnost | ●●● | ●●○ | ●○○ |
+| Výhybka: volič vybírá cestu | ●●● | ●●● | ●●○ (díky cílům) |
+| Rozdělovač | ●●● | ●●○ | ●○○ |
+| *Čtení dvojkových čísel z Aktu I* | ●●● | ●●○ | ●○○ (čte jen odečty pod deskou) |
+
+- Dobrá zpráva: odečty pod deskou (A, B, součet) vracejí do hry čísla z Aktu I, jak radila kap. 4.6.
+  Nikola čte odečet, i když lampám nerozumí.
+- Nálada:
+  - Ema 7/10: IV-1 a IV-5 ji baví, IV-3 nudí.
+  - Vojta 8/10: abstrakce a příběh.
+  - Nikola 6/10: vrchol v IV-5, frustrace ve stavbě IV-2 a v IV-6.
+- Čas: Ema 20 min, Vojta 35 min, Nikola 55 min.
+
+### 8.2 Hlubší síně (Ema celé, Vojta zčásti)
+
+| Komnata | Postřeh |
+|---|---|
+| IV-8 Ozvěna | Cíle odhalí paměť dřív, než ji hra pojmenuje („S zhaslo, a lampa svítí dál“). Stavba kruhu má jen dva kameny po dvou polohách. Vojta: „Světlo v kruhu drží samo sebe“ je nejsilnější věta patra. |
+| IV-9 Tep Srdce | Brána tepu se dobře staví a tlačítko Tep je jasné. Echo „Mění se jen při tepu“ přesně pojmenuje rozdíl proti ozvěně. Vojtu chytí Srdce Observatoře. |
+| IV-10 Registr | „Ulož 5, vstup se mění, paměť drží“: registr pochopí z cílů. Posun nahoru připomene ×2 z Přílivu. |
+| IV-11 Počítadlo hvězd | Hotové počítadlo baví (napočítej do 6, přetoč na 0). Ve stavbě se smyčky ze S pod sčítačkou nahoru do D kříží. Ozvěny jsou číslované zleva 1, 2, 3, sčítačky pod nimi zleva 6, 5, 4, malými číslicemi v rohu. Ema se jednou splete. Vojta tady končí. |
+| IV-12 Odčítačka | Doplněk z II-13 v podobě stroje, aha. Zadání „Natoč točité kameny (a vlož runy)“ platí pro obě úlohy, runy jsou ale jen ve druhé. |
+| IV-13 Volič operace | Úloha 1: runy stojí shora dolů v pořadí kódů, takže je to triviální. Úloha 2: točitý kámen voliče ukazuje u obou voleb jen „O“, bez váhy, a O vypadá jako nula stálého stínu. Nastavení nejde přečíst, Ema ho vyřeší zkoušením (tři Zkoušky). |
+| IV-14 Násobička | Pěkná pointa (kopie a součet jako v II-10). Osm vodičů ze vstupů ke čtyřem Poutům vede úzkým pruhem, a co které Pouto násobí, zjistí Ema přepínáním vstupů. |
+| IV-15 Velká brána | Tři zkoušky jsou skoro kopie IV-10, IV-12 a IV-13. Ema je hotová za pět minut bez chyby. Jako syntéza patra je to slabé. |
+
+Ema projde Hlubší síně zhruba za 35 minut. Nejvíc ji zabaví IV-8, IV-11, IV-12 a IV-14.
+
+### 8.3 Co z toho plyne
+
+Seřazeno podle dopadu.
+
+#### 8.3.1 Základní cesta zase stojí na Hlubších síních
+- **IV-3:** točité kameny jsou hlavní ovládání komnaty, na základní cestě je ale hráč nikdy nepotká.
+  Akt III je ukazuje jen v III-11 Prapečeti a v III-15, obě jsou nepovinné, a jmenuje je tam *kamínky*.
+- **IV-4:** první úloha chce Rovnost, kterou zavádí nepovinná III-9.
+- Je to stejný vzorec jako v kap. 4.5. Návrhy:
+  - IV-3 začne úlohou s jediným točitým kamenem a Echem: „Točitý kámen vybírá, odkud do kamene
+    teče světlo. Klikni na něj.“ Při prvním vstupu točité kameny krátce zapulzují (návrh z kap. 4.7
+    pro Prapečeť).
+  - IV-4 začne zkoumáním Rovnosti (čtyři kombinace jako v III-2), nebo aspoň Echem
+    „Rovnost je obrácená Výluka: svítí, když jsou obě světla stejná.“
+  - V Aktu III sjednotit slovo: *kamínek* → *točitý kámen*.
+
+#### 8.3.2 Točitý kámen neukazuje váhu vstupu
+- Vstupy se stejným písmenem (A₂ a A₁, O₂ a O₁, B₄ až B₁, D₄ až D₁) má točitý kámen
+  i čtečka obrazovky pod jedním jménem: kámen ukazuje „O“, čtečka říká „ze vstupu O“.
+- Ve volbě voliče operace (IV-13, úloha 2) leží obě O na jednom kameni, takže nastavení nejde přečíst
+  vůbec. Jinde pozná správnou volbu podle polohy aspoň ten, kdo desku vidí.
+- Oprava: písmeno s vahou jako v záhlaví tabulky (O₂, O₁) v `sourceLabel` (`MachineBoard.svelte`)
+  a „ze vstupu O s váhou 2“ v `sourceWords` (`machineEvents.ts`).
+
+#### 8.3.3 Ukázka kroku v Dílně je zase autopilot
+- Je to stejné jako v kap. 4.1. Nápověda 3 označí kámen, ale ne runu. Nikola na něj kliká, dokud zvýraznění
+  neskočí jinam: stavba úplné sčítačky za šest kliků, bez jediné myšlenky.
+- `hint()` správnou runu i zdroj zná (`{ node, rune }`, `{ socket, source }`), takže věta může být
+  konkrétní: „Do zvýrazněného kamene patří Výluka. Spodní číslice svítí, když svítí právě jedno světlo.“
+  Stačí i jen jméno runy.
+- Když je stroj hotový, má nápověda říct „Stroj je hotový. Spusť Zkoušku.“ a zvýraznit tlačítko Zkouška.
+  Teď dál opakuje větu o kameni.
+
+#### 8.3.4 Mapa po bráně patra skočí jinam
+- Po IV-7 otevře „Zpět na mapu“ Patro I s nabídkou I-8. Mapa ukazuje první otevřenou komnatu
+  napříč patry (`nextId` v `MapScreen.svelte`). Kdo Hlubší síně v Aktech I až III vynechal, a to je
+  většina třídy, ten čerstvě otevřené Hlubší síně IV na mapě nevidí.
+- Výsledek brány přitom slibuje „Na mapě se otevřely i Hlubší síně tohoto patra“.
+- Oprava: mapa se otevře na patře naposledy hrané komnaty. K tomu tlačítko *Do Hlubších síní*
+  na výsledku brány (kap. 4.7, zatím neudělané).
+
+#### 8.3.5 Na telefonu jsou točité kameny na prst moc malé
+- Na šířce 375 px má v IV-13 točitý kámen 19 px a kámen s runou 29 px. Popisky run a součástek
+  se nedají přečíst. Pro dotyk se doporučuje kolem 44 px.
+- Oprava: kolem točitých kamenů a kamenů neviditelný větší kruh pro klik. Na úzké desce nechat jen
+  symbol runy bez anglického jména. Časem možnost desku přiblížit.
+
+#### 8.3.6 Ema se nudí ve třech komnatách
+- **IV-3:** druhý a třetí řetěz opakují stejný vzor. Zkusit úlohu „najdi chybu“: řetěz, ve kterém je
+  jeden přenos natočený špatně, nebo točité kameny s přenosem z kterékoli sčítačky.
+- **IV-13 úloha 1:** zamíchat kódy jako v bráně, ať pořadí run není shora dolů.
+- **IV-15:** místo tří kopií jeden stroj, který spojí dvě součástky patra. Třeba volič operace,
+  kde kód 3 znamená A − B, nebo počítadlo s nulováním přes výhybku.
+
+#### 8.3.7 Drobnosti v textech a pro čtečku
+- „Lampy nesvítí správně v 3 řádcích“ → *ve 3* (před 2, 3 a 4 *ve*). Viz `machineEvents.ts`.
+- „světlo teče ze kamene 1“, „ze výstupu P“ → *z kamene*, *z výstupu*. Předložka se musí řídit
+  slovem, které po ní následuje (`MachineBoard.svelte`, `machineEvents.ts`).
+- Čtečka čte „Točitý kámen kamene 4“ i u součástky. Lépe „Točitý kámen sčítačky 4 u vstupu P“.
+  Dva točité kameny u jednoho kamene (rozdělovač, násobička) navíc zní stejně, chybí jméno vstupu.
+- Číslování: v IV-11 jdou ozvěny a sčítačky opačným směrem. Číslovat všechno stejně.
+- Kvíz ve smíšené komnatě má nadpis „Zkouška“, stejně jako tlačítko Zkouška. Lépe název z Kodexu
+  celé komnaty, třeba Velký počtář nebo Výhybka (`Quiz.svelte`).
+- Popisky vstupů pod sebou (IV-4, IV-14): váha „2“ jednoho krystalu a písmeno „B“ dalšího splývají
+  v „2 B“. Chce to víc místa.
+- IV-12: zadání rozdělit podle úlohy, ať se v první neříká „(a vlož runy)“.
+- IV-0: odečet „A + B“ prozradí odpověď na otázku Echa. Pro Nikolu je to ale opora, takže nechat,
+  nebo odečet do vyřešení nadepsat jen „lampy“.
+
+#### 8.3.8 Co funguje a má zůstat
+- **Cíle s Echem** (IV-5, IV-8 až IV-11) jsou nejlepší nový formát hry: hráč stav zažije a Echo
+  ho hned pojmenuje. Hodil by se i do dalších pater.
+- Past s Rozcestím v IV-1 a kvíz, který se na ni ptá.
+- Okénko „Stroj se spletl: A = 0, B = 0“ a označený řádek desky. Chyba má jméno, jak chtěla kap. 4.3.
+- Úloha navíc v bráně po ukázce kroku.
+- Svítící vodiče: kudy teče světlo, je vidět na první pohled.
+
+### 8.4 Priority
+
+| Úprava | Komu pomůže | Práce | Dopad | Kde v kódu |
+|---|---|---|---|---|
+| Váha vstupu na točitém kameni a ve čtečce | Ema, čtečka | malá | vysoký (IV-13 je jinak hádanka) | `sourceLabel` v `MachineBoard.svelte`, `sourceWords` v `machineEvents.ts` |
+| Mapa zůstane na patře poslední komnaty | všichni | malá | vysoký | `nextId` a `shown` v `MapScreen.svelte` |
+| Točité kameny a Rovnost na základní cestě | Nikola, Vojta | malá až střední | vysoký | `act4.ts` (IV-3, IV-4), `act3.ts` (kamínek) |
+| Ukázka kroku řekne runu a pošle ke Zkoušce | Nikola | malá v Dílně, střední všude | vysoký | `hint` v `machine.ts`, `SLOT_HINT` a `SOCKET_HINT`, `Level.svelte` |
+| Předložky a popisy pro čtečku | všichni, čtečka | malá | střední | `machineEvents.ts`, `MachineBoard.svelte` |
+| Větší plocha pro dotek | telefon, tablet | malá | střední | `MachineBoard.svelte` |
+| Výzva pro Emu (IV-3, IV-13, IV-15) | Ema | střední | střední | `act4.ts`, `generators4.ts`, `machines.ts` |
+| Číslování součástek, nadpis kvízu, mezery u popisků | všichni | malá | nižší | `machines.ts`, `Quiz.svelte`, `MachineBoard.svelte` |
+
+Rychlé výhry na jedno odpoledne: váha na točitém kameni, mapa, úvod točitých kamenů a Rovnosti,
+jméno runy v ukázce kroku a texty pro čtečku.
+
+**Hotovo 17. 11. 2026 (rychlé výhry):**
+
+- Točitý kámen ukazuje u vstupů se stejným písmenem váhu (O₂, O₁) písmem popisků, čtečka říká
+  „ze vstupu O s váhou 2“ (`machineWords.ts`).
+- Mapa se otevře na patře naposledy hrané komnaty, po návratu odjinud na naposledy prohlíženém.
+  Když je základní cesta hotová, ukáže Vstoupit u nejbližší Hlubší síně zobrazeného patra.
+- IV-3 začíná řetězem s jediným točitým kamenem a Echo ho představí. Nenastavené točité kameny
+  na začátku úlohy třikrát zapulzují. IV-4 je smíšená komnata a začíná zkoumáním Rovnosti.
+  V Aktu III se kamínkům říká točité kameny.
+- Ukázka kroku v Dílně a v Bráně řekne runu i její zákon („Do zvýrazněného kamene patří Výluka:
+  svítí, když svítí právě jedno světlo.“), u točitého kamene zdroj světla. Když je stroj hotový,
+  řekne „Spusť Zkoušku“ a tlačítko Zkouška se rozzáří. Text se mění s každým tahem.
+- Předložky: *ve 3 řádcích*, *ve 2. kroku*, *z kamene*, *z výstupu*, *ve druhém sloupci* (Dílna, Brána,
+  Kaskáda). Čtečka u točitého kamene řekne, kde sedí („u vstupu P úplné sčítačky 2“, „u kamene 3,
+  horní vstup“).
+
+Zbývá: větší plocha pro dotek, výzva pro Emu (IV-3, IV-13, IV-15), číslování součástek v IV-11,
+nadpis kvízu ve smíšených komnatách a mezery u popisků vstupů.
+
+### 8.5 Jak to ověřit se třídou
+- **Předpověď simulace:** nejvíc ukázek kroku bude ve stavbě IV-2, v IV-3, IV-4 a IV-6.
+  V IV-7 přibude úloha navíc hlavně u Sčítačky.
+- **Krátký test bez hry:** dvě sčítačky vedle sebe sčítají 01 a 11. Co ukáže každá lampa a kudy
+  teče přenos? Rozliší, kdo řetěz pochopil a kdo jen opakoval vzor „od souseda“.
+
+---
+
+## 9. Akt III: Zahrada Bran v prohlížeči
+
+### 9.0 Jak jsem hrál
+
+- Celé patro III-0 až III-15 jsem zahrál v prohlížeči. Začal jsem s postupem, ve kterém je hotová
+  základní cesta Aktů I a II, ale žádná Hlubší síň.
+- Hrál jsem už s opravami z kap. 8: ukázka kroku jmenuje runu a její zákon, mapa zůstává na patře.
+- Ema hraje všechno, Vojta základní cestu a část Hlubších síní, Nikola základní cestu.
+  - Za Nikolu jsem dělal typické chyby: Průchod místo Obraceče, Rozcestí bez Obraceče, zapomenutý
+    řádek 1 1 na desce. Taky jsem bral ukázku kroku.
+- Okno 1110 × 1265 (tablet na výšku). Na telefonu 375 × 812 jsem zkusil III-10 a III-12.
+- Kap. 2 a 3 popisují stejné patro ze simulace podle textů. Tahle kapitola zapisuje, co se při hraní
+  ukázalo jinak nebo nově.
+
+### 9.1 Průchod základní cestou (8 komnat)
+
+| Komnata | Ema | Vojta | Nikola |
+|---|---|---|---|
+| **III-0 Cesta světla** | Jeden dotek. | „Do cest se tu vkládají runy“ ho naladí. | Jeden dotek a úspěch. |
+| **III-1 Obraceč** | Napoprvé. | Dva Obraceče za sebou se zruší a Echo to řekne přesně ve chvíli, kdy to vidí. | První klik do kamene dá Průchod a Zkouška padne („Lampa nesvítí správně ve 2 řádcích“). Druhý klik dá Obraceč a jde to. |
+| **III-2 Pouto** | Čtyři kombinace za tři doteky. | „Prší a fouká“ sedí. | Kliká na přeskáčku, ale deska objevů se plní. Desku zákona vyplní správně. Vstupy se při vyplňování nedají přepínat, takže je to opravdu vzpomínka. Kvíz „Kolik řádků má deska pro 4 vstupy?“ tipne 8, pak 16. |
+| **III-3 Rozcestí** | Stejný formát podruhé. | Kino nebo divadlo, potěší. | Zapomene na řádek 1 1. Hláška řekne přesný řádek („Řádek A světlo, B světlo nesedí“) a Nikola ho opraví. |
+| **III-4 Jen jeden** | Potřetí stejný formát. | Odkaz na Soutok je aha. | V kvízu o Soutoku zvolí „celý součet 10“. Nápověda ho vrátí ke spodní číslici. |
+| **III-5 Které pravidlo?** | Pět desek za minutu. | V pohodě. | Runu pozná podle desky. Kvíz je stejná otázka jako v III-2, jen s jiným počtem vstupů. |
+| **III-6 Řetězy** | Baví ji. | Nápověda 2 pomůže. | Dvě Zkoušky naslepo (Rozcestí a Průchod, Rozcestí a Obraceč), pak se rozzáří Nápověda. Ukázka kroku teď řekne „Do zvýrazněného kamene patří Pouto: svítí, jen když svítí obě světla.“ Všechny čtyři řetězy projde, už ne úplně naslepo. **Z vrcholu frustrace (kap. 2) je zvládnutelná komnata.** |
+| **III-7 Brána Zahrady** | Bez chyby. | Zvládne. | V Desce obvod sám prochází řádky a lampa ukazuje odpověď, Nikola ji jen přepíše. Kameny s ukázkou kroku a jednou úlohou navíc. Závoj podle desky. |
+
+- **III-6 a Rovnost:** v mém průchodu byl třetí řetěz Výluka a za ní Obraceč, tedy Rovnost. Hra ji ale
+  nepojmenuje, Echo po něm mluví už o větvení. Navíc se třetí řetěz losuje ze tří (`genIII6`), takže
+  Rovnost padne jen v každém třetím vstupu. Kdo jde jen základní cestou, potká jméno Rovnost až v IV-4.
+- Nálada: Ema 7/10, Vojta 9/10, Nikola 7/10. Žádná komnata už nemá „vrchol frustrace“.
+- Čas: Ema 12 min, Vojta 25 min, Nikola 40 min.
+
+**Model paměti po Aktu III**
+
+| Pojem | Ema | Vojta | Nikola |
+|---|---|---|---|
+| Obraceč, Pouto, Rozcestí, Výluka | ●●● | ●●● | ●●○ |
+| Deska zákona (číst, vyplnit) | ●●● | ●●● | ●●○ (vyplní z lampy) |
+| Skládání run, Zlomené pouto, Zavřené rozcestí | ●●● | ●●○ | ●●○ (jména run z ukázky kroku) |
+| Rovnost | ●●○ (pozná ji, ale nemá jméno) | ●○○ | ○○○ |
+
+### 9.2 Hlubší síně (Ema celé, Vojta zčásti)
+
+| Komnata | Postřeh |
+|---|---|
+| III-8 Zrcadla | Dvě desky vyjdou stejně, ale aha věta „Stejná deska jako u prvního obvodu. Zrcadlo!“ zmizí po 1,6 s, když začne další část. Vojta ji nedočte. Desky obou obvodů se dají opsat z lampy (viz 9.3.2). |
+| III-9 Rovnost a důsledek | Výborný kvíz „Kdy neplatí ‚Když prší, je mokro‘?“: Vojta nejdřív zvolí „neprší a je mokro“, typickou chybu. |
+| III-10 Hlas většiny | Osm kombinací za sedm doteků, pět kamenů jde rozumem. Kvíz začíná „Ve kolika řádcích“, správně „V kolika“. |
+| III-11 Prapečeť | Točité kameny jsou malá kolečka u runy (26 px) a v Bráně na rozdíl od Dílny nepulzují. Ema je najde až po nápovědě 1, stejně jako v kap. 3. |
+| III-12 Masky | Komnata odměňuje nejmenší masku pro daný nápis. Zadání „Nech svítit jen pravou čtveřici“ a kvíz („AND s 0000 1111“) přitom učí obecnou masku, která platí pro jakýkoli nápis. Kdo masku nastaví podle zadání, ztratí pečeť přesnosti. |
+| III-13 Tajná řeč | Pětkrát za sebou stejný klíč do masky, 25 kliků stejné práce. Písmena C a H hra cestou neukáže, výsledek je jen osm bitů. Pointa „E, C, H, O. To jsem já.“ přijde celá až na konci. Pro Vojtu je to pořád nejsilnější chvíle patra, jen by mohla přicházet písmeno po písmenu. |
+| III-14 Méně je víc | Pěkný obraz: starý obvod, šipka, jeden kámen. Ema ho řeší přes zrcadla, Vojta zkoušením. |
+| III-15 Velká brána | Závoj se sedmi runami, Prapečeť s úlohou navíc a maska. Pro Emu dobrá syntéza patra. |
+
+### 9.3 Co z toho plyne
+
+Seřazeno podle dopadu.
+
+#### 9.3.1 Maska na telefonu nefunguje
+- Na šířce 375 px přetéká řada nápisu i výsledku doprava a osmý krystal je useknutý. Popisky NÁPIS
+  a VÝSLEDEK překrývají krystaly.
+- Maska se zalomí do dvou řad po čtyřech, takže krystaly masky už nestojí pod krystaly nápisu. Celá
+  myšlenka masky, krystal pod krystalem, se tím ztratí. Týká se III-12, III-13 a III-15.
+- Oprava: na úzké obrazovce zmenšit krystaly všech tří řad stejně (osm vedle sebe se vejde zhruba
+  při 36 px) a popisky řad dát nad řadu, ne vedle ní.
+
+#### 9.3.2 Deska zákona v bráně se dá opsat
+- Při vyplňování desky obvod sám prochází řádky a lampa ukazuje, co k ní doteče. Pro III-2 až III-4
+  je to správně: hráč zapisuje, co právě viděl.
+- V bráně patra (III-7 Deska) a v III-8 ale nápověda říká „pusť v duchu světlo obvodem“, a přitom
+  lampa odpověď ukáže. Zkouška pak měří opisování, ne skládání run.
+- Návrh: v bráně a v Zrcadlech nechat obvod procházet řádky i svítit runami, jen poslední lampu zakrýt
+  závojem, dokud hráč desku nepotvrdí. Hráč pak skládá výsledek z run, které vidí.
+
+#### 9.3.3 Rovnost má jméno až v Hlubších síních
+- Základní cesta Rovnost postaví (III-6, Výluka a Obraceč), ale nepojmenuje, a to jen když ji los
+  vybere (třetí řetěz je jedna ze tří možností v `genIII6`).
+- Návrh: třetí řetěz vždy Výluka a Obraceč a po něm věta Echa: „Výluka a za ní Obraceč: lampa svítí,
+  když jsou vstupy stejné. Lumenité tomu říkali Rovnost.“ Losovat se může větvení. Pak IV-4 Rovnost
+  jen připomene.
+
+#### 9.3.4 Smíšená komnata utne klíčovou větu Echa
+- Po dokončení části řekne Echo její závěr („Lampa svítila jen jednou. Teď to zapiš na desku zákona.“,
+  „Stejná deska jako u prvního obvodu. Zrcadlo!“) a za 1,6 s ho nahradí úvod další části.
+  Vypisování přitom trvá 22 ms na znak, takže na přečtení zbývá půl vteřiny.
+- Týká se všech smíšených komnat ve všech patrech. Oprava: závěr části a úvod další říct jako dvě
+  repliky za sebou, ať druhá přijde až po „dál“ nebo po přečtení (`nextPart` v `Level.svelte`).
+
+#### 9.3.5 Tajná řeč a Masky
+- **Tajná řeč:** pod výsledkem ukazovat číslo a písmeno (69 · E) a nahoře skládat slovo, jak písmena
+  přibývají: E, EC, ECH… Pointa pak roste s každou úlohou. Klíč by po zašifrování mohl v masce
+  zůstat, ať hráč při rozšifrování zažije, že stačí tentýž klíč.
+- **Masky:** buď počítat ideál podle masky, kterou zadání popisuje (pravá čtveřice = 0000 1111), nebo
+  úlohu postavit tak, aby obecná maska byla nutná: stejná maska se vyzkouší na dvou nápisech.
+
+#### 9.3.6 Drobnosti
+- Točité kameny v Bráně (III-11, III-15) nepulzují jako v Dílně. Pulz zkopírovat do `Board.svelte`.
+- Texty:
+  - „Ve kolika řádcích“ → *V kolika řádcích* (III-10);
+  - `qTableRows` píše „se 5 vstupy“ → *s 5 vstupy*;
+  - stejná otázka o počtu řádků je v III-2 i v III-5. Druhá by mohla být jiná, třeba „Kolik řádků
+    přibude s dalším vstupem?“.
+- Nadpis kvízu ve smíšených komnatách je „Zkouška“ (III-2, III-3, III-4, III-8, III-9, III-10), stejně
+  jako tlačítko Zkouška (kap. 8.3.7).
+- Čtečka: kameny v Bráně bez točitých kamenů mají všechny popis „Prázdný kámen.“ bez čísla. Ve větvení
+  a v Hlasu většiny je nejde rozlišit.
+- Pečeť přesnosti počítá v každém archetypu jinak pojmenovanou věc: *pokusy* v Bráně, *kroky* ve
+  smíšených komnatách, *tahy* v Dílně a v Masce. Sjednotit, nebo aspoň v Dílně psát *pokusy* jako
+  v Bráně, protože obojí počítá Zkoušky.
+- Z kap. 4 a 5 dál čeká: „Desku znám“ pro Emu v III-2 až III-4, zkoumání větvení před jeho stavbou
+  v III-6 a tlačítko *Do Hlubších síní* po bráně patra.
+
+#### 9.3.7 Co funguje a má zůstat
+- Rytmus zkoumání, deska zákona a kvíz v III-2 až III-4: Nikola v něm nemá pocit, že hra „tvrdí“
+  něco, co neviděl.
+- Hláška chyby na desce jmenuje řádek („Řádek A světlo, B světlo nesedí“).
+- Ukázka kroku se jménem a zákonem runy: III-6 už není vrchol frustrace.
+- Kvíz s Důsledkem a typickou chybou „neprší a je mokro“.
+- III-14: starý obvod, šipka a jediný kámen. Zjednodušení je vidět, ne jen řečeno.
+
+### 9.4 Priority
+
+| Úprava | Komu pomůže | Práce | Dopad | Kde v kódu |
+|---|---|---|---|---|
+| Maska na telefonu | všichni na telefonu | malá | vysoký | `src/ui/gate/Mask.svelte` (CSS) |
+| Závěr části a úvod další jako dvě repliky | Vojta, všechny smíšené komnaty | malá | střední | `nextPart` v `Level.svelte` |
+| Jméno Rovnosti v III-6 | Nikola, Vojta | malá | střední | `act3.ts`, `genIII6` |
+| Lampa pod závojem v desce brány a Zrcadel | Nikola, Ema | střední | střední | `Desk.svelte`, prezentace části |
+| Písmena v Tajné řeči | Vojta | malá až střední | střední | `Mask.svelte`, `secretSpeech` |
+| Ideál Masek podle zadání | Ema | malá | nižší | `mask.ts` (`par`), `act3.ts` |
+| Pulz točitých kamenů v Bráně, texty, čtečka | všichni | malá | nižší | `Board.svelte`, `act3.ts`, `quizzes.ts` |
+
+Rychlé výhry na jedno odpoledne: maska na telefonu, dvě repliky při přechodu části, Rovnost v III-6,
+pulz točitých kamenů v Bráně a texty.
+
+**Hotovo 17. 11. 2026 (rychlé výhry):**
+
+- Maska na telefonu: popisky řad jsou nad řadami a nápis, maska i výsledek mají osm stejně širokých
+  sloupců, takže krystal masky stojí přesně pod svým krystalem (`Mask.svelte`).
+- Přechod části smíšené komnaty: úvod další části se přidá za závěr předchozí a Echo na něj přejde
+  samo, až jde závěr přečíst (75 ms na znak, aspoň 3 s). Kliknutím na dál hned (`readOn` v `Level.svelte`).
+- III-6: třetí řetěz je vždy Rovnost a Echo ji po něm pojmenuje. Losuje se pořadí Zlomeného pouta
+  a Zavřeného rozcestí a větvení. IV-4 na Rovnost z Řetězů navazuje.
+- Točité kameny v Bráně na začátku úlohy třikrát zapulzují jako v Dílně.
+- Texty: *V kolika řádcích* (III-10), *s 5 vstupy* (předložka podle čísla, `withNum`), III-5 má novou
+  otázku (v kolika řádcích svítí Pouto, nebo Rozcestí se 3 či 4 vstupy).
+- Čtečka čísluje prázdné kameny v Bráně („Prázdný kámen 2 z 3“).
+
+Zbývá: lampa pod závojem v desce brány a Zrcadel, písmena v Tajné řeči, ideál Masek, nadpis kvízu
+ve smíšených komnatách a jednotný název pro pokusy v pečeti přesnosti.

@@ -82,6 +82,8 @@
   /** Roste s každým chybným potvrzením Kaskády (otřese sloupcem). */
   let wobble = $state(0);
   let partTimer: ReturnType<typeof setTimeout> | undefined;
+  /** Po přechodu části: Echo samo přejde od závěru části k úvodu další, až se závěr dá přečíst. */
+  let readTimer: ReturnType<typeof setTimeout> | undefined;
 
   const echo = new Echo();
 
@@ -147,6 +149,23 @@
   };
 
   let game = $state.raw(createGame());
+
+  /**
+   * Ukázka kroku slovy (Dílna a Brána): mění se s každým tahem, takže ji Echo po tahu řekne znovu,
+   * třeba „Do zvýrazněného kamene patří Výluka…“ a nakonec „Stroj je hotový. Spusť Zkoušku.“
+   */
+  const stepText = $derived('stepHint' in game ? game.stepHint : null);
+  let saidStep: string | null = null;
+  $effect(() => {
+    const text = stepText;
+    if (!text || text === saidStep) return;
+    saidStep = text;
+    untrack(() => {
+      echo.say([text], 'hint');
+      announce(text);
+    });
+  });
+
   /** Dohrané části komnaty (u smíšené brány všechny, jinak jediná): ve volné hře se jimi listuje. */
   const finished: ReturnType<typeof createGame>[] = [];
 
@@ -207,12 +226,33 @@
 
   $effect(() => () => {
     clearTimeout(partTimer);
+    clearTimeout(readTimer);
   });
+
+  /**
+   * Echo samo přejde na další repliku, až jde ta současná přečíst (vypisování a čtení zhruba 75 ms
+   * na znak, aspoň 3 s), a tak dál až k replice s pořadím until. Klik na dál nebo nová replika ho zastaví.
+   */
+  function readOn(serial: number, until: number, elapsed = 0) {
+    clearTimeout(readTimer);
+    if (echo.index >= until) return;
+    const ms = Math.max(3000, plainText(echo.current ?? '').length * 75) - elapsed;
+    readTimer = setTimeout(
+      () => {
+        if (echo.serial !== serial || !echo.hasMore) return;
+        echo.next();
+        readOn(echo.serial, until);
+      },
+      Math.max(0, ms),
+    );
+  }
 
   /** Smíšená brána: po splněné části přijde další hádanka. */
   function nextPart() {
     const done = level.echo.solved;
     if (done.length) echo.say(done);
+    const doneSerial = echo.serial;
+    const said = Date.now();
     pulse += 1;
     sound.playGrind(0.8);
     stepFx('.row', '.board', '.register', '.wall');
@@ -227,7 +267,12 @@
         slips = 0;
         nudgeHint = false;
         game = createGame();
-        echo.say(level.echo.intro);
+        // Závěr části často nese hlavní myšlenku („Stejná deska… Zrcadlo!“): úvod další části se
+        // za něj jen přidá a Echo na něj přejde samo, až jde závěr přečíst (vypisování a čtení).
+        if (done.length && echo.serial === doneSerial) {
+          echo.add(level.echo.intro);
+          readOn(doneSerial, done.length, Date.now() - said);
+        } else echo.say(level.echo.intro);
         announce(`Část ${partIndex + 1} z ${parts.length}: ${level.title}. ${level.presentation.task}`);
       },
       settings.reducedMotion ? 400 : 1600,
@@ -325,7 +370,9 @@
         break;
       case 'hint': {
         nudgeHint = false;
-        const text = level.hints[e.level - 1] + (e.extra ? ' Na konec pak přibude ještě jedna podobná zkouška, tu zkus bez ukázky.' : '');
+        const step = e.level >= 3 ? stepText : null;
+        if (step) saidStep = step;
+        const text = (step ?? level.hints[e.level - 1]) + (e.extra ? ' Na konec pak přibude ještě jedna podobná zkouška, tu zkus bez ukázky.' : '');
         recordHint(room.id, e.level >= 3);
         echo.say([text], 'hint');
         announce(`Nápověda ${e.level}: ${text}`);

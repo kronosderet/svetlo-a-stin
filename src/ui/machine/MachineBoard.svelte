@@ -21,7 +21,8 @@
   import { RUNE_KODEX, RUNE_MODERN, RUNE_NAME } from '../../content/runes';
   import { progress } from '../../game/progress.svelte.ts';
   import { settings } from '../../game/settings.svelte.ts';
-  import { partWords, sourceWords } from '../screens/level/machineEvents';
+  import { partWords } from '../screens/level/machineEvents';
+  import { fromWords, seatWords } from '../../game/machineWords';
 
   interface Props {
     machine: Machine;
@@ -172,13 +173,20 @@
     return nodeOut(g, Math.max(0, outputsOf(g).indexOf(src)));
   }
 
-  /** Krátký název zdroje na točitém kameni. */
-  function sourceLabel(src: string): string {
-    if (src === SHADOW || src === LIGHT) return src;
+  /**
+   * Krátký název zdroje na točitém kameni. Vstupy se stejným písmenem (A₂ a A₁, O₂ a O₁) dostanou
+   * váhu jako index, jinak by kámen ukazoval u obou voleb totéž.
+   */
+  function sourceLabel(src: string): { text: string; sub: string } {
+    if (src === SHADOW || src === LIGHT) return { text: src, sub: '' };
     const inp = machine.inputs.find((i) => i.id === src);
-    if (inp) return inp.label ?? inp.id;
+    if (inp) {
+      const name = inp.label ?? inp.id;
+      const shared = machine.inputs.filter((i) => (i.label ?? i.id) === name).length > 1;
+      return { text: name, sub: shared && weightOf[inp.id] ? String(weightOf[inp.id]) : '' };
+    }
     const [id, out] = src.split('.');
-    return `${nodeNo(id)}${out ?? ''}`;
+    return { text: `${nodeNo(id)}${out ?? ''}`, sub: '' };
   }
 
   type Wire = { d: string; on: boolean; dead: boolean };
@@ -262,10 +270,7 @@
   }
 
   function seatLabel(s: Seat): string {
-    const owner = s.owner.startsWith('lamp:')
-      ? `lampy ${machine.lamps.find((l) => lampKey(l.id) === s.owner)?.label}`
-      : `kamene ${nodeNo(s.owner)}`;
-    return `Točitý kámen ${owner}: ${s.src ? `světlo teče ze ${sourceWords(machine, s.src)}` : 'nenastavený'}. Kliknutím pootočíš.`;
+    return `Točitý kámen ${seatWords(machine, s.key)}: ${s.src ? `světlo teče ${fromWords(machine, s.src)}` : 'nenastavený'}. Kliknutím pootočíš.`;
   }
 
   const translated = (r: Rune) => !!RUNE_MODERN[r] && (settings.alwaysDigits || progress.kodex.includes(RUNE_KODEX[r] ?? ''));
@@ -315,11 +320,14 @@
         class="socket"
         class:set={!!s.src}
         class:lit={!!s.src && values[s.src] === 1}
+        class:letter={!!s.src && machine.inputs.some((i) => i.id === s.src)}
         class:hl={highlight && 'socket' in highlight && highlight.socket === s.key}
         disabled={!canPlace}
         aria-label={seatLabel(s)}
         onclick={() => onSocket?.(s.key)}
-      >{s.src ? sourceLabel(s.src) : '·'}</button>
+      >
+        {#if s.src}{@const lab = sourceLabel(s.src)}{lab.text}{#if lab.sub}<sub>{lab.sub}</sub>{/if}{:else}·{/if}
+      </button>
     </div>
   {/each}
 
@@ -653,6 +661,27 @@
   }
   .socket.lit {
     color: var(--lumen);
+  }
+  /* Vstup (A, O…) písmem popisků, ať se písmeno O neplete s nulou stálého stínu. */
+  .socket.letter {
+    font-family: var(--font-display);
+    font-size: 13px;
+  }
+  .socket sub {
+    font-size: 0.8em;
+    line-height: 0;
+    vertical-align: -0.3em;
+  }
+  /* Nenastavený točitý kámen se na začátku úlohy třikrát připomene: je malý a snadno se přehlédne. */
+  .socket:not(.set):not(:disabled):not(.hl) {
+    animation: invite 1.4s ease-in-out 3;
+  }
+  @keyframes invite {
+    50% {
+      transform: scale(1.35);
+      border-color: var(--lumen);
+      box-shadow: 0 0 10px rgba(255, 217, 138, 0.6);
+    }
   }
   .socket:disabled {
     cursor: default;

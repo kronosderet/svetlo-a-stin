@@ -19,7 +19,6 @@ import {
 import {
   chainTask,
   compare1,
-  compareTarget,
   countScript,
   counter,
   fullAdder,
@@ -59,7 +58,6 @@ const bench = (task: string, more: Partial<Presentation> = {}): Presentation => 
 const half1 = halfAdder('and', TWO);
 const half2 = halfAdder(TWO, TWO);
 const fullBuild = fullAdder({ s: TWO, c2: TWO, c: TWO });
-const cmp1 = compare1(['and', 'or', 'xor', 'xnor']);
 const counterBuild = counter(
   [
     ['h2.S', 'h1.S', 'h0.S'],
@@ -225,7 +223,7 @@ const levels: LevelDef[] = [
     id: 'IV-3',
     title: 'Řetěz sčítaček',
     kind: 'machine',
-    config: { tasks: [chainTask(2), chainTask(4), chainTask(3, 1)] },
+    config: { tasks: [chainTask(2, 0, false), chainTask(4), chainTask(3, 1)] },
     presentation: bench(
       'Úplná sčítačka je teď jediný kámen. Natoč točité kameny přenosu tak, aby lampy ukázaly, co žádá brána. Pak spusť Zkoušku.',
     ),
@@ -237,6 +235,7 @@ const levels: LevelDef[] = [
     echo: {
       intro: [
         'Úplnou sčítačku z minulé komnaty Lumenité zabalili do jednoho kamene.',
+        'Malé kolečko u vstupu P je točitý kámen. Vybírá, odkud do sčítačky přitéká přenos. Klikni na něj a sleduj lampy.',
         'Sčítačky vedle sebe jsou sloupce Kaskády. Kudy teče přenos?',
       ],
       step: {
@@ -270,44 +269,60 @@ const levels: LevelDef[] = [
   {
     id: 'IV-4',
     title: 'Porovnávač',
-    kind: 'machine',
-    config: {
-      tasks: [
-        {
-          mode: 'build',
-          machine: cmp1,
-          target: compareTarget(cmp1, 1),
-          rule: 'Lampa svítí, když A = B.',
-        },
-        compareTask(true),
-        compareTask(false),
-      ],
-    },
-    presentation: bench('Vlož runy tak, aby lampa svítila přesně podle svého jména. Pak spusť Zkoušku.'),
-    hints: [
-      'Porovnávej po sloupcích: jsou krystaly A a B v jednom sloupci stejné?',
-      'Rovnost svítí, když jsou oba krystaly stejné. Čísla jsou stejná, když se shodne každý sloupec, a to pohlídá Pouto.',
-      SLOT_HINT,
-    ],
+    kind: 'mixed',
     echo: {
       intro: ['Porovnávač. Stroj, který pozná dvě stejná čísla.'],
-      step: {
-        0: 'Rovnost: stejná světla, lampa svítí.',
-        1: 'Shodne se každý sloupec? Pouto se zeptá obou naráz.',
-        2: 'Různá čísla: Výluka najde rozdíl a Rozcestí stačí jeden.',
-      },
-      wrong: 'Lampa se plete. Najdi na desce řádek, kde svítí jinak.',
-      complete: 'Porovnávač pozná stejná i různá čísla.',
       solved: ['Porovnávač hlídá každý sloupec zvlášť.', 'Počítač takhle pozná třeba správné heslo.'],
-      skill: 'Všechny tři porovnávače napoprvé.',
+      skill: 'Bez jediného zbytečného kroku.',
     },
-    quiz: [
+    parts: [
       {
-        question: 'Porovnávač dvou oktáv (osmibitových čísel) má v každém sloupci jednu Rovnost. Kolik jich je?',
-        options: ['8', '1', '16', '2'],
-        correct: 0,
-        hint: 'Kolik sloupců mají dvě oktávy pod sebou?',
-        explain: 'Jedna Rovnost na sloupec, tedy osm. Pouto pak chce světlo ze všech osmi naráz.',
+        id: 'IV-4',
+        title: 'Rovnost',
+        kind: 'machine',
+        config: { tasks: [{ mode: 'explore', machine: compare1('xnor') }] },
+        presentation: bench('Rovnost z Řetězů je tu jediný kámen. Přepínej krystaly A a B. Kdy lampa svítí?'),
+        hints: [
+          'Přepínej krystaly po jednom a sleduj lampu.',
+          'Kombinace jsou čtyři. Lampa svítí ve dvou z nich. Co mají společného?',
+          'Zvýrazněný krystal vede k nové kombinaci.',
+        ],
+        echo: {
+          intro: ['Rovnost. V Řetězech to byla Výluka a za ní Obraceč, tady je to jeden kámen. Kdy svítí?'],
+          found: { 2: 'Jedno světlo a jeden stín: lampa mlčí.' },
+          solved: ['Rovnost svítí, když jsou obě světla stejná. Je to obrácená Výluka.'],
+        },
+      },
+      {
+        id: 'IV-4',
+        title: 'Porovnávač',
+        kind: 'machine',
+        config: { tasks: [compareTask(true), compareTask(false)] },
+        presentation: bench('Vlož runy tak, aby lampa svítila přesně podle svého jména. Pak spusť Zkoušku.'),
+        hints: [
+          'Porovnávej po sloupcích: jsou krystaly A a B v jednom sloupci stejné?',
+          'Rovnost svítí, když jsou oba krystaly stejné. Čísla jsou stejná, když se shodne každý sloupec, a to pohlídá Pouto.',
+          SLOT_HINT,
+        ],
+        echo: {
+          intro: ['Teď dvoubitová čísla. Shodne se každý sloupec?'],
+          step: {
+            0: 'Shodne se každý sloupec? Pouto se zeptá obou naráz.',
+            1: 'Různá čísla: Výluka najde rozdíl a Rozcestí stačí jeden.',
+          },
+          wrong: 'Lampa se plete. Najdi řádek, kde svítí jinak.',
+          complete: 'Porovnávač pozná stejná i různá čísla.',
+          solved: [],
+        },
+        quiz: [
+          {
+            question: 'Porovnávač dvou oktáv (osmibitových čísel) má v každém sloupci jednu Rovnost. Kolik jich je?',
+            options: ['8', '1', '16', '2'],
+            correct: 0,
+            hint: 'Kolik sloupců mají dvě oktávy pod sebou?',
+            explain: 'Jedna Rovnost na sloupec, tedy osm. Pouto pak chce světlo ze všech osmi naráz.',
+          },
+        ],
       },
     ],
     kodex: 'porovnavac',

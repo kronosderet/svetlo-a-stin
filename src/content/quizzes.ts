@@ -3,7 +3,7 @@
  * „šestnáct“. Pojmové otázky (1 + 1 = 10, barva #FF8800…) zůstávají v obsahu pevné.
  * Každý generátor vrací správnou odpověď a tři různé špatné; pořadí zamíchá hra.
  */
-import { plural } from '../game/text';
+import { inNum, plural, withNum } from '../game/text';
 import { int, pick, shuffled, type Rng } from './random';
 import type { QuizQuestion } from './types';
 
@@ -411,10 +411,32 @@ export function qFastMul(rng: Rng): QuizQuestion {
 // --- Akt III ---
 
 /** III: deska zákona pro n vstupů má 2ⁿ řádků. */
+/** III-5: v kolika řádcích desky svítí Pouto, nebo Rozcestí s víc vstupy. */
+export function qTableLit(rng: Rng): QuizQuestion {
+  const n = int(rng, 3, 4);
+  const rows = 2 ** n;
+  if (pick(rng, [true, false])) {
+    return make(
+      `Pouto ${withNum(n)} ${n} vstupy pustí světlo, jen když svítí všechny. V kolika řádcích desky zákona svítí lampa?`,
+      1,
+      [n, rows / 2, rows - 1],
+      'Kolik řádků desky má světlo na všech vstupech?',
+      `Všechny vstupy svítí jen v jediném řádku, ${'1'.repeat(n)}. V ostatních ${rows - 1} řádcích lampa mlčí.`,
+    );
+  }
+  return make(
+    `Rozcestí ${withNum(n)} ${n} vstupy pustí světlo, když svítí aspoň jeden. V kolika řádcích desky zákona svítí lampa?`,
+    rows - 1,
+    [rows, n, rows / 2],
+    'Ve kterém řádku desky mlčí všechny vstupy?',
+    `Lampa mlčí jen v řádku ${'0'.repeat(n)}. Svítí tedy ${inNum(rows - 1)} ${rows - 1} řádcích z ${rows}.`,
+  );
+}
+
 export function qTableRows(rng: Rng): QuizQuestion {
   const n = int(rng, 3, 5);
   return make(
-    `Kolik řádků má deska zákona pro runu se ${n} vstupy?`,
+    `Kolik řádků má deska zákona pro runu ${withNum(n)} ${n} vstupy?`,
     2 ** n,
     [2 * n, 2 ** (n - 1), 2 ** (n + 1), n + 1],
     'Každý řádek je jedna kombinace vstupů. Kolik kombinací má n krystalů?',

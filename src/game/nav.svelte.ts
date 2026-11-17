@@ -14,9 +14,14 @@ export const ui = $state({
   kodexOpen: false,
   kodexFocus: null as string | null,
   settingsOpen: false,
+  /** Komnata, ze které hráč právě odešel (mapa pak ukáže její patro). */
+  lastRoom: null as string | null,
+  /** Patro, které mapa ukazovala naposledy (index v ACTS). */
+  mapAct: null as number | null,
 });
 
 export function go(screen: Screen): void {
+  if (nav.screen.name === 'level' && screen.name !== 'level') ui.lastRoom = nav.screen.id;
   nav.screen = screen;
   ui.kodexOpen = false;
   try {

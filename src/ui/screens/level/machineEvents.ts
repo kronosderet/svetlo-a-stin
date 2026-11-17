@@ -11,24 +11,10 @@ import {
   type MachineTask,
 } from '../../../core/puzzles/machine';
 import { RUNE_NAME } from '../../../content/runes';
-import { plural } from '../../../game/text';
+import { inNum, plural } from '../../../game/text';
+import { fromWords, inputName, lampName, seatWords } from '../../../game/machineWords';
 import * as sound from '../../../audio/sound';
 import { sayComplete, type LevelCtx } from './context';
-
-const inputName = (m: Machine, id: string): string => m.inputs.find((i) => i.id === id)?.label ?? id;
-const lampName = (m: Machine, id: string): string => m.lamps.find((l) => l.id === id)?.label ?? id;
-
-/** Zdroj světla slovy (pro čtečku obrazovky). */
-export function sourceWords(m: Machine, src: string): string {
-  if (src === '0') return 'stálého stínu';
-  if (src === '1') return 'stálého světla';
-  if (m.inputs.some((i) => i.id === src)) return `vstupu ${inputName(m, src)}`;
-  const [id, out] = src.split('.');
-  const k = m.nodes.findIndex((g) => g.id === id);
-  const g = m.nodes[k];
-  if (g?.part && out) return `výstupu ${out} součástky ${k + 1}`;
-  return `kamene ${k + 1}`;
-}
 
 /** Co ukazují lampy: u čísel jejich hodnota, jinak lampa po lampě. */
 export function lampsWords(m: Machine, lamps: Record<string, number | null>): string {
@@ -95,8 +81,7 @@ export function onMachine(ctx: LevelCtx, ev: MachineEvent, state: MachineState):
       break;
     case 'wire': {
       sound.playTick();
-      const owner = ev.key.startsWith('lamp:') ? `Lampa ${lampName(m, ev.key.slice(5))}` : 'Točitý kámen';
-      ctx.announce(`${owner}: světlo teče ze ${sourceWords(m, ev.source)}.`);
+      ctx.announce(`Točitý kámen ${seatWords(m, ev.key)}: světlo teče ${fromWords(m, ev.source)}.`);
       break;
     }
     case 'wrong': {
@@ -107,12 +92,12 @@ export function onMachine(ctx: LevelCtx, ev: MachineEvent, state: MachineState):
       else if (task.script) {
         const which = f.lamps.map((id) => `lampa ${lampName(m, id)}`).join(' a ');
         const by = m.nodes.some((g) => g.part === 'flip') ? 'vstupy a tepem' : 'vstupy';
-        why = `Zkouška se zastavila v ${f.at + 1}. kroku: ${which} nesvítí správně. Projdi ten krok ${by} a sleduj, kudy světlo teče.`;
+        why = `Zkouška se zastavila ${inNum(f.at + 1)} ${f.at + 1}. kroku: ${which} nesvítí správně. Projdi ten krok ${by} a sleduj, kudy světlo teče.`;
       } else if (rowCount(n) > 8) {
         why = `Stroj se splete u ${rowWords(m, f.at)}. Nastav ty vstupy a sleduj, kudy světlo teče.`;
       } else {
         const k = f.count;
-        why = `Lampy nesvítí správně v ${k} ${plural(k, 'řádku', 'řádcích', 'řádcích')} desky. Přepni vstupy podle nich a sleduj, kudy světlo teče.`;
+        why = `Lampy nesvítí správně ${inNum(k)} ${k} ${plural(k, 'řádku', 'řádcích', 'řádcích')} desky. Přepni vstupy podle nich a sleduj, kudy světlo teče.`;
       }
       ctx.echo.say([ctx.said.wrongCount++ === 0 && level.echo.wrong && !f.empty ? level.echo.wrong : why]);
       ctx.announce(`Brána se nepohnula. ${why}`);

@@ -4,7 +4,7 @@ import type { TableEvent, TableState } from '../../../core/puzzles/table';
 import { tableOf } from '../../../core/puzzles/table';
 import { ARITY, runeTable } from '../../../core/logic';
 import { RUNE_NAME } from '../../../content/runes';
-import { plural } from '../../../game/text';
+import { plural, inNum } from '../../../game/text';
 import * as sound from '../../../audio/sound';
 import { sayComplete, type LevelCtx } from './context';
 
@@ -50,7 +50,7 @@ export function onGate(ctx: LevelCtx, ev: GateEvent, state: GateState): void {
       const k = ev.failed.length;
       const why = ev.empty
         ? 'Některý kámen je prázdný. Bez runy jím světlo neprojde.'
-        : `Lampa nesvítí správně v ${k} ${plural(k, 'řádku', 'řádcích', 'řádcích')} desky. Přepni vstupy podle nich a sleduj, kudy světlo teče.`;
+        : `Lampa nesvítí správně ${inNum(k)} ${k} ${plural(k, 'řádku', 'řádcích', 'řádcích')} desky. Přepni vstupy podle nich a sleduj, kudy světlo teče.`;
       ctx.echo.say([ctx.said.wrongCount++ === 0 && level.echo.wrong && !ev.empty ? level.echo.wrong : why]);
       ctx.announce(`Brána se nepohnula. ${why}`);
       break;

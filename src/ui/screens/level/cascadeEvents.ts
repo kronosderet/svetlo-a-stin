@@ -3,7 +3,9 @@ import * as sound from '../../../audio/sound';
 import { sayComplete, type LevelCtx } from './context';
 
 /** Sloupce Kaskády: v … sloupci, nad … sloupcem, do … sloupce. */
-const LOC = ['prvním', 'druhém', 'třetím', 'čtvrtém', 'pátém', 'šestém', 'sedmém', 'osmém'];
+/** „v prvním“, „ve druhém“… (sloupce zprava). */
+const LOC = ['v prvním', 've druhém', 've třetím', 've čtvrtém', 'v pátém', 'v šestém', 'v sedmém', 'v osmém'];
+const LOC_UP = LOC.map((w) => w[0].toUpperCase() + w.slice(1));
 const INS = ['prvním', 'druhým', 'třetím', 'čtvrtým', 'pátým', 'šestým', 'sedmým', 'osmým'];
 const GEN = ['prvního', 'druhého', 'třetího', 'čtvrtého', 'pátého', 'šestého', 'sedmého', 'osmého'];
 const FLOW = ['žádné světlo', 'jedno světlo', 'dvě světla', 'tři světla', 'čtyři světla', 'pět světel'];
@@ -38,8 +40,8 @@ export function cascadeWhy(ctx: LevelCtx, ev: Wrong, state: CascadeState): strin
     }
     if (sub) {
       return ev.expected
-        ? `Ve sloupci vpravo nebylo z čeho brát. Výpůjčku zapiš krystalem pod spodní řadu v ${LOC[c]} sloupci zprava.`
-        : `Sloupec vpravo si nepůjčoval. V ${LOC[c]} sloupci zprava výpůjčka být nemá.`;
+        ? `Ve sloupci vpravo nebylo z čeho brát. Výpůjčku zapiš krystalem pod spodní řadu ${LOC[c]} sloupci zprava.`
+        : `Sloupec vpravo si nepůjčoval. ${LOC_UP[c]} sloupci zprava výpůjčka být nemá.`;
     }
     return ev.expected
       ? `Ve sloupci vpravo se slila ${FLOW[ev.inflow]} a jedno přeteklo. Nad ${INS[c]} sloupcem zprava chybí krystal přenosu.`
@@ -47,20 +49,20 @@ export function cascadeWhy(ctx: LevelCtx, ev: Wrong, state: CascadeState): strin
   }
   if (sub) {
     if (ev.inflow < 0) {
-      return `V ${LOC[c]} sloupci zprava nemáš z čeho brát. Půjčené světlo tu váží dvě: ${ev.inflow === -1 ? '10 − 1 = 1' : '10 − 1 − 1 = 0'}.`;
+      return `${LOC_UP[c]} sloupci zprava nemáš z čeho brát. Půjčené světlo tu váží dvě: ${ev.inflow === -1 ? '10 − 1 = 1' : '10 − 1 − 1 = 0'}.`;
     }
-    return `V ${LOC[c]} sloupci zprava ${ev.inflow === 1 ? 'zbude jedno světlo' : 'nezbude nic'}.`;
+    return `${LOC_UP[c]} sloupci zprava ${ev.inflow === 1 ? 'zbude jedno světlo' : 'nezbude nic'}.`;
   }
   const bitsInWall = cfg.bits ?? cfg.width;
   if (cfg.carries === 'none' && c >= bitsInWall) {
     return `Do ${GEN[c]} sloupce zprava přeteklo světlo ze sousedního sloupce. Rozsviť ho tam.`;
   }
   if (ev.inflow >= 2) {
-    return `V ${LOC[c]} sloupci zprava se slévají ${FLOW[ev.inflow]}. Do jednoho krystalu se nevejdou: co zůstane dole a co přeteče?`;
+    return `${LOC_UP[c]} sloupci zprava se slévají ${FLOW[ev.inflow]}. Do jednoho krystalu se nevejdou: co zůstane dole a co přeteče?`;
   }
   return ev.inflow === 1
-    ? `V ${LOC[c]} sloupci zprava je jedno světlo. Nikam nepřetéká, zůstane dole.`
-    : `V ${LOC[c]} sloupci zprava není žádné světlo. Krystal dole má zůstat zhasnutý.`;
+    ? `${LOC_UP[c]} sloupci zprava je jedno světlo. Nikam nepřetéká, zůstane dole.`
+    : `${LOC_UP[c]} sloupci zprava není žádné světlo. Krystal dole má zůstat zhasnutý.`;
 }
 
 /** Kaskáda: počítání pod sebou. */

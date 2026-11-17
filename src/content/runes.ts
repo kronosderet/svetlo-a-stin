@@ -13,6 +13,19 @@ export const RUNE_NAME: Record<Rune, string> = {
   imp: 'Důsledek',
 };
 
+/** Zákon runy jednou větou (ukázka kroku řekne, proč do kamene patří právě ona). */
+export const RUNE_RULE: Record<Rune, string> = {
+  id: 'pustí světlo dál, jak přišlo',
+  not: 'obrátí světlo ve stín a stín ve světlo',
+  and: 'svítí, jen když svítí obě světla',
+  or: 'svítí, když svítí aspoň jedno světlo',
+  xor: 'svítí, když svítí právě jedno světlo',
+  nand: 'mlčí, jen když svítí obě světla',
+  nor: 'svítí, jen když obě světla mlčí',
+  xnor: 'svítí, když jsou obě světla stejná',
+  imp: 'mlčí, jen když A svítí a B ne',
+};
+
 /** Moderní značka (ukáže se, až Kodex runy přeloží). */
 export const RUNE_MODERN: Record<Rune, string> = {
   id: '',

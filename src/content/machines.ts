@@ -144,8 +144,9 @@ export function chainTarget(m: Machine, bits: number, extra = 0) {
 }
 
 /** Úloha: dosaď přenosy do řetězu sčítaček (točité kameny na vstupech přenosu). */
-export function chainTask(bits: number, extra = 0): MachineTask {
-  const carry = (k: number): Pin => (k === 0 ? [SHADOW, LIGHT] : [SHADOW, LIGHT, `fa${k - 1}.P`]);
+/** Řetěz sčítaček k osazení přenosů. first = false: do nejlehčí sčítačky pevně teče stín (úvodní úloha s jediným točitým kamenem). */
+export function chainTask(bits: number, extra = 0, first = true): MachineTask {
+  const carry = (k: number): Pin => (k === 0 ? (first ? [SHADOW, LIGHT] : SHADOW) : [SHADOW, LIGHT, `fa${k - 1}.P`]);
   const machine = adderChain(bits, carry);
   return {
     mode: 'build',
@@ -157,14 +158,15 @@ export function chainTask(bits: number, extra = 0): MachineTask {
 
 /* ───────────── porovnávač ───────────── */
 
-/** Porovnávač jednoho krystalu: jediný kámen mezi A, B a lampou. */
-export function compare1(choices: Rune[]): Machine {
+/** Porovnávač jednoho krystalu: jediný kámen mezi A, B a lampou (s volbou run, nebo s pevnou runou). */
+export function compare1(choices: Rune[] | Rune): Machine {
+  const stone = typeof choices === 'string' ? { rune: choices } : { choices };
   return {
     inputs: [
       { id: 'A', x: 0, y: 0.6 },
       { id: 'B', x: 0, y: 3.4 },
     ],
-    nodes: [{ id: 'e', choices, in: ['A', 'B'], x: 4.6, y: 2 }],
+    nodes: [{ id: 'e', ...stone, in: ['A', 'B'], x: 4.6, y: 2 }],
     lamps: [{ id: 'eq', label: 'stejné', in: 'e', x: 8.4, y: 2 }],
   };
 }

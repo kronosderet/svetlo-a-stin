@@ -23,7 +23,9 @@ import {
   type MachineTask,
 } from '../core/puzzles/machine';
 import type { MachineLevel } from '../content/types';
+import { RUNE_NAME, RUNE_RULE } from '../content/runes';
 import { BaseGame, type GameEvent } from './baseGame.svelte.ts';
+import { fromWords } from './machineWords';
 
 export interface MachineView {
   task: MachineTask;
@@ -87,6 +89,26 @@ export class MachineGame extends BaseGame<MachineLevel> {
 
   get hintTarget(): ReturnType<typeof hint> {
     return this.playing && this.hintLevel >= 3 ? hint(this.level.config, this.state) : null;
+  }
+
+  /**
+   * Ukázka kroku slovy při stavbě: jaká runa patří do zvýrazněného kamene a proč, kam natočit
+   * točitý kámen, nebo že je stroj hotový a zbývá Zkouška. Jinde platí nápověda komnaty.
+   */
+  get stepHint(): string | null {
+    if (!this.playing || this.hintLevel < 3) return null;
+    const task = currentTask(this.level.config, this.state);
+    if (task?.mode !== 'build') return null;
+    const h = hint(this.level.config, this.state);
+    if (!h) return 'Stroj je hotový. Spusť Zkoušku.';
+    if ('node' in h) return `Do zvýrazněného kamene patří ${RUNE_NAME[h.rune]}: ${RUNE_RULE[h.rune]}.`;
+    if ('socket' in h) return `Zvýrazněný točitý kámen natoč tak, aby světlo teklo ${fromWords(task.machine, h.source)}.`;
+    return null;
+  }
+
+  /** Stavba je hotová a ukázka kroku ukazuje na Zkoušku. */
+  get hintTest(): boolean {
+    return this.hintLevel >= 3 && this.playing && currentTask(this.level.config, this.state)?.mode === 'build' && !this.hintTarget;
   }
 
   get canUndo(): boolean {

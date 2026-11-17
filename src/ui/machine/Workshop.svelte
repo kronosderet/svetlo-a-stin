@@ -223,7 +223,7 @@
         {/if}
         {#if task.rule && !bigTable}<p class="rule-line carved">{task.rule}</p>{/if}
         {#if game.phase === 'play'}
-          <button type="button" class="btn btn-primary btn-lg" onclick={() => game.test()} disabled={!game.playing}>Zkouška</button>
+          <button type="button" class="btn btn-primary btn-lg" class:hl={game.hintTest} onclick={() => game.test()} disabled={!game.playing}>Zkouška</button>
         {/if}
       </div>
     {/if}
@@ -553,6 +553,12 @@
   .hl {
     outline: 3px solid var(--ok);
     outline-offset: 3px;
+    animation: hl 1.6s ease-in-out infinite;
+  }
+  @keyframes hl {
+    50% {
+      outline-offset: 6px;
+    }
   }
   @media (max-height: 820px) {
     .board-wrap {

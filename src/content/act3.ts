@@ -19,7 +19,7 @@ import {
   secretSpeech,
   single,
 } from './generators3';
-import { qTableRows } from './quizzes';
+import { qTableLit, qTableRows } from './quizzes';
 import type { ActDef, LevelDef } from './types';
 
 const SLOT_HINT = 'Zvýrazněný kámen potřebuje jinou runu. Klikni na něj.';
@@ -334,7 +334,7 @@ const levels: LevelDef[] = [
       solved: ['Každá runa má svou desku zákona.', 'Kdo zná desku, pozná runu i bez pohledu pod závoj.'],
       skill: 'Každá deska napoprvé.',
     },
-    quiz: [qTableRows],
+    quiz: [qTableLit],
     kodex: 'deska',
   },
   {
@@ -365,9 +365,9 @@ const levels: LevelDef[] = [
     echo: {
       intro: ['Řetězy. Světlo projde jednou runou a hned další.', 'Ze známých run tu vznikají nové.'],
       step: {
-        0: 'Pouto a za ním Obraceč. Lumenité tomu říkali Zlomené pouto.',
-        1: 'A Rozcestí s Obracečem je Zavřené rozcestí.',
-        2: 'Teď větvení: každý vstup má svou cestu.',
+        0: 'Runa a za ní Obraceč: deska runy se obrátí.',
+        1: 'Pouto s Obracečem je Zlomené pouto, Rozcestí s Obracečem Zavřené rozcestí.',
+        2: 'Výluka a za ní Obraceč: lampa svítí, když jsou vstupy stejné. Lumenité tomu říkali Rovnost. Teď větvení.',
       },
       wrong: 'Brána se nepohnula. Ve kterých řádcích lampa nesedí? Přepni na ně vstupy.',
       complete: 'Řetězy drží.',
@@ -652,7 +652,7 @@ const levels: LevelDef[] = [
         echo: { intro: ['Pět kamenů, dvě runy. Hlas většiny je na tobě.'], wrong: 'Brána se nepohnula. Které dvojice musí svítit obě?', solved: [] },
         quiz: [
           {
-            question: 'Ve kolika řádcích desky svítí Hlas většiny se třemi vstupy?',
+            question: 'V kolika řádcích desky svítí Hlas většiny se třemi vstupy?',
             options: ['4', '3', '2', '6'],
             correct: 0,
             hint: 'Spočítej řádky, kde svítí aspoň dva vstupy.',
@@ -669,16 +669,16 @@ const levels: LevelDef[] = [
     kind: 'gate',
     config: { tasks: [nandOnly('not'), nandOnly('and'), nandOnly('or')] },
     presentation: {
-      task: 'Máš jen Zlomená pouta. Natoč kamínky u jejich vstupů tak, aby lampa svítila podle brány vpravo.',
+      task: 'Máš jen Zlomená pouta. Natoč točité kameny u jejich vstupů tak, aby lampa svítila podle brány vpravo.',
       showDigits: true,
       showSum: false,
       sizes: 'equal',
       ledger: false,
     },
     hints: [
-      'Malé kulaté kameny u runy vybírají, odkud do ní teče světlo. Kliknutím je pootočíš.',
+      'Točité kameny jsou malá kolečka u vstupů runy. Vybírají, odkud do ní teče světlo, a kliknutím je pootočíš.',
       'Zlomené pouto se stejným světlem na obou vstupech je Obraceč. A Obraceč za Zlomeným poutem dá Pouto.',
-      'Zvýrazněný kamínek je potřeba pootočit.',
+      'Zvýrazněný točitý kámen je potřeba pootočit.',
     ],
     echo: {
       intro: ['Prapečeť. Lumenité tvrdili, že z jediné runy postaví všechny ostatní.', 'Tady máš jen Zlomená pouta. Zkus to.'],
@@ -868,9 +868,9 @@ const levels: LevelDef[] = [
         generate: genIII15Nand,
         presentation: { task: 'Druhá zkouška: postav runu jen ze Zlomených pout.', showDigits: true, showSum: false, sizes: 'equal', ledger: false },
         hints: [
-          'Malé kulaté kameny vybírají, odkud do runy teče světlo.',
+          'Točité kameny vybírají, odkud do runy teče světlo.',
           'Zlomené pouto se dvěma stejnými světly je Obraceč. Pouto je Zlomené pouto a Obraceč, Rozcestí jsou Zlomené pouto obrácených vstupů.',
-          'Zvýrazněný kamínek je potřeba pootočit.',
+          'Zvýrazněný točitý kámen je potřeba pootočit.',
         ],
         echo: { intro: ['Druhá zkouška: jen Zlomená pouta.'], wrong: 'Brána se nepohnula. Odkud teče světlo do každé runy?', solved: ['Prapečeť poslechla. Zbývá maska.'] },
       },

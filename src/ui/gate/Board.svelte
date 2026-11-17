@@ -116,10 +116,16 @@
   const inputOn = (i: number) => ((inputs >> (n - 1 - i)) & 1) === 1;
   const lampOn = $derived(values?.[circuit.output] === 1);
 
+  /** Prázdné kameny k osazení: čtečka je čísluje, když je jich víc (v pořadí obvodu). */
+  const slotIds = $derived(circuit.nodes.filter((g) => !g.rune).map((g) => g.id));
+
   function nodeLabel(g: GateNode): string {
     const r = runeOf(g);
     if (veiled) return 'Runa pod závojem';
-    if (!g.rune) return r ? `Kámen s runou ${RUNE_NAME[r]}. Kliknutím vyber jinou.` : 'Prázdný kámen. Kliknutím vlož runu.';
+    if (!g.rune) {
+      const no = slotIds.length > 1 ? ` ${slotIds.indexOf(g.id) + 1} z ${slotIds.length}` : '';
+      return r ? `Kámen${no} s runou ${RUNE_NAME[r]}. Kliknutím vyber jinou.` : `Prázdný kámen${no}. Kliknutím vlož runu.`;
+    }
     return `Runa ${RUNE_NAME[r!]}`;
   }
 
@@ -405,6 +411,17 @@
   }
   .socket:disabled {
     cursor: default;
+  }
+  /* Nenastavený točitý kámen se na začátku úlohy třikrát připomene: je malý a snadno se přehlédne. */
+  .socket:not(.set):not(:disabled):not(.hl) {
+    animation: invite 1.4s ease-in-out 3;
+  }
+  @keyframes invite {
+    50% {
+      transform: scale(1.35);
+      border-color: var(--lumen);
+      box-shadow: 0 0 10px rgba(255, 217, 138, 0.6);
+    }
   }
   .rune-name {
     position: absolute;

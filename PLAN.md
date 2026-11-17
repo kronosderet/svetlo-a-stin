@@ -363,7 +363,7 @@ tesali těmi samými znaky. Moderní značka (NOT, AND…) se pod runou objeví,
 | III-3 | Rozcestí | smíšená (Brána + Deska) | OR | Stejný postup pro OR. Kvíz: ve kterých řádcích se liší Pouto a Rozcestí. |
 | III-4 | Jen jeden | smíšená (Brána + Deska) | XOR | Výluka. Echo připomene Soutok: XOR je spodní číslice součtu 1 + 1. |
 | III-5 | Které pravidlo? | Deska zákona | identifikace | Losované desky: tři poznat (runa pod závojem), dvě vyplnit. Špatná volba řekne, ve kterém řádku by zvolená runa svítila jinak. |
-| III-6 | Řetězy | Brána | skládání | Dvě runy za sebou: hráč objeví Zlomené pouto (NAND) a Zavřené rozcestí (NOR), pak větvení s Obracečem na jednom vstupu. |
+| III-6 | Řetězy | Brána | skládání | Dvě runy za sebou: hráč objeví Zlomené pouto (NAND), Zavřené rozcestí (NOR) a Rovnost (Výluka a Obraceč, Echo ji pojmenuje), pak losované větvení s Obracečem na jednom vstupu. |
 | III-7 | **Brána Zahrady** | smíšená | syntéza | Deska zákona dvou obvodů, osazení kamenů ke třem deskám a dvě runy pod závojem z pěti. |
 | | *Hlubší síně* | | | *Nepovinné, otevřou se po bráně patra.* |
 | III-8 | Zrcadla | smíšená (Deska + Brána) | De Morgan | Desky pro Zlomené pouto a pro Rozcestí obrácených vstupů vyjdou stejně. Pak hráč postaví Zavřené rozcestí jako Pouto obrácených vstupů. |
@@ -390,8 +390,8 @@ vrací čtení čísel z Aktu I. Stroje se staví z kamenů a točitých kamenů
 | IV-0 | Stroj, který počítá | Dílna | (nultá komnata) | Hotová poloviční sčítačka s lampami 2 a 1. Hráč zkouší čtyři kombinace a zjistí, že stroj sčítá: 1 + 1 = 10. |
 | IV-1 | Poloviční sčítačka | Dílna | XOR + AND = sčítání | Hráč sám vloží Výluku na spodní číslici, pak obě runy. Kvíz: proč nestačí Rozcestí, proč ze dvou světel nevyjde 11. |
 | IV-2 | Úplná sčítačka | smíšená (Dílna) | přenos zprava | Zkoumání osmi kombinací (lampy počítají světla, zákon sloupce z II-3), pak doplnění tří run. |
-| IV-3 | Řetěz sčítaček | Dílna | **abstrakce** | Úplná sčítačka je jeden kámen, sčítačky stojí jako sloupce Kaskády. Hráč točí přenosy: dvě, čtyři sčítačky a nakonec A + B + 1 světlem v prvním přenosu. |
-| IV-4 | Porovnávač | Dílna | rovnost | Rovnost pro jeden krystal, pak dvoubitová čísla (Rovnost v každém sloupci a Pouto) a „různé“ (Výluka a Rozcestí). |
+| IV-3 | Řetěz sčítaček | Dílna | **abstrakce** | Úplná sčítačka je jeden kámen, sčítačky stojí jako sloupce Kaskády. Hráč točí přenosy: dvě sčítačky s jediným točitým kamenem (Echo ho představí, na základní cestě je nový), čtyři sčítačky a nakonec A + B + 1 světlem v prvním přenosu. |
+| IV-4 | Porovnávač | smíšená (Dílna) | rovnost | Zkoumání Rovnosti z III-6 jako jednoho kamene, pak dvoubitová čísla (Rovnost v každém sloupci a Pouto) a „různé“ (Výluka a Rozcestí). |
 | IV-5 | Výhybka | smíšená (Dílna) | multiplexor | Cíle na hotové výhybce (lampa poslouchá A, pak B), pak stavba: točité kameny voliče a runa, která cesty spojí. |
 | IV-6 | Rozdělovač | Dílna | dekodér | Dva krystaly rozsvítí právě jednu ze čtyř lamp. Nejdřív lampy 0 a 3, pak všechny. |
 | IV-7 | **Brána Hlubiny** | smíšená (Dílna) | syntéza | Losovaný řetěz sčítaček (A + B, nebo A + B + 1), rozdělovač s lampami v jiném pořadí a výhybka (i obrácená), porovnávač „stejné“ nebo „různé“. Kvíz s losovaným součtem. |
