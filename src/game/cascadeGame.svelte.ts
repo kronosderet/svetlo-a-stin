@@ -3,6 +3,7 @@ import {
   confirm as confirmCascade,
   currentTask,
   firstWrong,
+  flowToggle,
   initCascade,
   par as computePar,
   shownTask,
@@ -14,7 +15,7 @@ import {
   type CascadeTask,
 } from '../core/puzzles/cascade';
 import type { CascadeLevel } from '../content/types';
-import { flipBit, isBitSet } from '../core/bits';
+import { isBitSet } from '../core/bits';
 import { BaseGame, type GameEvent } from './baseGame.svelte.ts';
 import { cascadeStep } from './cascadeWords';
 
@@ -36,6 +37,8 @@ export class CascadeGame extends BaseGame<CascadeLevel> {
   history: CascadeState[] = $state([]);
   /** Přijatý výsledek, který během pauzy zůstává na stěně. */
   held: CascadeView | null = $state(null);
+  /** Zachování světla: krystal, který se naposledy odmítl rozsvítit (n roste s každým odmítnutím, deska jím zatřese). */
+  refused: { cell: CascadeCell; n: number } | null = $state(null);
 
   constructor(level: CascadeLevel, emit: (e: GameEvent) => void) {
     super(level, computePar, emit);
@@ -82,18 +85,29 @@ export class CascadeGame extends BaseGame<CascadeLevel> {
   toggle(cell: CascadeCell): void {
     if (this.free) {
       // Volná hra: krystaly výsledku i přenosů jdou přepínat a světla se přesouvají, nic se nepočítá.
+      // Zachování světla platí dál: krystal bez světla se nerozsvítí.
+      const r = flowToggle(this.level.config, this.task, this.state, cell);
+      if (r.refused) return this.#refuse(cell, this.state);
+      this.state = { ...this.state, ...r.marks };
       const key = ({ result: 'result', carry: 'carries', far: 'far', copy: 'copies' } as const)[cell.row];
-      const value = flipBit(this.state[key], cell.column);
-      this.state = { ...this.state, [key]: value };
-      this.emit({ kind: 'cascade', event: { type: 'toggle', cell, on: isBitSet(value, cell.column) }, state: this.state });
+      const on = isBitSet(this.state[key], cell.column);
+      const event: CascadeEvent = r.dropped.length ? { type: 'toggle', cell, on, dropped: r.dropped } : { type: 'toggle', cell, on };
+      this.emit({ kind: 'cascade', event, state: this.state });
       return;
     }
     if (!this.playing) return;
     const before = $state.snapshot(this.state) as CascadeState;
     const r = toggleCell(this.level.config, before, cell);
     if (r.events.length === 0) return;
+    if (r.events.some((e) => e.type === 'refuse')) return this.#refuse(cell, this.state);
     this.history = [...this.history, before];
     this.#apply(r.state, r.events);
+  }
+
+  /** Krystal se nerozsvítil: nic se nemění ani nepočítá, deska jen zatřese krystalem a Echo řekne proč. */
+  #refuse(cell: CascadeCell, state: CascadeState): void {
+    this.refused = { cell, n: (this.refused?.n ?? 0) + 1 };
+    this.emit({ kind: 'cascade', event: { type: 'refuse', cell }, state });
   }
 
   confirm(): void {

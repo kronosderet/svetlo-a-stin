@@ -55,6 +55,7 @@ const levels: LevelDef[] = [
       width: 2,
       bits: 1,
       carries: 'none',
+      conserve: true,
       tasks: [
         { op: 'add', operands: [1, 0] },
         { op: 'add', operands: [0, 1] },
@@ -147,6 +148,7 @@ const levels: LevelDef[] = [
       width: 5,
       bits: 4,
       carries: 'none',
+      conserve: true,
       tasks: [
         { op: 'add', operands: [0b0101, 0b0001] },
         { op: 'add', operands: [0b0010, 0b0010] },
@@ -202,6 +204,7 @@ const levels: LevelDef[] = [
       width: 5,
       bits: 4,
       carries: 'manual',
+      conserve: true,
       tasks: [
         { op: 'add', operands: [0b0011, 0b0001] },
         { op: 'add', operands: [0b0101, 0b0011] },
@@ -259,6 +262,7 @@ const levels: LevelDef[] = [
       width: 7,
       bits: 6,
       carries: 'manual',
+      conserve: true,
       tasks: [
         { op: 'add', operands: [0b011111, 0b000001] },
         { op: 'add', operands: [0b101101, 0b011011] },
@@ -305,6 +309,7 @@ const levels: LevelDef[] = [
     config: {
       width: 4,
       carries: 'manual',
+      conserve: true,
       overflow: true,
       tasks: [
         { op: 'add', operands: [0b0101, 0b0110] },
@@ -449,7 +454,10 @@ const levels: LevelDef[] = [
           CELL_HINT,
         ],
         echo: {
-          intro: ['První zkouška: tři součty, pět krystalů v řadě.'],
+          intro: [
+            'První zkouška: tři součty, pět krystalů v řadě.',
+            'Brána krystaly nehlídá: rozsvítí se, i když do nich žádné světlo nepřiteče. Co kam teče, musíš spočítat ty.',
+          ],
           step: { 0: 'Sečteno. Brána se pohnula.', 1: 'Ještě jeden součet.' },
           solved: ['Kaskáda proběhla. Teď páky.'],
         },
@@ -499,6 +507,7 @@ const levels: LevelDef[] = [
     config: {
       width: 4,
       carries: 'manual',
+      conserve: true,
       tasks: [
         { op: 'sub', operands: [0b0111, 0b0010] },
         { op: 'sub', operands: [0b0110, 0b0011] },
@@ -592,6 +601,7 @@ const levels: LevelDef[] = [
       width: 6,
       bits: 3,
       carries: 'manual',
+      conserve: true,
       pickCopies: true,
       tasks: [
         { op: 'mul', operands: [0b101, 0b11] },
@@ -688,6 +698,7 @@ const levels: LevelDef[] = [
       width: 6,
       bits: 4,
       carries: 'manual',
+      conserve: true,
       farCarries: true,
       tasks: [
         { op: 'add', operands: [0b0110, 0b0101, 0b0011] },
@@ -812,6 +823,7 @@ const levels: LevelDef[] = [
         config: {
           width: 4,
           carries: 'manual',
+          conserve: true,
           overflow: true,
           tasks: [
             { op: 'add', operands: [0b0111, 0b1101] },
@@ -935,7 +947,7 @@ const levels: LevelDef[] = [
           CELL_HINT,
         ],
         echo: {
-          intro: ['První zkouška: odliv, pět krystalů v řadě.'],
+          intro: ['První zkouška: odliv, pět krystalů v řadě.', 'Ani tahle brána krystaly nehlídá. Co kam teče, musíš spočítat ty.'],
           solved: ['Odliv zvládnutý. Teď násobení.'],
         },
       },

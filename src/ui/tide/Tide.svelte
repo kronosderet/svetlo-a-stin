@@ -150,6 +150,7 @@
             highlight={game.hintOp === op}
             disabled={!game.playing && !game.free}
             label={leverLabel(op)}
+            swing={op === 'shl' ? 'left' : 'right'}
             onPull={() => game.pull(op)}
           />
         {/each}

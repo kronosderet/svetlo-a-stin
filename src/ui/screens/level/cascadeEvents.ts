@@ -1,7 +1,7 @@
-import type { CascadeEvent, CascadeState } from '../../../core/puzzles/cascade';
+import { shownTask, type CascadeEvent, type CascadeState } from '../../../core/puzzles/cascade';
 import * as sound from '../../../audio/sound';
 import { sayComplete, type LevelCtx } from './context';
-import { cascadeWhy } from '../../../game/cascadeWords';
+import { cascadeRefusal, cascadeWhy } from '../../../game/cascadeWords';
 
 /** Kaskáda: počítání pod sebou. */
 export function onCascade(ctx: LevelCtx, ev: CascadeEvent, state: CascadeState): void {
@@ -20,7 +20,17 @@ export function onCascade(ctx: LevelCtx, ev: CascadeEvent, state: CascadeState):
       else if (column === cfg.width) what = 'Přepad';
       else if (cfg.tasks[state.step]?.op === 'sub') what = `Krystal výpůjčky ve sloupci ${column + 1} zprava`;
       else what = `Krystal přenosu nad sloupcem ${column + 1} zprava`;
-      ctx.announce(`${what}: ${ev.on ? 'světlo' : 'stín'}.`);
+      const n = ev.dropped?.length ?? 0;
+      // Zachování světla: se zhasnutým zdrojem zhasnou i krystaly, do kterých z něj teklo světlo.
+      const lost = n === 0 ? '' : n === 1 ? ' Zhasl i krystal, do kterého odtud teklo světlo.' : ' Zhasly i krystaly, do kterých odtud teklo světlo.';
+      ctx.announce(`${what}: ${ev.on ? 'světlo' : 'stín'}.${lost}`);
+      break;
+    }
+    case 'refuse': {
+      sound.playSoft();
+      const why = cascadeRefusal(cfg, shownTask(cfg, state), state, ev.cell);
+      ctx.echo.say([why]);
+      ctx.announce(`Krystal se nerozsvítil. ${why}`);
       break;
     }
     case 'wrong': {

@@ -278,7 +278,7 @@ Díky tomu je přidávání levelů rychlé a datově řízené.
 | **Oltář** | klikáním přepínáš krystaly, abys dosáhl cílové hodnoty; v přísném režimu (Tichý krok) projdeš všechny kombinace bez opakování, jinak se cesta přeruší | bit → číslo, poziční hodnota, Grayův kód | I |
 | **Nápis** | chrám rozsvítí kombinaci, na kamenných kotoučích (desítky, jednotky) nastavíš její hodnotu; umí i opačný směr a kotouče s glyfy 0–F (jeden na každou čtveřici krystalů) | binární → desítkové, šestnáctková soustava | I |
 | **Počítadlo** | poutníci přibývají jako čárky a ty nastavuješ „další“ číslo; zápisník červeně ukáže změněné krystaly (technicky Oltář s cíli n + 1) | inkrementace, přenos | I |
-| **Kaskáda** | počítání pod sebou: ve stěně svítí řádky, hráč rozsvěcí krystaly výsledku a krystaly přenosu nad sloupci a výsledek potvrdí. Světla se přesouvají při každém doteku: do rozsvíceného krystalu výsledku sjede nejspodnější světlo sloupce, do krystalu přenosu odletí dvě světla shora (o dvě místa čtyři), u odčítání se menšitel vyruší a výpůjčka půjčí sousedovi; co odešlo, ve sloupci pohasne. Bez krystalů přenosu (II-0, II-2) přeteče dvojice rovnou do prázdného krystalu vlevo. Chyba otřese prvním špatným sloupcem zprava a Echo řekne proč (kolik světel se v něm slévá, který přenos chybí). Umí sčítání, pevnou nádobu s přepadem, odčítání s výpůjčkami, tři řady s přenosem o dvě místa i násobení, ve kterém hráč sám vybírá posunuté kopie | aritmetika | II |
+| **Kaskáda** | počítání pod sebou: ve stěně svítí řádky, hráč rozsvěcí krystaly výsledku a krystaly přenosu nad sloupci a výsledek potvrdí. Světla se přesouvají při každém doteku: do rozsvíceného krystalu výsledku sjede nejspodnější světlo sloupce, do krystalu přenosu odletí dvě světla shora (o dvě místa čtyři), u odčítání se menšitel vyruší a výpůjčka půjčí sousedovi; co odešlo, ve sloupci pohasne. Bez krystalů přenosu (II-0, II-2) přeteče dvojice rovnou do prázdného krystalu vlevo. Zachování světla (mimo brány): krystal, do kterého nemá odkud přitéct světlo, se nerozsvítí, zatřese se a Echo řekne proč; zhasnutý zdroj zhasne i krystaly, které z něj svítily. Chyba otřese prvním špatným sloupcem zprava a Echo řekne proč (kolik světel se v něm slévá, který přenos chybí). Umí sčítání, pevnou nádobu s přepadem, odčítání s výpůjčkami, tři řady s přenosem o dvě místa i násobení, ve kterém hráč sám vybírá posunuté kopie | aritmetika | II |
 | **Příliv** | páky posouvají celou řadu (vlevo = ×2, vpravo = ÷2, co přeteče přes okraj, je ztracené), další páky přidají nebo uberou jedničku. Cíl co nejméně tahy; ve Vahách Osudu dovolí každá zkouška jen ideální počet tahů a pak se vrátí na začátek. Páka „převrať“ (doplněk), miska zbytku (dělení) a kolo může místo čísla ukázat „÷ 8“ nebo „−3“ | posuny, ×2, ÷2, doplněk | II |
 | **Smíšená komnata** | brána patra: několik hádanek různých archetypů za sebou (třeba Kaskáda a pak Příliv), nad scénou ukazatel zkoušek; tahy, pokusy i nápovědy se pro pečetě sčítají za celou komnatu | syntéza patra | II |
 | **Brána** | kamenná deska s obvodem: vlevo krystaly vstupů, uprostřed kameny s runami, vpravo lampa, mezi nimi světlovody, které svítí, když nesou světlo. Zkoumání (runy pevné, hráč zkouší všechny kombinace vstupů) a vkládání run do prázdných kamenů (kliknutí runy střídá, Zkouška projde všechny řádky a nesedící rozsvítí okrově) | hradla, skládání | III |
@@ -499,10 +499,10 @@ Co z toho plyne:
 - **Okamžité ověření** u jednoduchých hádanek (vyřešeno = hned se otevře).
   U obvodů je tlačítko **„Spustit zkoušku“**, které animovaně projde všechny vstupy.
 - **Žádné prohry.** Zpět/Znovu je vždy po ruce a neomezené.
-- **Otevřená komnata.** Po vyřešení výsledek nevyskočí sám. Prvky zůstanou ovladatelné a nic se už
-  nepočítá (krystaly, páky, vstupy, maska; v Nápisu jsou kotouče s krystaly propojené), hráč může ve
-  vyřešené komnatě experimentovat. Výsledek, pečetě a cestu dál ukáže tlačítko Pokračovat (nebo Enter) a z výsledku
-  se jde zpátky do komnaty. Komnatu s víc úlohami jde prolistovat (u smíšené brány i přes všechny
+- **Otevřená komnata.** Po vyřešení se po chvilce sama ukáže vítězná deska (výsledek, pečetě, cesta
+  dál). Z desky se jde zpátky do komnaty: prvky zůstanou ovladatelné a nic se už nepočítá (krystaly,
+  páky, vstupy, maska; v Nápisu jsou kotouče s krystaly propojené), hráč může ve vyřešené komnatě
+  experimentovat. K desce se pak vrátí tlačítkem Pokračovat (nebo Enter), to je na trámu jen po návratu. Komnatu s víc úlohami jde prolistovat (u smíšené brány i přes všechny
   zkoušky): šipky lemují zlaté kosočtverečky úloh nad hádankou a kosočtverečky jdou i proklikat.
   Každá úloha se ukáže vyřešená a dá se s ní dál experimentovat.
 
@@ -1009,6 +1009,12 @@ osnovy nejde naučit těmi stávajícími.
     druhé. Kamenné dveře se zavřou až po Další komnatě (nebo Do Hlubších síní, Další patro, Vstoupit
     do patra), za nimi se načte další obrazovka a dveře se do ní otevřou (`src/game/doors.svelte.ts`).
     Verze 0.4.1 alpha.
+    Potom: vítězná deska přijde po vyřešení sama, Pokračovat je na trámu jen po návratu z desky do
+    komnaty. Páky posunu se sklápějí na stranu, kam posouvají. Kaskáda hlídá zachování světla
+    (`conserve`): krystal se nerozsvítí, když do něj nemá odkud přitéct světlo (dvě světla zprava
+    přetečou jako jedno, výpůjčka dá vpravo dvě, dolů se vejde jen jedno), zatřese se a Echo řekne
+    proč. Zhasnutý zdroj zhasne i krystaly, které z něj svítily. Platí ve všech Kaskádách kromě bran
+    II-7 a II-15: tam hráč ukazuje, že počítá sám. Verze 0.4.2 alpha.
 18. **Akt V, Archiv Hlasů:** nová osnova v rozdělení 0–15 (kap. 6, 17. 11. 2026). Po stavbě
     playtest kompletního průchodu jen základní cestou Aktů I až V a Finále: ověří, že základní cesta
     Archivu nic z Hlubších síní nepotřebuje.

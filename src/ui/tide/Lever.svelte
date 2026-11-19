@@ -8,10 +8,12 @@
     highlight?: boolean;
     disabled?: boolean;
     label: string;
+    /** Kam se páka sklopí: posun vlevo doleva, posun vpravo doprava. Ostatní páky doprava. */
+    swing?: 'left' | 'right';
     onPull: () => void;
   }
 
-  let { symbol, caption, keyHint, highlight = false, disabled = false, label, onPull }: Props = $props();
+  let { symbol, caption, keyHint, highlight = false, disabled = false, label, swing = 'right', onPull }: Props = $props();
 
   let pulls = $state(0);
 
@@ -21,8 +23,8 @@
   }
 </script>
 
-<!-- Dřevěná páka s mosaznou rukojetí: při zatažení se rukojeť sklopí. -->
-<button type="button" class="lever wood" class:highlight aria-label={label} {disabled} onclick={pull}>
+<!-- Dřevěná páka s mosaznou rukojetí: při zatažení se rukojeť sklopí na stranu, kam páka posouvá. -->
+<button type="button" class="lever wood" class:highlight class:swing-left={swing === 'left'} aria-label={label} {disabled} onclick={pull}>
   {#key pulls}
     <span class="handle" class:pulled={pulls > 0} aria-hidden="true">
       <span class="rod"></span>
@@ -36,6 +38,9 @@
 
 <style>
   .lever {
+    /* Rukojeť v klidu a v nejhlubším bodě zatažení. Páka doleva stojí zrcadlově. */
+    --rest: -18deg;
+    --pulled: 28deg;
     position: relative;
     display: inline-flex;
     flex-direction: column;
@@ -78,7 +83,7 @@
     border-radius: 3px;
     background: linear-gradient(90deg, #5e4416, #d4ad55 45%, #7d5c1e);
     transform-origin: 50% 100%;
-    transform: rotate(-18deg);
+    transform: rotate(var(--rest));
   }
   .knob {
     position: absolute;
@@ -90,7 +95,11 @@
     background: radial-gradient(circle at 35% 30%, #f6e2a6, #c9a24a 55%, #6b4c14);
     box-shadow: 0 2px 3px rgba(0, 0, 0, 0.6);
     transform-origin: 3px 38px;
-    transform: rotate(-18deg);
+    transform: rotate(var(--rest));
+  }
+  .lever.swing-left {
+    --rest: 18deg;
+    --pulled: -28deg;
   }
   .pulled .rod,
   .pulled .knob {
@@ -128,10 +137,10 @@
   @keyframes pull {
     0%,
     100% {
-      transform: rotate(-18deg);
+      transform: rotate(var(--rest));
     }
     45% {
-      transform: rotate(28deg);
+      transform: rotate(var(--pulled));
     }
   }
   @keyframes glow {

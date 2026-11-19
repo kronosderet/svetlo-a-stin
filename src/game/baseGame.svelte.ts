@@ -110,7 +110,8 @@ export abstract class BaseGame<L extends PuzzleLevel = PuzzleLevel> {
 
   /**
    * Volná hra po vyřešení: komnata je otevřená a výsledek zapsaný, prvky se ale dají dál přepínat
-   * a nic se nepočítá. O výsledek a pečetě si hráč řekne sám tlačítkem Pokračovat.
+   * a nic se nepočítá. Vítězná deska se po vyřešení ukáže sama; kdo se z ní do komnaty vrátí,
+   * dostane se k ní zpátky tlačítkem Pokračovat.
    */
   get free(): boolean {
     return this.phase === 'solved' && !this.holding;

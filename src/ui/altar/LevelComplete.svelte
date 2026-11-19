@@ -36,6 +36,12 @@
 
   /** Escape zavře výsledek a vrátí hráče do otevřené komnaty. */
   function onKey(e: KeyboardEvent) {
+    // Deska se ukáže sama a fokus skočí na Další komnatu: Enter podržený od potvrzení poslední
+    // úlohy by ji hned stiskl a hráč by výsledek ani pečetě neviděl. Platí jen nový stisk.
+    if (e.repeat && e.key === 'Enter') {
+      e.preventDefault();
+      return;
+    }
     if (e.key === 'Escape' && onBack) {
       e.preventDefault();
       onBack();

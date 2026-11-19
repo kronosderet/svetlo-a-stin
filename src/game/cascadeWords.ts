@@ -2,7 +2,21 @@
  * Kaskáda slovy: proč buňka nesedí (po chybném potvrzení) a proč má vypadat právě tak
  * (ukázka kroku s důvodem).
  */
-import { answer, firstWrong, rows, type CascadeCell, type CascadeConfig, type CascadeEvent, type CascadeState } from '../core/puzzles/cascade';
+import {
+  answer,
+  carryColumns,
+  farColumns,
+  firstWrong,
+  liveInflow,
+  rows,
+  wallRows,
+  type CascadeCell,
+  type CascadeConfig,
+  type CascadeEvent,
+  type CascadeState,
+  type CascadeTask,
+  type FlowMarks,
+} from '../core/puzzles/cascade';
 import { isBitSet } from '../core/bits';
 
 /** Sloupce Kaskády: v … sloupci, nad … sloupcem, do … sloupce. */
@@ -71,6 +85,65 @@ export function cascadeWhy(cfg: CascadeConfig, state: CascadeState, ev: Wrong, e
     : `${LOC_UP[c]} sloupci zprava není žádné světlo. Krystal dole má zůstat zhasnutý.`;
 }
 
+
+/** „žádné světlo není“, „je jen jedno světlo“, „jsou jen tři světla“ (kolik světel ve sloupci je). */
+const HOW_MANY = ['žádné světlo není', 'je jen jedno světlo', 'jsou jen dvě světla', 'jsou jen tři světla'];
+
+/**
+ * Zachování světla: proč se krystal nerozsvítil (marks = co na desce svítí teď, před dotekem).
+ * Do výsledku sjede jedno světlo z jeho sloupce, do přenosu přeteče dvojice ze sloupce vpravo
+ * (o dvě místa čtveřice) a u odčítání půjčí sloupec sousedovi vpravo jedno světlo, které tam jsou dvě.
+ */
+export function cascadeRefusal(cfg: CascadeConfig, task: CascadeTask, marks: FlowMarks, cell: CascadeCell): string {
+  const c = cell.column;
+  const where = (i: number) => `${LOC_UP[i]} sloupci zprava`;
+  const lit = (mask: number, i: number) => isBitSet(mask, i);
+  const empty = `${where(c)} žádné světlo není. Krystal výsledku nemá z čeho svítit.`;
+
+  if (task.op === 'sub') {
+    const [a, b] = wallRows(cfg, task);
+    const loan = carryColumns(cfg).includes(c + 1) && lit(marks.carries, c + 1);
+    const pool = (lit(a, c) ? 1 : 0) + (loan ? 2 : 0);
+    // Menšitel vyruší jedno světlo sloupce, pokud tam nějaké je.
+    const left = pool - (lit(b, c) && pool > 0 ? 1 : 0);
+    if (cell.row === 'result') {
+      if (pool === 0) return lit(b, c) ? `${where(c)} není od čeho odečítat. Bez výpůjčky ze sloupce vlevo tu žádné světlo nebude.` : empty;
+      if (left === 0) return `${where(c)} spodní řada odečte jediné světlo. Na výsledek nezbylo nic.`;
+      return `Jediné volné světlo ${GEN[c]} sloupce zprava už je půjčené sousedovi vpravo.`;
+    }
+    if (pool === 0) {
+      return `${where(c)} není co půjčit.${carryColumns(cfg).includes(c + 1) ? ' Sloupec si nejdřív musí sám půjčit od souseda vlevo.' : ''}`;
+    }
+    if (left === 0) return `${where(c)} spodní řada odečte jediné světlo. Půjčit už není co.`;
+    return `Jediné volné světlo ${GEN[c]} sloupce zprava už sjelo do krystalu výsledku. Půjčit už není co.`;
+  }
+
+  // Sčítání a násobení: kolik světel ve sloupci je (řádky ve stěně i přenosy, které do něj přitekly).
+  const pool = (i: number) => (i < 0 ? 0 : liveInflow(task, marks.carries, i, { cfg, far: marks.far, copies: marks.copies }));
+  if (cell.row === 'carry') {
+    const s = c - 1;
+    const n = pool(s);
+    const head = c === cfg.width ? 'Do přepadu přetéká jen dvojice světel z nejlevějšího sloupce.' : 'Do krystalu přenosu přetéká dvojice světel ze sloupce vpravo.';
+    if (n < 2) return `${head} ${where(s)} ${HOW_MANY[n]}.`;
+    // Přenos o dvě místa si ze sloupce bere čtyři světla dřív než přenos a výsledek (lightFlow).
+    const toFar = farColumns(cfg).includes(s + 2) && lit(marks.far, s + 2) ? 4 : 0;
+    if (n - toFar < 2) return `${head} ${where(s)} už ale čtyři světla odtekla o dvě místa dál a na dvojici nezbývá.`;
+    if (lit(marks.result, s)) return `${head} ${where(s)} už ale jedno světlo sjelo dolů do krystalu výsledku a na dvojici nezbývá.`;
+    return `${head} ${where(s)} už dvě volná světla nezbyla.`;
+  }
+  if (cell.row === 'far') {
+    const s = c - 2;
+    const n = pool(s);
+    const head = 'Přenos o dvě místa dostane čtyři světla ze sloupce o dvě místa vpravo.';
+    return n < 4 ? `${head} ${where(s)} ${HOW_MANY[n]}.` : `${head} ${where(s)} už čtyři volná světla nezbyla.`;
+  }
+  if (cfg.carries !== 'none') return pool(c) === 0 ? empty : `${where(c)} už všechna světla odtekla nahoru do přenosu. Dolů nezbylo nic.`;
+  // Bez krystalů přenosu: do prázdného sloupce přiteče dvojice ze sloupce vpravo rovnou do výsledku.
+  if (pool(c) > 0) return `Obě světla ${GEN[c]} sloupce zprava už přetekla do sloupce vlevo. Dolů nezbylo nic.`;
+  if (c === 0) return empty;
+  if (pool(c - 1) < 2) return `${where(c)} žádné světlo není. Přitéct sem může jen dvojice světel ze sloupce vpravo, a ta tam není.`;
+  return `${where(c)} žádné světlo není. Přitéct sem může jen celá dvojice ze sloupce vpravo, a tam už jedno světlo sjelo dolů do krystalu výsledku.`;
+}
 
 /** Buňka a co v ní má být: stejné údaje, jaké nese chybné potvrzení (u přenosu světlo sloupce, odkud teče). */
 export function cellFacts(cfg: CascadeConfig, st: CascadeState, cell: CascadeCell): Wrong | null {

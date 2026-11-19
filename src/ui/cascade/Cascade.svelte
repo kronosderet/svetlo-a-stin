@@ -178,6 +178,32 @@
     return { destroy: () => anim.cancel() };
   }
 
+  /**
+   * Zachování světla: krystal, který se nerozsvítil, se v podstavci zachvěje (nemá odkud přitéct světlo).
+   * Odmítnutí z doby před připojením desky (předchozí část smíšené komnaty) se nepřehrává.
+   */
+  let seenRefusal = untrack(() => game.refused?.n ?? 0);
+  $effect(() => {
+    const r = game.refused;
+    if (!r || r.n === seenRefusal) return;
+    seenRefusal = r.n;
+    untrack(() => {
+      const el = gridEl?.querySelector(`[data-flow="${r.cell.row}:${r.cell.column}"]`);
+      if (!el || !m) return;
+      el.animate(
+        [
+          { transform: 'translateX(0)' },
+          { transform: 'translateX(-6px)' },
+          { transform: 'translateX(5px)' },
+          { transform: 'translateX(-3px)' },
+          { transform: 'translateX(2px)' },
+          { transform: 'translateX(0)' },
+        ],
+        { duration: 380, easing: 'ease-out' },
+      );
+    });
+  });
+
   let gridEl: HTMLElement | undefined = $state();
   const ARROWS: Record<string, [number, number]> = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] };
 

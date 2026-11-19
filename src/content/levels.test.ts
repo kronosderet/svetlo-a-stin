@@ -4,7 +4,7 @@ import * as cascade from '../core/puzzles/cascade';
 import * as inscription from '../core/puzzles/inscription';
 import * as tide from '../core/puzzles/tide';
 import { KODEX } from './kodex';
-import { ACTS, BASIC_PATH, GATE, LEVELS, actOf, instantiate, isAdvanced, nextLevelId, partsOf, roomNumber } from './levels';
+import { ACTS, BASIC_PATH, GATE, LEVELS, actOf, instantiate, isAdvanced, isGateRoom, nextLevelId, partsOf, roomNumber } from './levels';
 import { seeded } from './random';
 import { ARITY } from '../core/logic';
 import * as gate from '../core/puzzles/gate';
@@ -170,9 +170,13 @@ function cascadeChecks(level: CascadeLevel) {
     let guard = 0;
     while (!st.complete && guard++ < 300) {
       // Nápověda ukazuje buňky jednu po druhé; potvrzuje se až úplný výsledek.
+      // Se zachováním světla ukazuje jen buňky, které jde opravdu přepnout.
       let cell = cascade.firstWrong(cfg, st);
-      while (cell) {
-        st = cascade.toggle(cfg, st, cell).state;
+      let touches = 0;
+      while (cell && touches++ < 100) {
+        const r = cascade.toggle(cfg, st, cell);
+        expect(r.events.map((e) => e.type)).toEqual(['toggle']);
+        st = r.state;
         cell = cascade.firstWrong(cfg, st);
       }
       st = cascade.confirm(cfg, st).state;
@@ -180,6 +184,32 @@ function cascadeChecks(level: CascadeLevel) {
     expect(st.complete).toBe(true);
     expect(st.mistakes).toBe(0);
     expect(st.moves).toBe(cascade.par(cfg));
+  });
+
+  check(level, 'se zachováním světla jde každý výsledek postavit krystal po krystalu', (level) => {
+    const cfg = level.config;
+    if (!cfg.conserve) return;
+    cfg.tasks.forEach((task, k) => {
+      const ans = cascade.answer(cfg, task);
+      const goal = {
+        result: ans.result,
+        carries: cfg.carries === 'manual' ? ans.carries : 0,
+        far: cfg.carries === 'manual' ? ans.far : 0,
+        copies: task.op === 'mul' && cfg.pickCopies ? task.operands[1] : 0,
+      };
+      // Správný výsledek má každý krystal se světlem; přednastavené výpůjčky ukázkové úlohy taky.
+      expect(cascade.unfedCells(cfg, task, goal)).toEqual([]);
+      let st: cascade.CascadeState = { ...cascade.initCascade(cfg), step: k, carries: cfg.demo === k ? ans.carries : 0 };
+      expect(cascade.unfedCells(cfg, task, st)).toEqual([]);
+      // Krystaly správného výsledku jde rozsvěcet jeden po druhém (v nějakém pořadí), aniž by se některý odmítl.
+      const cells = cascade.wrongCells(cfg, st);
+      for (let round = 0; round < cells.length && cascade.wrongCells(cfg, st).length; round++) {
+        const next = cascade.wrongCells(cfg, st).find((c) => !cascade.flowToggle(cfg, task, st, c).refused);
+        expect(next).toBeDefined();
+        st = cascade.toggle(cfg, st, next!).state;
+      }
+      expect(cascade.wrongCells(cfg, st)).toEqual([]);
+    });
   });
 }
 
@@ -520,5 +550,19 @@ describe('celá observatoř', () => {
     expect(actOf('II-3').numeral).toBe('II');
     expect(ACTS[ACTS.length - 1].nextAct).toBeDefined();
     ACTS.slice(0, -1).forEach((a) => expect(a.nextAct).toBeUndefined());
+  });
+
+  const cascades = LEVELS.flatMap((l) => partsOf(l)).filter((p): p is CascadeLevel => p.kind === 'cascade');
+
+  it('Kaskáda hlídá zachování světla všude kromě bran (tam hráč ukazuje, že počítá sám)', () => {
+    expect(cascades.length).toBeGreaterThan(0);
+    for (const level of cascades) expect([level.id, !!level.config.conserve]).toEqual([level.id, !isGateRoom(level.id)]);
+  });
+
+  it('vylosovaná Kaskáda má stejné nastavení jako zadání komnaty, liší se jen úlohami', () => {
+    const settings = ({ tasks: _tasks, ...rest }: cascade.CascadeConfig) => rest;
+    for (const level of cascades.filter((l) => l.generate)) {
+      for (let seed = 1; seed <= 5; seed++) expect([level.id, settings(level.generate!(seeded(seed)))]).toEqual([level.id, settings(level.config)]);
+    }
   });
 });

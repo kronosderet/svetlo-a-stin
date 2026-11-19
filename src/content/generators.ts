@@ -125,13 +125,14 @@ export function genII2(rng: Rng): CascadeConfig {
     width: 5,
     bits: 4,
     carries: 'none',
+    conserve: true,
     tasks: [add(0b0101, 0b0001), add(0b0010, 0b0010), add(0b1000, 0b1000), either(rng, pick(rng, PAIR_ONE)), either(rng, pick(rng, PAIR_TWO))],
   };
 }
 
 /** II-3: po ukázce 3 + 1 tři součty s přenosy; třetí má sloupec se třemi světly, poslední přeteče do pátého krystalu. */
 export function genII3(rng: Rng): CascadeConfig {
-  const base: CascadeConfig = { width: 5, bits: 4, carries: 'manual', tasks: [] };
+  const base: CascadeConfig = { width: 5, bits: 4, carries: 'manual', conserve: true, tasks: [] };
   const first = add(0b0011, 0b0001);
   const rest = sequence(
     rng,
@@ -149,7 +150,7 @@ export function genII3(rng: Rng): CascadeConfig {
 
 /** II-4: mezi pevnou ukázkou 31 + 1 a závěrečným 63 + 63 jeden šestimístný součet s řetězem přenosů. */
 export function genII4(rng: Rng): CascadeConfig {
-  const base: CascadeConfig = { width: 7, bits: 6, carries: 'manual', tasks: [] };
+  const base: CascadeConfig = { width: 7, bits: 6, carries: 'manual', conserve: true, tasks: [] };
   const fixed = [add(0b011111, 0b000001), add(0b111111, 0b111111)];
   const middle = sequence(
     rng,
@@ -163,7 +164,7 @@ export function genII4(rng: Rng): CascadeConfig {
 
 /** II-5: nejdřív součet, který se vejde, pak jeden, který přeteče, pak libovolný; na konci vždy 15 + 1. */
 export function genII5(rng: Rng): CascadeConfig {
-  const base: CascadeConfig = { width: 4, carries: 'manual', overflow: true, tasks: [] };
+  const base: CascadeConfig = { width: 4, carries: 'manual', conserve: true, overflow: true, tasks: [] };
   const tasks = sequence(
     rng,
     3,
@@ -229,7 +230,7 @@ export function genII7Tide(rng: Rng): TideConfig {
 
 /** II-8: po ukázce 7 − 2 bez výpůjčky tři rozdíly s výpůjčkami; prostřední má výpůjček víc. */
 export function genII8(rng: Rng): CascadeConfig {
-  const base: CascadeConfig = { width: 4, carries: 'manual', tasks: [] };
+  const base: CascadeConfig = { width: 4, carries: 'manual', conserve: true, tasks: [] };
   const rest = sequence(
     rng,
     3,
@@ -255,7 +256,7 @@ export function genII9(rng: Rng): TideConfig {
 
 /** II-10: po ukázce 5 × 3 dva součiny trojmístného čísla a čísla se dvěma jedničkami, aspoň s jedním přenosem. */
 export function genII10(rng: Rng): CascadeConfig {
-  const base: CascadeConfig = { width: 6, bits: 3, carries: 'manual', pickCopies: true, tasks: [] };
+  const base: CascadeConfig = { width: 6, bits: 3, carries: 'manual', conserve: true, pickCopies: true, tasks: [] };
   const rest = sequence(
     rng,
     2,
@@ -340,7 +341,7 @@ export function genII11(rng: Rng): TideConfig {
 
 /** II-12, Tři řady: dvě losované trojice se sloupcem čtyř a víc světel; na konci vždy 15 + 15 + 15. */
 export function genII12(rng: Rng): CascadeConfig {
-  const base: CascadeConfig = { width: 6, bits: 4, carries: 'manual', farCarries: true, tasks: [] };
+  const base: CascadeConfig = { width: 6, bits: 4, carries: 'manual', conserve: true, farCarries: true, tasks: [] };
   const last = add3(15, 15, 15);
   const first = sequence(
     rng,
@@ -368,7 +369,7 @@ export function genII13Negate(rng: Rng): TideConfig {
 
 /** II-13, Doplněk (odčítání sčítáním): a + doplněk b v nádobě se čtyřmi krystaly, přetečení do přepadu. */
 export function genII13Add(rng: Rng): CascadeConfig {
-  const base: CascadeConfig = { width: 4, carries: 'manual', overflow: true, tasks: [] };
+  const base: CascadeConfig = { width: 4, carries: 'manual', conserve: true, overflow: true, tasks: [] };
   const tasks = sequence(
     rng,
     3,

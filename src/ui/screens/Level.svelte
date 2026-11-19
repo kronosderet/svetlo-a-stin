@@ -77,8 +77,15 @@
   let announcement = $state('');
   let pulse = $state(0);
   let showComplete = $state(false);
-  /** Komnata je otevřená: výsledek je zapsaný a čeká, až si o něj hráč řekne tlačítkem Pokračovat. */
+  /** Komnata je otevřená: výsledek je zapsaný a hráč si v ní může dál zkoušet (volná hra). */
   let ready = $state(false);
+  /**
+   * Hráč se z vítězné desky vrátil do otevřené komnaty. Jen pak je na trámu tlačítko Pokračovat,
+   * kterým se k desce vrátí. Po vyřešení se deska ukáže sama.
+   */
+  let returned = $state(false);
+  /** Po vyřešení se ještě chvíli dívá na hotovou hádanku (vlna světla, poslední úloha), pak přijde deska. */
+  let resultTimer: ReturnType<typeof setTimeout> | undefined;
   const READY_LINE = 'Komnata je vyřešená. Experimentuj tu, jak dlouho chceš, a pak pokračuj.';
   let solvedLines: string[] = $state([]);
   let fx: FxLayer | undefined = $state();
@@ -266,6 +273,7 @@
     clearTimeout(partTimer);
     clearTimeout(readTimer);
     clearTimeout(tipTimer);
+    clearTimeout(resultTimer);
   });
 
   /**
@@ -476,11 +484,12 @@
           fx?.win(centerOf('.row', '.board', '.register', '.wall'), stageArea());
           shake('win');
         });
-        // Výsledek nevyskočí sám: hráč může ve vyřešené komnatě experimentovat a pokračuje, až chce.
+        // Vítězná deska přijde sama, jen co se hotová hádanka ukáže. Komnata zůstává otevřená:
+        // z desky se do ní hráč může vrátit a dál v ní zkoušet.
         finished[partIndex] = game;
         ready = true;
-        echo.say([READY_LINE]);
-        announce(`Komnata otevřena. ${solvedLines.map((t) => plainText(t, known)).join(' ')} Prvky si můžeš dál zkoušet, výsledek a pečetě ukáže tlačítko Pokračovat.`);
+        announce(`Komnata otevřena. ${solvedLines.map((t) => plainText(t, known)).join(' ')}`);
+        resultTimer = setTimeout(autoResult, settings.reducedMotion ? RESULT_DELAY_CALM_MS : RESULT_DELAY_MS);
         break;
       }
     }
@@ -493,18 +502,36 @@
   }
 
   /**
-   * Pokračovat: ukáže se vítězná deska (výsledek, pečetě, cesta dál). Kamenné dveře se otevřou až
-   * cestou do další komnaty (enterThroughDoors).
+   * Za jak dlouho po vyřešení přijde vítězná deska: poslední úloha zůstane chvíli na očích a doběhne
+   * vlna světla (otřes scény při otevření komnaty trvá 1,1 s). Se zklidněným pohybem dřív.
+   */
+  const RESULT_DELAY_MS = 1300;
+  const RESULT_DELAY_CALM_MS = 450;
+
+  /**
+   * Vítězná deska (výsledek, pečetě, cesta dál): po vyřešení sama, po návratu do komnaty tlačítkem
+   * Pokračovat. Kamenné dveře se otevřou až cestou do další komnaty (enterThroughDoors).
    */
   function openResult() {
+    clearTimeout(resultTimer);
     if (!result || showComplete) return;
     showComplete = true;
     sound.playReveal();
   }
 
+  /** Deska sama po vyřešení: s otevřeným Kodexem nebo nastavením počká, až je hráč zavře (jinak by byla pod nimi). */
+  function autoResult() {
+    if (ui.kodexOpen || ui.settingsOpen) resultTimer = setTimeout(autoResult, 400);
+    else openResult();
+  }
+
   /** Z výsledku zpátky do vyřešené komnaty, ať v ní hráč může dál experimentovat. */
   function backToRoom() {
     showComplete = false;
+    if (returned) return;
+    returned = true;
+    echo.say([READY_LINE]);
+    announce('Zpátky v otevřené komnatě. Prvky si můžeš dál zkoušet, výsledek a pečetě ukáže tlačítko Pokračovat.');
   }
 
   /** Znovu: komnata se vytvoří od začátku (a u procvičování vylosuje nové úlohy). */
@@ -537,7 +564,8 @@
       return;
     }
     const plain = !ev.ctrlKey && !ev.metaKey && !ev.altKey;
-    // V otevřené komnatě Enter pokračuje k výsledku (tlačítka na desce si Enter nechávají).
+    // V otevřené komnatě Enter pokračuje k výsledku, i dřív, než se deska ukáže sama
+    // (tlačítka na desce si Enter nechávají).
     if (ready && plain && ev.key === 'Enter' && !(ev.target instanceof HTMLButtonElement)) {
       ev.preventDefault();
       openResult();
@@ -642,8 +670,8 @@
         Desku znám
       </button>
     {/if}
-    {#if ready}
-      <!-- Komnata je vyřešená: hráč pokračuje k výsledku a pečetím, až dozkoumá, co chce. -->
+    {#if ready && returned}
+      <!-- Hráč se z desky vrátil do vyřešené komnaty: k výsledku a pečetím pokračuje, až dozkoumá, co chce. -->
       <button type="button" class="btn btn-primary continue" onclick={openResult} title="Výsledek, pečetě a cesta dál (Enter)">
         Pokračovat <Icon name="check" />
       </button>

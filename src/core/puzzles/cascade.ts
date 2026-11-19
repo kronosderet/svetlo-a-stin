@@ -33,6 +33,13 @@ export interface CascadeConfig {
    * výsledek. Echo je okomentuje (Odliv: kam se výpůjčka zapisuje).
    */
   demo?: number;
+  /**
+   * Zachování světla: krystal jde rozsvítit, jen když do něj má odkud přitéct světlo (lightFlow).
+   * Dvě světla ze sloupce vpravo přetečou jako jedno, výpůjčka dá sousedovi vpravo dvě, dolů do
+   * výsledku se vejde jen jedno. Zhasnutý krystal vezme světlo i krystalům, které z něj svítily.
+   * Brány ho nemají: v nich hráč ukazuje, že počítá sám.
+   */
+  conserve?: boolean;
   tasks: CascadeTask[];
 }
 
@@ -59,7 +66,10 @@ export interface CascadeState {
 }
 
 export type CascadeEvent =
-  | { type: 'toggle'; cell: CascadeCell; on: boolean }
+  /** dropped = krystaly, které se zhasnutím přišly o světlo a zhasly s ním (zachování světla). */
+  | { type: 'toggle'; cell: CascadeCell; on: boolean; dropped?: CascadeCell[] }
+  /** Zachování světla: krystal se nerozsvítil, protože do něj nemá odkud přitéct světlo. */
+  | { type: 'refuse'; cell: CascadeCell }
   /** inflow = kolik světla se ve sloupci slévá (u přenosu: ve sloupci vpravo, odkud přenos teče). */
   | { type: 'wrong'; cell: CascadeCell; expected: boolean; inflow: number }
   | { type: 'step'; index: number; task: CascadeTask; result: number }
@@ -243,22 +253,76 @@ function validCell(cfg: CascadeConfig, task: CascadeTask, cell: CascadeCell): bo
 export function toggle(cfg: CascadeConfig, st: CascadeState, cell: CascadeCell): Result {
   const task = currentTask(cfg, st);
   if (!task || !validCell(cfg, task, cell)) return { state: st, events: [] };
-  const key = rowKey[cell.row];
-  const next = { ...st, [key]: flipBit(st[key], cell.column) };
-  const on = isBitSet(rowMask(next, cell.row), cell.column);
-  return { state: { ...next, wrong: null }, events: [{ type: 'toggle', cell, on }] };
+  const r = flowToggle(cfg, task, st, cell);
+  if (r.refused) return { state: st, events: [{ type: 'refuse', cell }] };
+  const on = isBitSet(rowMask(r.marks, cell.row), cell.column);
+  const event: CascadeEvent = r.dropped.length ? { type: 'toggle', cell, on, dropped: r.dropped } : { type: 'toggle', cell, on };
+  return { state: { ...st, ...r.marks, wrong: null }, events: [event] };
+}
+
+const cellKey = (c: CascadeCell): string => `${c.row}:${c.column}`;
+const marksOf = (m: FlowMarks): FlowMarks => ({ result: m.result, carries: m.carries, far: m.far, copies: m.copies });
+
+/**
+ * Rozsvícené krystaly, do kterých podle lightFlow žádné světlo nepřiteklo: výsledek, přenos (u odčítání
+ * výpůjčka, která sousedovi vpravo nemá co půjčit) a přenos o dvě místa. Vypínače kopií světlo nepotřebují.
+ */
+export function unfedCells(cfg: CascadeConfig, task: CascadeTask, marks: FlowMarks): CascadeCell[] {
+  const fed = new Set(lightFlow(cfg, task, marks).map((mv) => `${mv.to.kind}:${mv.to.column}`));
+  const out: CascadeCell[] = [];
+  for (let i = 0; i < cfg.width; i++) if (isBitSet(marks.result, i) && !fed.has(`result:${i}`)) out.push({ row: 'result', column: i });
+  const carryKind = task.op === 'sub' ? 'lend' : 'carry';
+  for (const i of carryColumns(cfg)) if (isBitSet(marks.carries, i) && !fed.has(`${carryKind}:${i}`)) out.push({ row: 'carry', column: i });
+  if (task.op !== 'sub') for (const i of farColumns(cfg)) if (isBitSet(marks.far, i) && !fed.has(`far:${i}`)) out.push({ row: 'far', column: i });
+  return out;
+}
+
+export interface FlowToggle {
+  marks: FlowMarks;
+  /** Rozsvícení se odmítlo: krystal (nebo jiný, kterému by vzal světlo) by zůstal bez světla. */
+  refused: boolean;
+  /** Krystaly, které se zhasnutím přišly o světlo a zhasly s ním. */
+  dropped: CascadeCell[];
 }
 
 /**
- * První buňka zprava, která nesedí (ve sloupci nejdřív přenosy, které do něj vtékají).
- * Při výběru kopií se nejdřív kontroluje, jestli svítí správné kopie.
+ * Přepne buňku. Se zachováním světla (conserve) se rozsvícení, po kterém by některý krystal zůstal
+ * bez světla, odmítne. Zhasnutí vrátí světla do sloupců, odkud přišla, a krystaly, které tím o světlo
+ * přijdou, zhasnou taky (třeba výsledek, do kterého sjelo světlo ze zhasnutého přenosu).
+ * Krystaly, které bez světla svítily už předtím, se nepočítají.
  */
-export function firstWrong(cfg: CascadeConfig, st: CascadeState): CascadeCell | null {
+export function flowToggle(cfg: CascadeConfig, task: CascadeTask, marks: FlowMarks, cell: CascadeCell): FlowToggle {
+  const key = rowKey[cell.row];
+  const flipped: FlowMarks = { ...marksOf(marks), [key]: flipBit(marks[key], cell.column) };
+  if (!cfg.conserve) return { marks: flipped, refused: false, dropped: [] };
+  const before = new Set(unfedCells(cfg, task, marks).map(cellKey));
+  const fresh = (m: FlowMarks) => unfedCells(cfg, task, m).filter((c) => !before.has(cellKey(c)));
+  if (isBitSet(flipped[key], cell.column)) {
+    return fresh(flipped).length ? { marks: marksOf(marks), refused: true, dropped: [] } : { marks: flipped, refused: false, dropped: [] };
+  }
+  let cur = flipped;
+  const dropped: CascadeCell[] = [];
+  for (let lost = fresh(cur); lost.length; lost = fresh(cur)) {
+    for (const c of lost) {
+      const k = rowKey[c.row];
+      cur = { ...cur, [k]: cur[k] & ~(1 << c.column) };
+      dropped.push(c);
+    }
+  }
+  return { marks: cur, refused: false, dropped };
+}
+
+/**
+ * Všechny buňky, které nesedí, v pořadí kontroly: zprava, ve sloupci nejdřív přenosy, které do něj
+ * vtékají. Při výběru kopií nejdřív kopie.
+ */
+export function wrongCells(cfg: CascadeConfig, st: CascadeState): CascadeCell[] {
   const task = currentTask(cfg, st);
-  if (!task) return null;
+  if (!task) return [];
+  const out: CascadeCell[] = [];
   if (cfg.pickCopies && task.op === 'mul') {
     for (let j = 0; j < copySlots(cfg); j++) {
-      if (bit(st.copies, j) !== bit(task.operands[1], j)) return { row: 'copy', column: j };
+      if (bit(st.copies, j) !== bit(task.operands[1], j)) out.push({ row: 'copy', column: j });
     }
   }
   const ans = answer(cfg, task);
@@ -266,11 +330,24 @@ export function firstWrong(cfg: CascadeConfig, st: CascadeState): CascadeCell | 
   const farCols = farColumns(cfg);
   const last = cfg.overflow && cfg.carries === 'manual' ? cfg.width : cfg.width - 1;
   for (let i = 0; i <= last; i++) {
-    if (farCols.includes(i) && bit(st.far, i) !== bit(ans.far, i)) return { row: 'far', column: i };
-    if (carryCols.includes(i) && bit(st.carries, i) !== bit(ans.carries, i)) return { row: 'carry', column: i };
-    if (i < cfg.width && bit(st.result, i) !== bit(ans.result, i)) return { row: 'result', column: i };
+    if (farCols.includes(i) && bit(st.far, i) !== bit(ans.far, i)) out.push({ row: 'far', column: i });
+    if (carryCols.includes(i) && bit(st.carries, i) !== bit(ans.carries, i)) out.push({ row: 'carry', column: i });
+    if (i < cfg.width && bit(st.result, i) !== bit(ans.result, i)) out.push({ row: 'result', column: i });
   }
-  return null;
+  return out;
+}
+
+/**
+ * První buňka zprava, která nesedí (ve sloupci nejdřív přenosy, které do něj vtékají).
+ * Při výběru kopií se nejdřív kontroluje, jestli svítí správné kopie.
+ * Se zachováním světla první buňka, kterou jde opravdu přepnout: krystal bez světla se rozsvítit nedá,
+ * takže třeba u řetězu výpůjček ukáže nejdřív sloupec, který má z čeho půjčit.
+ */
+export function firstWrong(cfg: CascadeConfig, st: CascadeState): CascadeCell | null {
+  const cells = wrongCells(cfg, st);
+  const task = currentTask(cfg, st);
+  if (!cfg.conserve || !task || cells.length < 2) return cells[0] ?? null;
+  return cells.find((c) => !flowToggle(cfg, task, st, c).refused) ?? cells[0];
 }
 
 /** Potvrdí výsledek. Každé potvrzení je jeden tah. */
