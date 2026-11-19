@@ -9,6 +9,7 @@
   import KodexPanel from './ui/KodexPanel.svelte';
   import SettingsPanel from './ui/SettingsPanel.svelte';
   import UpdateToast from './ui/UpdateToast.svelte';
+  import DoorTransition from './ui/DoorTransition.svelte';
   import Title from './ui/screens/Title.svelte';
   import MapScreen from './ui/screens/MapScreen.svelte';
   import Level from './ui/screens/Level.svelte';
@@ -66,6 +67,7 @@
 <KodexPanel />
 <SettingsPanel />
 <UpdateToast />
+<DoorTransition />
 
 <style>
   .app {

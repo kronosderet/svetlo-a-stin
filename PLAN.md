@@ -1005,6 +1005,10 @@ osnovy nejde naučit těmi stávajícími.
     vedla natvrdo do I-1). Soutok je teď hračka v II-0 (1 + 0, 0 + 1, 1 + 1) a v II-2 je nová komnata
     Dvě dvojky se Zákonem dvojice; Dvě řady zanikly. Postup se převede na rozvržení 5: stará II-2 se
     sloučí do II-0, nová II-2 začíná neodehraná a přeložený Soutok z Kodexu zmizí.
+    Po vyřešení komnaty ukáže Pokračovat nejdřív vítěznou desku a pečetě se na ni otisknou jedna po
+    druhé. Kamenné dveře se zavřou až po Další komnatě (nebo Do Hlubších síní, Další patro, Vstoupit
+    do patra), za nimi se načte další obrazovka a dveře se do ní otevřou (`src/game/doors.svelte.ts`).
+    Verze 0.4.1 alpha.
 18. **Akt V, Archiv Hlasů:** nová osnova v rozdělení 0–15 (kap. 6, 17. 11. 2026). Po stavbě
     playtest kompletního průchodu jen základní cestou Aktů I až V a Finále: ověří, že základní cesta
     Archivu nic z Hlubších síní nepotřebuje.

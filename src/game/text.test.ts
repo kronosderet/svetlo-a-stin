@@ -75,6 +75,7 @@ describe('verze hry', () => {
     const { versionLabel } = await import('../content/about');
     expect(versionLabel('0.4.0-alpha')).toBe('0.4 alpha');
     expect(versionLabel('0.4.1')).toBe('0.4.1');
+    expect(versionLabel('0.4.1-alpha')).toBe('0.4.1 alpha');
     expect(versionLabel('1.0.0')).toBe('1.0');
   });
 });

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { tick, untrack } from 'svelte';
+  import { onMount, tick, untrack } from 'svelte';
   import { fade } from 'svelte/transition';
   import Altar from '../altar/Altar.svelte';
   import LevelComplete from '../altar/LevelComplete.svelte';
@@ -29,6 +29,7 @@
   import { Echo } from '../../game/echo.svelte.ts';
   import { browse } from '../../game/browse.svelte.ts';
   import { FX, fxState } from '../../game/fx.svelte.ts';
+  import { enterThroughDoors } from '../../game/doors.svelte.ts';
   import { go, openKodex, ui } from '../../game/nav.svelte.ts';
   import { isCompleted, isUnlocked, progress, recordEntry, recordHint, recordResult, unseenKodex } from '../../game/progress.svelte.ts';
   import { saveSettings, settings } from '../../game/settings.svelte.ts';
@@ -491,11 +492,14 @@
     sound.playTick();
   }
 
-  /** Pokračovat: dveře se otevřou a ukáže se výsledek, pečetě a cesta dál. */
+  /**
+   * Pokračovat: ukáže se vítězná deska (výsledek, pečetě, cesta dál). Kamenné dveře se otevřou až
+   * cestou do další komnaty (enterThroughDoors).
+   */
   function openResult() {
     if (!result || showComplete) return;
     showComplete = true;
-    sound.playDoor();
+    sound.playReveal();
   }
 
   /** Z výsledku zpátky do vyřešené komnaty, ať v ní hráč může dál experimentovat. */
@@ -515,8 +519,19 @@
     if (settings.sound) sound.unlock();
   }
 
+  /** Nadpis komnaty: po příchodu (dveřmi, z mapy, ze schodů, Znovu) na něj skočí fokus. */
+  let titleEl: HTMLElement | undefined = $state();
+  // Zaměřené tlačítko staré obrazovky zmizelo s ní a fokus spadl na <body>: čtečka by o nové komnatě
+  // nic neřekla a Tab by začal od začátku stránky. Hádanka, která si fokus vzala sama, ho nechá.
+  onMount(() => {
+    const active = document.activeElement;
+    if (!active || active === document.body) titleEl?.focus({ preventScroll: true });
+  });
+
   function onKey(ev: KeyboardEvent) {
     if (ui.kodexOpen || ui.settingsOpen || showComplete) return;
+    // Podržený Enter by potvrzoval pořád dokola (a z vítězné desky by přeskočil do nové komnaty).
+    if (ev.repeat && ev.key === 'Enter') return;
     if (puzzleKey(game, ev)) {
       ev.preventDefault();
       return;
@@ -546,7 +561,7 @@
     </button>
     <div class="where">
       <span class="act carved hide-narrow">{act.title}</span>
-      <h1 class="inlaid"><span class="code">{room.id}</span> {room.title}</h1>
+      <h1 class="inlaid" tabindex="-1" bind:this={titleEl}><span class="code">{room.id}</span> {room.title}</h1>
     </div>
     <div class="tools">
       <button
@@ -658,8 +673,8 @@
     {kodex}
     hasNext={next !== null}
     floorDone={isGate ? { numeral: act.numeral, next: next ? actOf(next).title : (act.nextAct?.title ?? null) } : null}
-    onDeep={deepId ? () => go({ name: 'level', id: deepId! }) : undefined}
-    onNext={() => next && go(isGate ? { name: 'stairs', act: ACTS.indexOf(actOf(next)) } : { name: 'level', id: next })}
+    onDeep={deepId ? () => enterThroughDoors({ name: 'level', id: deepId! }) : undefined}
+    onNext={() => next && enterThroughDoors(isGate ? { name: 'stairs', act: ACTS.indexOf(actOf(next)) } : { name: 'level', id: next })}
     onMap={() => go({ name: 'map' })}
     onReplay={restart}
     onBack={backToRoom}
@@ -703,6 +718,10 @@
     overflow: hidden;
     text-overflow: ellipsis;
     max-width: 100%;
+  }
+  /* Fokus na nadpisu je jen pro čtečku a klávesnici, rámeček nepotřebuje. */
+  h1:focus {
+    outline: none;
   }
   .code {
     margin-right: 0.4em;

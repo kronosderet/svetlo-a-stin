@@ -8,6 +8,7 @@
   import { ACTS, basicRooms } from '../../content/levels';
   import { shuffleOptions } from '../../content/random';
   import type { QuizQuestion } from '../../content/types';
+  import { enterThroughDoors } from '../../game/doors.svelte.ts';
   import { go } from '../../game/nav.svelte.ts';
   import { settings } from '../../game/settings.svelte.ts';
   import * as sound from '../../audio/sound';
@@ -56,9 +57,9 @@
     } else phase = 'done';
   }
 
+  /** Do patra se vstupuje kamennými dveřmi, stejně jako z komnaty do komnaty. */
   function enter() {
-    sound.playDoor();
-    go({ name: 'level', id: first });
+    enterThroughDoors({ name: 'level', id: first });
   }
 </script>
 

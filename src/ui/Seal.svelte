@@ -1,7 +1,14 @@
 <script lang="ts">
   type SealIcon = 'diamond' | 'star' | 'drop';
 
-  let { earned, title, caption, icon }: { earned: boolean; title: string; caption: string; icon: SealIcon } = $props();
+  /** delay: za kolik ms po zobrazení se získaná pečeť otiskne (na vítězné desce jedna po druhé). */
+  let {
+    earned,
+    title,
+    caption,
+    icon,
+    delay = 0,
+  }: { earned: boolean; title: string; caption: string; icon: SealIcon; delay?: number } = $props();
 
   const icons: Record<SealIcon, string> = {
     diamond: 'M32 18 44 32 32 46 20 32Z',
@@ -12,7 +19,7 @@
 </script>
 
 <!-- Bronzový medailon; nezískaná pečeť je jen vytesaný otisk v kameni. -->
-<div class="seal" class:earned>
+<div class="seal" class:earned style:--stamp-delay="{delay}ms">
   <svg viewBox="0 0 64 64" aria-hidden="true" focusable="false">
     <circle class="coin" cx="32" cy="32" r="28" />
     {#each notches as deg (deg)}
@@ -78,7 +85,7 @@
   }
   .earned svg {
     filter: drop-shadow(0 3px 2px rgba(0, 0, 0, 0.6)) drop-shadow(0 0 12px rgba(242, 193, 78, 0.35));
-    animation: stamp 650ms cubic-bezier(0.2, 1.6, 0.4, 1) both 1.2s;
+    animation: stamp 650ms cubic-bezier(0.2, 1.6, 0.4, 1) both var(--stamp-delay, 0ms);
   }
   .t {
     font-family: var(--font-display);
