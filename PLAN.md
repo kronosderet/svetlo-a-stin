@@ -29,7 +29,7 @@ každý telefon v jeho kapse.
 | Logika | používat NOT, AND, OR, XOR, NAND, NOR, číst a sestavit pravdivostní tabulku, chápat De Morganovy zákony |
 | Obvody | postavit poloviční a úplnou sčítačku, porovnávač, multiplexor, dekodér |
 | Paměť | pochopit zpětnou vazbu, klopný obvod a čítač |
-| Kódování | dekódovat ASCII, chápat paritu a opravu chyb, záporná čísla ve dvojkovém doplňku, obraz jako pole bitů |
+| Kódování | dekódovat ASCII, chápat paritu a opravu chyb, obraz a zvuk jako řady čísel, záporná čísla ve dvojkovém doplňku |
 | Abstrakce | skládat složitější součástky z jednodušších a chápat, že i program je jen posloupnost bitů |
 
 ### 1.2 Pocit ze hry
@@ -120,7 +120,7 @@ Observatoř je vertikální stavba. Každý akt je jedno patro, které se po vy�
 | II | Síň Počtářů | sčítání, odčítání, přetečení, posuny, násobení |
 | III | Zahrada Bran | logická hradla, pravdivostní tabulky, De Morgan, NAND, bitové masky |
 | IV | Hlubina Strojů | sčítačky, porovnávač, multiplexor, dekodér, paměť, čítač |
-| V | Archiv Hlasů | šestnáctková soustava, ASCII, parita, Hamming, dvojkový doplněk, bitmapy |
+| V | Archiv Hlasů | šestnáctková soustava, ASCII, parita a oprava chyb, obraz a zvuk v bitech |
 | ✦ | Srdce Observatoře | finále: mini-ALU a první program |
 
 ### 2.5 Vyprávění skrze hru
@@ -169,11 +169,12 @@ Každý level má sadu pomůcek, které se v dalších levelech postupně vypín
 | živý součet „Tvé světlo váží: 5“ | I-4 | I-7 |
 | číslice 0/1 pod krystaly | I-1 (přístupnostní volba) | nikdy nucené |
 | počty světel pod sloupci (kolik se jich ve sloupci slévá) | II-0 | uvnitř II-4, po prvním součtu |
-| desítkové hodnoty řádků při počítání pod sebou | II-2 | II-3 (vrací se u nových operací: přetečení, odčítání, násobení) |
+| váhy pod krystaly výsledku Kaskády | II-0 | uvnitř II-2, po třech součtech (po objevu dvojice) |
+| desítkové hodnoty řádků při počítání pod sebou | II-0 | II-3 (vrací se u nových operací: přetečení, odčítání, násobení) |
 | živé světlo ve vodičích | III-1 | nikdy (je to jádro reaktivity) |
 
 Opora nemizí ve stejné chvíli, kdy přichází nový nápad. Odchází uvnitř komnaty po několika úlohách
-(`presentation.fade`) a Echo to řekne: v I-6 přibývá čtení i kotouče, v II-4 delší řady.
+(`presentation.fade`) a Echo to řekne: v I-6 přibývá čtení i kotouče, v II-4 delší řady, v II-2 váhy zhasnou až po objevu dvojice.
 
 ### 3.3 Nápovědy ve třech stupních
 
@@ -277,16 +278,17 @@ Díky tomu je přidávání levelů rychlé a datově řízené.
 | **Oltář** | klikáním přepínáš krystaly, abys dosáhl cílové hodnoty; v přísném režimu (Tichý krok) projdeš všechny kombinace bez opakování, jinak se cesta přeruší | bit → číslo, poziční hodnota, Grayův kód | I |
 | **Nápis** | chrám rozsvítí kombinaci, na kamenných kotoučích (desítky, jednotky) nastavíš její hodnotu; umí i opačný směr a kotouče s glyfy 0–F (jeden na každou čtveřici krystalů) | binární → desítkové, šestnáctková soustava | I |
 | **Počítadlo** | poutníci přibývají jako čárky a ty nastavuješ „další“ číslo; zápisník červeně ukáže změněné krystaly (technicky Oltář s cíli n + 1) | inkrementace, přenos | I |
-| **Kaskáda** | počítání pod sebou: ve stěně svítí řádky, hráč rozsvěcí krystaly výsledku a krystaly přenosu nad sloupci a výsledek potvrdí. Světla se přesouvají při každém doteku: do rozsvíceného krystalu výsledku sjede nejspodnější světlo sloupce, do krystalu přenosu odletí dvě světla shora (o dvě místa čtyři), u odčítání se menšitel vyruší a výpůjčka půjčí sousedovi; co odešlo, ve sloupci pohasne. Chyba otřese prvním špatným sloupcem zprava a Echo řekne proč (kolik světel se v něm slévá, který přenos chybí). Umí sčítání, pevnou nádobu s přepadem, odčítání s výpůjčkami, tři řady s přenosem o dvě místa i násobení, ve kterém hráč sám vybírá posunuté kopie | aritmetika | II |
+| **Kaskáda** | počítání pod sebou: ve stěně svítí řádky, hráč rozsvěcí krystaly výsledku a krystaly přenosu nad sloupci a výsledek potvrdí. Světla se přesouvají při každém doteku: do rozsvíceného krystalu výsledku sjede nejspodnější světlo sloupce, do krystalu přenosu odletí dvě světla shora (o dvě místa čtyři), u odčítání se menšitel vyruší a výpůjčka půjčí sousedovi; co odešlo, ve sloupci pohasne. Bez krystalů přenosu (II-0, II-2) přeteče dvojice rovnou do prázdného krystalu vlevo. Chyba otřese prvním špatným sloupcem zprava a Echo řekne proč (kolik světel se v něm slévá, který přenos chybí). Umí sčítání, pevnou nádobu s přepadem, odčítání s výpůjčkami, tři řady s přenosem o dvě místa i násobení, ve kterém hráč sám vybírá posunuté kopie | aritmetika | II |
 | **Příliv** | páky posouvají celou řadu (vlevo = ×2, vpravo = ÷2, co přeteče přes okraj, je ztracené), další páky přidají nebo uberou jedničku. Cíl co nejméně tahy; ve Vahách Osudu dovolí každá zkouška jen ideální počet tahů a pak se vrátí na začátek. Páka „převrať“ (doplněk), miska zbytku (dělení) a kolo může místo čísla ukázat „÷ 8“ nebo „−3“ | posuny, ×2, ÷2, doplněk | II |
 | **Smíšená komnata** | brána patra: několik hádanek různých archetypů za sebou (třeba Kaskáda a pak Příliv), nad scénou ukazatel zkoušek; tahy, pokusy i nápovědy se pro pečetě sčítají za celou komnatu | syntéza patra | II |
 | **Brána** | kamenná deska s obvodem: vlevo krystaly vstupů, uprostřed kameny s runami, vpravo lampa, mezi nimi světlovody, které svítí, když nesou světlo. Zkoumání (runy pevné, hráč zkouší všechny kombinace vstupů) a vkládání run do prázdných kamenů (kliknutí runy střídá, Zkouška projde všechny řádky a nesedící rozsvítí okrově) | hradla, skládání | III |
 | **Deska zákona** | pravdivostní tabulka: hráč rozsvítí, ve kterých řádcích lampa svítí, nebo podle hotové desky pozná runu pod závojem. Obvod vedle desky ukazuje kombinaci, kterou hráč vybere (kliknutím na řádek desky nebo krystaly vstupů, najetí myší ji jen ukáže), a lampa ukazuje, co k ní doteče; desku jde odvodit z toho, co hráč vidí, a prochází ji svým tempem | tabulky, identifikace | III |
 | **Dílna** | stroj z run a součástek na kamenné desce: víc lamp (čísla s vahami a živou hodnotou pod deskou), součástky s několika výstupy (poloviční a úplná sčítačka, výhybka, ozvěna, ozvěna s tepem), zpětná vazba a tlačítko Tep. Zkoumání (všechny kombinace vstupů), cíle (dovést stroj vstupy a tepem k cílovému stavu) a stavba: hráč osazuje prázdné kameny runami a točitými kameny vybírá, odkud do kamene, součástky nebo lampy teče světlo. Zkouška projde všechny kombinace (u velkých strojů s pravidlem slovy a prvním příkladem, kde se stroj plete), nebo zkušební posloupnost s tepy od zhasnuté paměti | sčítačky, multiplexor, dekodér, paměť, čítač, ALU | IV |
 | **Maska** | ve stěně svítí oktáva, hráč pod ní rozsvěcí masku a runa AND, OR nebo XOR z nich živě skládá výsledek; oltář žádá cílový výsledek, u šifry má maska odpovídat klíči a výsledkem je rozšifrované písmeno | bitové operace, šifra XOR | III |
-| **Šifra** | kódování/dekódování zpráv | XOR šifra, ASCII, hex | III, V |
-| **Léčitel** | najdi a oprav poškozený bit | parita, Hamming | V |
-| **Mozaika** | mřížka 8×8, každý řádek je bajt | bitmapy | V |
+| **Kniha znaků** | Nápis, u kterého oktáva ukazuje do tabulky: levý glyf je řádek, pravý sloupec. Čtení i zápis slov, druhé knihy pro česká písmena, police s čísly dalších polic | ASCII, UTF-8, adresa | V |
+| **Léčitel** | deska krystalů se strážnými krystaly: hráč strážce doplní, pozná poškozenou desku, nebo podle strážců, kteří se ozvou, najde a opraví poškozený krystal (kříž, tři kruhy, strážci s vahami) | parita, oprava chyb, Hamming | V |
+| **Mozaika** | mřížka krystalů, každý řádek je čtveřice nebo oktáva zapsaná glyfy; hráč podle glyfů kreslí, nebo obraz zapíše. Varianty: sloupce výšek (zvuk), krátký zápis (komprese), barvy | bitmapa, zvuk, komprese, RGB | V |
+| **Strom znaků** | strom rozcestí: každý krystal zprávy vybere levou, nebo pravou cestu, na konci cesty je písmeno | kód s proměnnou délkou | V |
 | **Zpěv** | z karet sestavíš krátký program pro Srdce | instrukce = bity | ✦ |
 
 ---
@@ -302,8 +304,7 @@ vejde zhruba do jedné vyučovací hodiny. **Hlubší síně** 8–15 mají rozs
 jsou nepovinné a otevírají se po bráně patra, pak po jedné. Patří do nich látka, kterou sexta
 nutně nepotřebuje, ale je škoda o ni přijít (odčítání, násobení, dělení, šestnáctková soustava).
 Komnata 15 (glyf 1111) je velká brána patra. Akty I až IV jsou rozdělené takto a mají všech
-16 komnat; Akt V zatím drží původní osnovu po deseti levelech a rozdělí se, až na něj přijde
-řada (chybějící komnaty jsou na mapě zapečetěné). Sloupec *Nové* označuje jediný nový koncept levelu.
+16 komnat. Akt V má osnovu ve stejném rozdělení, ve hře zatím není. Sloupec *Nové* označuje jediný nový koncept levelu.
 
 ### Akt I — Předsíň Prvního Světla (bit a počítání)
 
@@ -331,10 +332,10 @@ Komnata 15 (glyf 1111) je velká brána patra. Akty I až IV jsou rozdělené ta
 
 | # | Název | Archetyp | Nové | Popis |
 |---|---|---|---|---|
-| II-0 | Jedna a jedna | Kaskáda | (nultá komnata) | Jediný součet 1 + 1 pod sebou. Hráč rozsvítí krystal s váhou 2 a obě světla do něj sama sjedou. |
+| II-0 | Jedna a jedna | Kaskáda | (nultá komnata) | Hračka se sčítáním dvou krystalů (dřív komnata Soutok): 1 + 0, 0 + 1 a 1 + 1 pod sebou, s počty světel a desítkovými hodnotami. U 1 + 1 hráč rozsvítí krystal s váhou 2 a obě světla do něj sama sjedou. |
 | II-1 | Počítadlo poutníků | Počítadlo | přenos | Čísla 1 až 8, poutníci jako čárky na desce. Hráč objeví „předání“ (0011 → 0100, 0111 → 1000), kvíz ho zobecní. Předání = přenos, jedno slovo pro celou Síň. |
-| II-2 | Soutok | smíšená (Kaskáda) | 1 + 1 = 10, sčítání pod sebou | Světlo z řad stéká do nádrže: 1 + 0, 1 + 1, 1 + 1 + 1 (dvě světla jsou krystal s váhou 2). Pak tři součty dvou řad bez přenosu. Kvíz: 1 + 1 a 1 + 1 + 1 + 1 dvojkově. |
-| II-3 | Krystaly přenosu | Kaskáda | přenos | Čtyřbitové součty s přenosy. Hráč sám umisťuje malé krystaly přenosu nad sloupce a brána chce vidět i je. Počty světel pod sloupci se s nimi živě mění. Kvíz: zákon sloupce (tři světla = dole 1, přenos 1). |
+| II-2 | Dvě dvojky | Kaskáda | dvojice v každém sloupci (sčítání pod sebou) | Dvě čtyřkrystalové řady, pět krystalů výsledku, bez krystalů přenosu. 5 + 1 (známá dvojice vpravo), 2 + 2 (dvě světla s váhou 2 patří do krystalu s váhou 4, ne pod dvojici: počet světel není váha), 8 + 8 = 16 v pátém krystalu. Pak váhy zhasnou: losovaný součet s jednou dvojicí a dvě dvojice naráz. Vlevo od každé dvojice je volno, srážka přijde až v II-3. Kvíz: součet s dvojicí, kam přeteče dvojice s váhou w (i mimo desku). |
+| II-3 | Krystaly přenosu | Kaskáda | přenos na světlo, krystal přenosu | Čtyřbitové součty s přenosy. Hráč sám umisťuje malé krystaly přenosu nad sloupce a brána chce vidět i je. Počty světel pod sloupci se s nimi živě mění. Kvíz: zákon sloupce (tři světla = dole 1, přenos 1). |
 | II-4 | Velká kaskáda | Kaskáda | řetěz přenosů | Šestibitová čísla bez počtů pod sloupci, 011111 + 1, jeden losovaný součet a 111111 + 111111. Kvíz: součet n bitů má nejvýš n + 1 bitů. |
 | II-5 | Přetékající nádoba | Kaskáda | přetečení | Pevné 4 krystaly s přepadem: přenos z nejvyššího sloupce musí hráč poslat do přepadu (12 + 6, 15 + 1). Zápisník ukáže (1)0010 a 18 → 2. Kvíz: širší nádoba, 255 + 1 v bajtu. |
 | II-6 | Příliv a odliv | Příliv | posun = ×2 / ÷2 | Páky jen se šipkami, živá váha. Hráč objeví ×2 a ÷2 i ztrátu světla vpravo (13 → 6). Kvíz: 52 >> 1, posun o dvě místa = ×4. |
@@ -361,7 +362,7 @@ tesali těmi samými znaky. Moderní značka (NOT, AND…) se pod runou objeví,
 | III-1 | Obraceč | Brána | NOT | Do prázdného kamene mezi vstupem a lampou se vkládá Průchod, nebo Obraceč, aby lampa svítila podle brány. Pak dva Obraceče za sebou (¬¬A = A). |
 | III-2 | Pouto | smíšená (Brána + Deska) | AND | Hráč přepíná vstupy a zkouší všechny čtyři kombinace (deska objevů je zapisuje, ideál po jediné změně), pak vyplní desku zákona zpaměti. |
 | III-3 | Rozcestí | smíšená (Brána + Deska) | OR | Stejný postup pro OR. Kvíz: ve kterých řádcích se liší Pouto a Rozcestí. |
-| III-4 | Jen jeden | smíšená (Brána + Deska) | XOR | Výluka. Echo připomene Soutok: XOR je spodní číslice součtu 1 + 1. |
+| III-4 | Jen jeden | smíšená (Brána + Deska) | XOR | Výluka. Echo připomene Síň Počtářů: XOR je spodní číslice součtu 1 + 1. |
 | III-5 | Které pravidlo? | Deska zákona | identifikace | Losované desky: tři poznat (runa pod závojem), dvě vyplnit. Špatná volba řekne, ve kterém řádku by zvolená runa svítila jinak. |
 | III-6 | Řetězy | Brána | skládání | Dvě runy za sebou: hráč objeví Zlomené pouto (NAND), Zavřené rozcestí (NOR) a Rovnost (Výluka a Obraceč, Echo ji pojmenuje). Pak prozkoumá hotové větvení a postaví losované větvení s Obracečem na jednom vstupu. |
 | III-7 | **Brána Zahrady** | smíšená | syntéza | Deska zákona dvou obvodů s lampou pod závojem (výsledek se skládá z run), osazení kamenů ke třem deskám a dvě runy pod závojem z pěti. |
@@ -407,23 +408,82 @@ vrací čtení čísel z Aktu I. Stroje se staví z kamenů a točitých kamenů
 
 ### Akt V — Archiv Hlasů (kódy)
 
+> Návrh osnovy · 17. 11. 2026, zatím bez kódu. Předpoklady o základní cestě ověří playtest
+> kompletního průchodu.
+
+Do Archivu Lumenité ukládali zprávy, obrazy i hlasy. Patro vede ke třem myšlenkám:
+- **cokoli jde zapsat světlem a stínem:** písmeno, obraz, zvuk;
+- **zápis se dá ochránit:** strážné krystaly prasklinu odhalí, nebo ji i opraví;
+- **co oktáva znamená, určuje dohoda:** stejné světlo je číslo, písmeno, nebo řádek obrazu.
+
+Na poslední myšlenku navazuje Finále: i rozkaz pro Srdce je jen oktáva.
+
+**Co zná hráč základní cesty.** Základní cesta Archivu počítá jen se základními cestami Aktů I až IV:
+
+| Zná | Nezná (je jen v Hlubších síních) |
+|---|---|
+| čísla ze čtyř krystalů (0–15), váhy 8-4-2-1, 2ⁿ kombinací | oktávu a čísla do 255 (I-10, I-12), glyfy jako číslice (I-13, I-14) |
+| sčítání s přenosem, přetečení, posun ×2 a ÷2 | Sudé a liché (I-9), odčítání a doplněk (II-8, II-13) |
+| runy a desky zákona, řetězy run | masky a Tajnou řeč s ASCII (III-12, III-13) |
+| sčítačky, porovnávač, výhybku, rozdělovač | paměť (IV-8 až IV-11) a volič operace (IV-13) |
+
+Co z toho plyne:
+- **Oktáva jsou dva glyfy.** Oktávu, glyfy i písmena učí Archiv od začátku. Oktáva se čte jako dva glyfy,
+  tedy dvakrát čtení čtyř krystalů, které hráč základní cesty umí. Váhy 128 až 16 nepotřebuje.
+- **Kdo prošel Hlubšími síněmi, nedělá totéž podruhé:**
+  - V-1 nabídne zkratku Glyfy znám (jako Desku znám), když má hráč přeloženou Řeč glyfů;
+  - ve V-2 Echo naváže na Tajnou řeč: tohle je kniha, ze které byla písmena;
+  - ve V-3 Echo odliší strážný krystal od Sudé a liché: tam rozhodoval pravý krystal čísla, tady
+    počet světel.
+- **Hlubší síně Archivu** se otevřou i hráči základní cesty. Staví proto jen na základních cestách
+  a na základní cestě Archivu, ne na Hlubších síních předchozích pater.
+- **Nečitelná slova:** hráč základní cesty nikdy nepřeloží „glyfy“ v I-5 (záznam Řeč glyfů) ani jméno
+  Echa v I-0 (Tajná řeč). Obě slova dostanou druhý záznam, který je přeloží taky: glyfy V-1, jméno
+  Echa V-2. První slova Echa v I-0 („… ticho… věky ticha“) přeloží brána V-7.
+
 | # | Název | Archetyp | Nové | Popis |
 |---|---|---|---|---|
-| V-1 | Čtveřice | Nápis | šestnáctková soustava | Čtveřicové glyfy: 4 bity = 1 znak 0–F. Hráč pochopí glyfy, které vídal od začátku. |
-| V-2 | Hlas v číslech | Šifra | ASCII | Dekóduj první slovo Lumenitů písmeno po písmenu. |
-| V-3 | Psaní do kamene | Šifra | kódování | Zakóduj slovo pro Echo (výběr písmen myší). |
-| V-4 | Poškozené desky | Léčitel | parita | Který z nápisů je poškozený? |
-| V-5 | Léčitel | Léčitel | Hammingův kód (7,4) | Najdi a oprav převrácený bit. *Volitelný/pokročilý.* |
-| V-6 | Stínová čísla | Kaskáda | dvojkový doplněk | Záporná čísla stínu: proč 1111 = −1. |
-| V-7 | Obrazy ze světla | Mozaika | bitmapa | Každý řádek 8×8 mřížky je bajt. Vykresli symbol Lumenitů. |
-| V-8 | Ozvěny minulosti | Šifra | opakování | Návrat ke střepům z Aktů I–IV, které už jdou přečíst. |
-| V-9 | **Poslední zpráva** | mix | syntéza | Hex → ASCII + kontrola parity. Zpráva odhalí osud Lumenitů. |
+| V-0 | Znak na dveřích | Oltář | (nultá komnata) | Na dveřích je glyf, kolem čtverce čtyři krystaly. Když svítí stejné strany jako na glyfu, dveře se otevřou: glyf je čtveřice krystalů. |
+| V-1 | Čtveřice | Nápis s glyfy | šestnáctková číslice | Strany glyfu se čtou od horní po směru hodinových ručiček, horní váží 8. Dveře komnat, kterými hráč prošel, nesou jejich čísla (I-5 je 5). Pro 10 až 15 číslice nestačí, proto A až F. Čtení i zápis jednoho glyfu. Kdo má přeloženou Řeč glyfů (I-13), přeskočí rovnou na závěrečnou zkoušku. Kvíz: proč právě 16 znaků. |
+| V-2 | Kniha znaků | Kniha znaků | ASCII (oktáva = dva glyfy) | Písmeno má v knize řádek podle levého glyfu a sloupec podle pravého, tak se tabulka ASCII tiskne dodnes: 4 a 5 je E. Hráč přečte krátké slovo písmeno po písmenu, pak sám zapíše slovo pro Echo. Osmý krystal zůstává zhasnutý. Kvíz: proč v knize chybí č a ř. |
+| V-3 | Strážný krystal | Léčitel | paritní bit | Osmý krystal Lumenité nechávali na hlídání: rozsvítí se tak, aby v oktávě svítil sudý počet krystalů. Hráč nejdřív doplní strážný krystal k několika písmenům, pak mezi přijatými deskami pozná ty, které poškodila prasklina (lichý počet světel). Kvíz: dvě praskliny ve stejné oktávě strážný krystal neodhalí. |
+| V-4 | Obrazy ze světla | Mozaika | bitmapa | Každý řádek mřížky je čtveřice, nebo oktáva. Nejdřív 4 × 4 s jedním glyfem na řádek, pak 8 × 8 se dvěma. Hráč podle glyfů nakreslí symbol Lumenitů, pak obraz přepíše do glyfů. Kvíz: stejná oktáva je písmeno i řádek obrazu, rozhoduje dohoda. |
+| V-5 | Kříž strážců | Léčitel | oprava chyby | Deska 4 × 4 má strážce na konci každého řádku i pod každým sloupcem. Po jedné prasklině se ozve jeden řádek a jeden sloupec a poškozený krystal je v jejich průsečíku. Hráč ho najde a opraví, nejdřív na obrazu, pak na vzoru, ve kterém chybu okem poznat nejde. |
+| V-6 | Hlas v číslech | Mozaika (sloupce) | zvuk jako čísla | Hlas je vlna. Lumenité ji v pravidelných chvílích změřili a každou výšku zapsali čtveřicí. Hráč nastaví výšky podle nakreslené vlny a Srdce zvuk přehraje. Pak podle řady glyfů vlnu nakreslí sám. Kvíz: víc měření a víc krystalů na měření zní věrněji, ale zabere víc místa. |
+| V-7 | **Poslední zpráva** | smíšená | syntéza | Poškozená deska s křížem strážců: opravit, přečíst písmena z dvojic glyfů, nakreslit obraz. Zpráva řekne, proč se Srdce zastavilo, a Echo konečně vysloví svá první slova z I-0. Kvíz: co znamená oktáva 0100 1000 (podle dohody 72, H, nebo řádek obrazu). Otevře Finále, Hlubší síně a „Zákony Archivu“. |
+| | *Hlubší síně* | | | *Nepovinné, otevřou se po bráně patra.* |
+| V-8 | Tři kruhy | Léčitel | Hammingův kód (7,4) | Čtyři krystaly zprávy leží v průnicích tří kruhů. V každém kruhu je jeden strážce a v kruhu musí svítit sudý počet krystalů. Hráč nejdřív strážce doplní, pak podle kruhů, které se ozvou, najde poškozený krystal. Tři strážci uhlídají čtyři krystaly, kříž by na ně potřeboval čtyři. |
+| V-9 | Strážci s vahami | Léčitel | poloha chyby | Krystaly stojí v řadě s čísly 1 až 7, strážci na místech 1, 2 a 4. Čísla strážců, kteří se ozvou, dají v součtu místo poškozeného krystalu (ozve se 1 a 4: krystal 5). Váhy kamenů z I-4 tu ukazují na chybu. Kvíz: kolik strážců potřebuje 15 krystalů. |
+| V-10 | Krátký zápis | Mozaika | komprese (RLE) | Řádek obrazu jde zapsat i jako „tři stíny, dvě světla, tři stíny“. Hráč obrazy zkracuje a podle krátkého zápisu kreslí. Aha: velká plocha se zkrátí hodně, šachovnice se naopak prodlouží. |
+| V-11 | Barvy světla | Mozaika s barvou | barva RGB | Barva jsou tři oktávy: červené, zelené a modré světlo, každé dvěma glyfy. Hráč míchá světlo (červená a zelená dají žlutou) a nastavuje barvy podle zápisu #FF8800. |
+| V-12 | Háčky a čárky | Kniha znaků | UTF-8 | Česká písmena se do knihy nevejdou. Glyfy C3, C4 a C5 znamenají, že písmeno je v jiné knize a ukáže ho další oktáva (č = C4 8D). Hráč čte a píše slova s háčky. Kvíz: proč se v e-mailu místo č objeví „ÄŤ“. |
+| V-13 | Krátké pro časté | Strom znaků | kód s proměnnou délkou | Kód je strom rozcestí jako rozdělovač z IV-6: stín vede vlevo, světlo vpravo, na konci cesty je písmeno. Častá písmena jsou blízko kořene a mají krátký kód. Hráč čte zprávu bez mezer (žádný kód není začátkem jiného), pak sám rozmístí písmena tak, aby zpráva byla co nejkratší. |
+| V-14 | Police Archivu | Kniha znaků | adresa | Police Archivu jsou číslované dvojicemi glyfů. Na některých leží písmeno, na jiných číslo další police. Hráč jde z police na polici a skládá zprávu. Číslo tu znamená místo, další dohoda. Kvíz: co když police ukazuje sama na sebe. |
+| V-15 | **Velká brána Archivu** | smíšená | syntéza | Zpráva chráněná strážci s vahami, slovo s háčky, obraz v barvách a cesta po policích. Odemyká „Hlubší zákony Archivu“ a poslední část příběhu: komu patřil hlas, ze kterého je Echo. |
+
+**Z původní osnovy vypadlo:**
+- šestnáctková soustava jako samostatný začátek: hráči Hlubších síní ji mají v I-13 a I-14, ve V-1 dostanou zkratku;
+- Stínová čísla: doplněk je v II-13 a IV-12;
+- Ozvěny minulosti: střepy ve hře nejsou a návrat ke starým patrům dělají nečitelná slova, která přeloží Kodex.
+
+**Co to znamená pro kód:**
+- Nové archetypy:
+  - Kniha znaků: V-2, V-12, V-14;
+  - Léčitel: V-3, V-5, V-8, V-9;
+  - Mozaika: V-4, V-6, V-10, V-11;
+  - Strom znaků: V-13.
+  Oltář s glyfem (V-0) a Nápis s glyfy (V-1) už jsou.
+- Glyf patra potřebuje třetí bit značky: základ 64 a maska 112 místo 48, uprostřed glyfu nový znak.
+- Nečitelné slovo s víc záznamy: `{{Echo|sifra,kniha}}` přeloží kterýkoli z nich.
+- Zkratka Glyfy znám ve V-1 jako Desku znám (`skip()`).
+- Strážce schodů do Archivu se ptá na základní cestu Hlubiny: sčítačka, výhybka, rozdělovač.
+- Přehrání vlny ve V-6 přes Web Audio, které hra už používá na zvuky.
 
 ### Finále — Srdce Observatoře
 
 | # | Název | Archetyp | Nové | Popis |
 |---|---|---|---|---|
-| ✦ | Zpěv Srdce | Zpěv + Dílna | program = bity | Srdce čte 4bitové instrukce (operace + operand). Hráč z karet sestaví 3–5 instrukcí, které spočítají požadovanou hodnotu na voliči operace z IV-13. Pointa: „I program je jen světlo a stín.“ |
+| ✦ | Zpěv Srdce | Zpěv + Dílna | program = bity | Srdce čte rozkazy jako oktávy: levý glyf je operace (vlož, přičti, zdvoj, rozpul, Výluka), pravý glyf číslo. Hráč z karet sestaví 3–5 rozkazů, které v krystalech Srdce spočítají požadovanou hodnotu. Volič operace má Srdce vlastní a hotový, takže Finále nepotřebuje IV-13 ani paměť z Hlubších síní: stačí sčítačka, posun, runy a výhybka ze základní cesty. Pointa: „I program je jen světlo a stín.“ |
 
 ---
 
@@ -941,4 +1001,10 @@ osnovy nejde naučit těmi stávajícími.
     Do Hlubších síní po bráně, Desku znám, nečitelná slova, která přeloží Kodex, Sudé a liché v I-9,
     Počítadlo v II-1 a Soutok s Dvěma řadami v II-2 (převod postupu, rozvržení 4), pracovní list.
     Podrobně v `PLAYTEST.md` (kap. 10) a `TYPOGRAFIE.md`.
-17. Akt V, Archiv Hlasů.
+17. **Úpravy Síně Počtářů (19. 11. 2026):** nová hra začíná nultou komnatou I-0 (titulní obrazovka
+    vedla natvrdo do I-1). Soutok je teď hračka v II-0 (1 + 0, 0 + 1, 1 + 1) a v II-2 je nová komnata
+    Dvě dvojky se Zákonem dvojice; Dvě řady zanikly. Postup se převede na rozvržení 5: stará II-2 se
+    sloučí do II-0, nová II-2 začíná neodehraná a přeložený Soutok z Kodexu zmizí.
+18. **Akt V, Archiv Hlasů:** nová osnova v rozdělení 0–15 (kap. 6, 17. 11. 2026). Po stavbě
+    playtest kompletního průchodu jen základní cestou Aktů I až V a Finále: ověří, že základní cesta
+    Archivu nic z Hlubších síní nepotřebuje.

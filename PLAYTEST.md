@@ -777,6 +777,7 @@ Zbytek (závoj lampy, Tajná řeč, Masky, nadpis kvízu, pečeť přesnosti) je
   čtyřmi, osmi). Rozhoduje pravý krystal a stíny vpravo. Nový záznam Kodexu Parita.
 - **II-1 Počítadlo poutníků** (z I-9): přenos je na základní cestě dřív, než ho Síň potřebuje.
 - **II-2 Soutok** (sloučené Soutok a Dvě řady): 1 + 1 = 10, pak tři součty bez přenosu.
+  Později (19. 11.) se Soutok přestěhoval do hračky II-0 a v II-2 jsou Dvě dvojky (PLAN.md, krok 17).
 - **I-5** má čtyři cíle, **I-12** čtyři nápisy.
 - Uložený postup i soubory se převedou (rozvržení 4, `src/game/migrate.ts`):
   - z I-9 na II-1;

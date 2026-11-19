@@ -338,8 +338,9 @@ export interface FlowMarks {
  * (přenos o dvě místa čtyři) ze sloupce vpravo, a to shora, nejblíž ke svému místu. Díky tomu
  * se nic nepřehazuje, ať hráč rozsvěcí v jakémkoli pořadí. Sloupce se procházejí zprava.
  *
- * Bez krystalů přenosu (Soutok) si výsledek, který ve svém sloupci nic nemá, vezme dvě světla
- * ze sloupce vpravo: tak je vidět, že 1 + 1 = 10.
+ * Bez krystalů přenosu (Jedna a jedna, Dvě dvojky) si výsledek, který ve svém sloupci nic nemá, vezme
+ * dvě světla ze sloupce vpravo: tak je vidět, že 1 + 1 = 10 a 10 + 10 = 100. Funguje to, jen když dvojice
+ * přetéká do sloupce, kde ve stěně nic nesvítí (hlídá levels.test.ts).
  *
  * Odčítání: menšitel vyruší nejspodnější světlo sloupce (ukáže se, až hráč sloupec zpracuje),
  * výsledek si vezme další zespodu a krystal výpůjčky půjčí sousedovi vpravo světlo shora.

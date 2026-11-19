@@ -64,10 +64,27 @@ describe('losované úlohy sedí na repliky Echa', () => {
     });
   });
 
-  it('II-2 nikdy nepotřebuje přenos', () => {
+  it('II-2: pevné 5 + 1, 2 + 2 a 8 + 8, pak jedna dvojice (součet do 15) a dvě dvojice; vlevo od dvojice vždy volno', () => {
     forSeeds((s) => {
       const cfg = genII2(seeded(s));
-      cfg.tasks.forEach((t) => expect(answer(cfg, t).carries).toBe(0));
+      expect(cfg.tasks.slice(0, 3).map((t) => t.operands)).toEqual([
+        [0b0101, 0b0001],
+        [0b0010, 0b0010],
+        [0b1000, 0b1000],
+      ]);
+      cfg.tasks.forEach((t) => {
+        const [a, b] = t.operands;
+        expect(((a & b) << 1) & (a | b)).toBe(0);
+        expect(Math.max(...answer(cfg, t).inflow)).toBeLessThanOrEqual(2);
+      });
+      const [a4, b4] = cfg.tasks[3].operands;
+      expect(popcount(a4 & b4)).toBe(1);
+      expect(a4 & b4 & 0b0110).toBe(a4 & b4);
+      expect(a4 ^ b4).not.toBe(0);
+      expect(a4 + b4).toBeLessThan(16);
+      const [a5, b5] = cfg.tasks[4].operands;
+      expect(popcount(a5 & b5)).toBe(2);
+      expect(a5 & b5 & 0b1000).toBe(0b1000);
     });
   });
 

@@ -5,6 +5,7 @@
   import { hasStarted } from '../../game/progress.svelte.ts';
   import { install, pwa } from '../../game/pwa.svelte.ts';
   import { AUTHOR, LICENSE_NAME, VERSION, YEAR } from '../../content/about';
+  import { BASIC_PATH } from '../../content/levels';
   import { playDoor, unlock } from '../../audio/sound';
 
   const started = $derived(hasStarted());
@@ -13,7 +14,8 @@
   function enter() {
     unlock();
     playDoor();
-    go(started ? { name: 'map' } : { name: 'level', id: 'I-1' });
+    // Nová hra začíná první komnatou základní cesty (nultá komnata Předsíně), ne pevným id.
+    go(started ? { name: 'map' } : { name: 'level', id: BASIC_PATH[0].id });
   }
 </script>
 

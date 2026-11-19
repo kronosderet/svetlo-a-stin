@@ -2,7 +2,7 @@
  * Kaskáda slovy: proč buňka nesedí (po chybném potvrzení) a proč má vypadat právě tak
  * (ukázka kroku s důvodem).
  */
-import { answer, firstWrong, type CascadeCell, type CascadeConfig, type CascadeEvent, type CascadeState } from '../core/puzzles/cascade';
+import { answer, firstWrong, rows, type CascadeCell, type CascadeConfig, type CascadeEvent, type CascadeState } from '../core/puzzles/cascade';
 import { isBitSet } from '../core/bits';
 
 /** Sloupce Kaskády: v … sloupci, nad … sloupcem, do … sloupce. */
@@ -56,9 +56,10 @@ export function cascadeWhy(cfg: CascadeConfig, state: CascadeState, ev: Wrong, e
     }
     return `${LOC_UP[c]} sloupci zprava ${ev.inflow === 1 ? 'zbude jedno světlo' : 'nezbude nic'}.`;
   }
-  const bitsInWall = cfg.bits ?? cfg.width;
-  if (cfg.carries === 'none' && c >= bitsInWall) {
-    return `Do ${GEN[c]} sloupce zprava přeteklo světlo ze sousedního sloupce. Rozsviť ho tam.`;
+  // Bez krystalů přenosu: světlo, které do sloupce přiteklo zprava, ve stěně nesvítí (own = vlastní světla sloupce).
+  const own = rows(task).filter((r) => isBitSet(r, c)).length;
+  if (cfg.carries === 'none' && ev.expected && ev.inflow > own) {
+    return `Ve sloupci vpravo se slila dvě světla. Dohromady váží ${2 ** c}, tolik jako krystal ${LOC[c]} sloupci zprava. Rozsviť tento krystal.`;
   }
   if (ev.inflow >= 2) {
     if (explicit)

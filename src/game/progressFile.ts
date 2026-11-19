@@ -12,12 +12,18 @@ export function fileNameFor(name: string): string {
   const clean = name.replace(/[\\/:*?"<>|]+/g, '').trim().replace(/\s+/g, '-');
   return clean ? `Svetlo-a-Stin-postup-${clean}.json` : FILE_NAME;
 }
-const FORMAT = 'svetlo-a-stin-postup';
+/**
+ * Značka formátu. Od rozvržení 5 je nová: verze do 0.4 alpha čtou jen starou značku, takže soubor z novější
+ * verze odmítnou, místo aby ho přečetly jako své číslování komnat a pak uložily poškozený.
+ */
+const FORMAT = 'svetlo-a-stin-postup-2';
+/** Značka souborů do rozvržení 4. Hra je dál čte a převede. */
+const LEGACY_FORMAT = 'svetlo-a-stin-postup';
 
 export function serializeProgress(p: ProgressData, now = new Date()): string {
   const file = {
     format: FORMAT,
-    verze: 2,
+    verze: 3,
     ulozeno: now.toISOString(),
     postup: { version: 1, layout: LAYOUT, name: p.name, levels: p.levels, stats: p.stats, kodex: p.kodex, seen: p.seen },
   };
@@ -36,10 +42,14 @@ export function parseProgress(text: string, levelIds: string[], kodexIds: string
   } catch {
     return { ok: false, reason: 'Soubor se nedá přečíst.' };
   }
-  if (!isRecord(raw) || raw.format !== FORMAT || !isRecord(raw.postup)) {
+  if (!isRecord(raw) || (raw.format !== FORMAT && raw.format !== LEGACY_FORMAT) || !isRecord(raw.postup)) {
     return { ok: false, reason: 'Tohle není soubor s postupem Světla & Stínu.' };
   }
   const src = raw.postup;
+  // Číslování komnat z novější verze hry tahle verze nezná: převod by postup poškodil.
+  if (typeof src.layout === 'number' && src.layout > LAYOUT) {
+    return { ok: false, reason: 'Soubor uložila novější verze hry. Otevři novější verzi a soubor načti v ní.' };
+  }
   const levels: Record<string, LevelRecord> = {};
   if (isRecord(src.levels)) {
     // Soubor uložený ve starším rozvržení komnat má jejich původní čísla.

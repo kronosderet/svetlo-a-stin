@@ -35,6 +35,12 @@ const lastParts = new Set(LEVELS.flatMap((l) => (l.kind === 'mixed' ? [partKey(l
 
 function commonChecks(level: PuzzleLevel) {
   expect(level.hints).toHaveLength(3);
+  // Závěrečnou repliku Echo řekne jen po hádance s kvízem (sayComplete); jinak by ji hráč nikdy neviděl.
+  if (level.echo.complete) expect(level.quiz?.length ?? 0).toBeGreaterThan(0);
+  // Opora, která v komnatě mizí, nesmí být zároveň zapnutá natrvalo.
+  const pres = level.presentation;
+  if (pres.fade?.weights) expect(pres.showWeights).toBeFalsy();
+  if (pres.fade?.counts) expect(pres.columnCounts).toBeFalsy();
   expect(level.echo.intro.length).toBeGreaterThan(0);
   if (!lastParts.has(partKey(level))) expect(level.echo.solved.length).toBeGreaterThan(0);
   if (level.kodex) expect(KODEX.some((e) => e.id === level.kodex)).toBe(true);
@@ -149,8 +155,9 @@ function cascadeChecks(level: CascadeLevel) {
       // Bez přepadu se výsledek musí vejít; krystal přenosu zapíše jen jedničku.
       if (!cfg.overflow) expect(ans.spilled).toBe(0);
       if (cfg.carries === 'manual') expect(ans.maxCarry).toBeLessThanOrEqual(1);
-      // Úrovně bez krystalů přenosu nesmí přenos potřebovat (kromě Soutoku, kde přetéká rovnou do výsledku).
-      if (cfg.carries === 'none' && cfg.width === bits) expect(ans.carries).toBe(0);
+      // Bez krystalů přenosu smí světlo přetéct jen do sloupce, kde ve stěně nic nesvítí (Jedna a jedna, Dvě dvojky):
+      // jinak by se ve sloupci slilo víc světel, než ukazuje počet pod ním, a přenos by nebyl vidět.
+      if (cfg.carries === 'none') expect(ans.carries & cascade.rows(task).reduce((u, r) => u | r, 0)).toBe(0);
       // Dvě stejné úlohy za sebou by vypadaly jako zaseknutá hra.
       if (k > 0) expect(task).not.toEqual(cfg.tasks[k - 1]);
     });
@@ -491,6 +498,8 @@ describe('celá observatoř', () => {
     expect(nextLevelId('I-1')).toBe('I-2');
     expect(nextLevelId('I-6')).toBe('I-7');
     expect(nextLevelId('I-7')).toBe('II-0');
+    // Nová hra začíná první komnatou základní cesty: nultou komnatou Předsíně.
+    expect(BASIC_PATH[0].id).toBe('I-0');
     expect(nextLevelId('II-0')).toBe('II-1');
     expect(nextLevelId('II-7')).toBe('III-0');
     expect(nextLevelId('III-0')).toBe('III-1');

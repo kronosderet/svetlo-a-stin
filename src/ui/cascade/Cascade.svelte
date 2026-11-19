@@ -46,9 +46,15 @@
   const farCols = $derived(sub ? [] : farColumns(cfg));
   const spout = $derived(!!cfg.overflow && cfg.carries === 'manual');
   const digits = $derived(pres.showDigits || settings.alwaysDigits);
-  const weights = $derived(!!pres.showWeights || settings.alwaysWeights);
-  /** Pořadí úlohy na stěně (během pauzy po splnění ještě ta přijatá). */
-  const shownStep = $derived(game.state.step - (game.holding && game.held ? 1 : 0));
+  /**
+   * Pořadí úlohy na stěně: během pauzy po splnění ještě ta přijatá, po dokončení komnaty (kvíz, volná hra)
+   * ta poslední, stejně jako shownTask. Mizící opory tak ve volné hře svítí tam, kde svítily při hraní.
+   */
+  const shownStep = $derived(
+    game.holding && game.held ? game.state.step - 1 : Math.min(game.state.step, cfg.tasks.length - 1),
+  );
+  /** Váhy pod krystaly výsledku: natrvalo, nebo jen v prvních úlohách komnaty (fade.weights, Dvě dvojky). */
+  const weights = $derived(!!pres.showWeights || aidOn(pres, 'weights', shownStep) || settings.alwaysWeights);
   const counts = $derived((!!pres.columnCounts || aidOn(pres, 'counts', shownStep)) && !sub);
   const values = $derived(!!pres.showValues);
   /** Sloupce zleva doprava jako indexy bitů (nejvyšší vlevo). */
@@ -416,9 +422,12 @@
           {#each columns as i (i)}
             {#if cfg.carries !== 'none' || i < bits}
               {@const n = liveInflow(task, view.carries, i, { cfg, far: view.far, copies: view.copies })}
-              <span class="count" class:zero={n === 0} style:grid-column={colOf(i)} style:grid-row={rCounts} title="světel ve sloupci">
-                {n}
-              </span>
+              <!-- Bez krystalů přenosu počet nevidí světlo, které přiteklo zprava: nula by svítila pod rozsvíceným krystalem. -->
+              {#if cfg.carries !== 'none' || n > 0}
+                <span class="count" class:zero={n === 0} style:grid-column={colOf(i)} style:grid-row={rCounts} title="světel ve sloupci">
+                  {n}
+                </span>
+              {/if}
             {/if}
           {/each}
         {/if}

@@ -107,3 +107,28 @@ describe('soubor s postupem: jméno a statistiky', () => {
     expect(r.ok && r.data.stats).toEqual({ 'I-0': { entered: 3, solved: 0, extra: 0, hints: 0, stepHints: 0, quizMistakes: 0 } });
   });
 });
+
+describe('soubor s postupem: formát a novější verze', () => {
+  const seal = (skill: boolean, pure: boolean) => ({ solved: true, skill, pure });
+
+  it('zapisuje novou značku formátu, kterou verze do 0.4 alpha nečtou', () => {
+    const file = JSON.parse(serializeProgress(sample));
+    expect(file.format).not.toBe('svetlo-a-stin-postup');
+    expect(parseProgress(serializeProgress(sample), LEVELS, KODEX)).toEqual({ ok: true, data: sample });
+  });
+
+  it('starý soubor v rozvržení 4 načte a Soutok sloučí s hračkou II-0', () => {
+    const text = JSON.stringify({
+      format: 'svetlo-a-stin-postup',
+      postup: { layout: 4, levels: { 'II-0': { seals: seal(true, true) }, 'II-2': { seals: seal(false, false) } }, kodex: ['soutok', 'preliti'] },
+    });
+    const r = parseProgress(text, ['II-0', 'II-1', 'II-2'], ['preliti', 'dvojice']);
+    expect(r.ok && r.data.levels).toEqual({ 'II-0': { seals: seal(true, true) } });
+    expect(r.ok && r.data.kodex).toEqual(['preliti']);
+  });
+
+  it('soubor z novější verze odmítne, místo aby ho převedl', () => {
+    const text = JSON.stringify({ format: 'svetlo-a-stin-postup-2', postup: { layout: LAYOUT + 1, levels: {} } });
+    expect(parseProgress(text, LEVELS, KODEX)).toMatchObject({ ok: false, reason: expect.stringContaining('novější verze') });
+  });
+});

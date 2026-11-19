@@ -60,7 +60,7 @@ export interface Presentation {
   remainder?: boolean;
   /**
    * Opory, které mizí uvnitř komnaty: číslo říká, v kolika prvních úlohách opora ještě svítí.
-   * weights = váhy pod krystaly, sizes = velikost krystalů podle váhy, counts = počty pod sloupci Kaskády.
+   * weights = váhy pod krystaly (Nápis, Kaskáda), sizes = velikost krystalů podle váhy, counts = počty pod sloupci Kaskády.
    */
   fade?: Partial<Record<FadingAid, number>>;
   /**

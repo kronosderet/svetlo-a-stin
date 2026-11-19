@@ -46,6 +46,8 @@ function load(): ProgressData {
     const data = JSON.parse(raw);
     if (data?.version !== 1) return empty();
     const loaded: ProgressData = { ...empty(), ...data };
+    // Postup z novější verze hry (stejný prohlížeč, starší uložená verze): nepřevádět a nepřepsat starším číslem.
+    if (typeof data.layout === 'number' && data.layout > LAYOUT) return loaded;
     if (data.layout !== LAYOUT) {
       // Postup ze staršího rozvržení komnat: komnaty dostanou nová čísla a hned se uloží.
       loaded.levels = migrateLevelIds(loaded.levels, data.layout, mergeSeals);
@@ -159,9 +161,11 @@ export const FAST_ROOMS = 3;
 export function fastGate(act: ActDef): boolean {
   const gate = gateOf(act);
   if (isCompleted(gate) || isCompleted(`${act.numeral}-${GATE - 1}`)) return false;
-  return Array.from({ length: FAST_ROOMS }, (_, k) => progress.levels[`${act.numeral}-${k + 1}`]).every(
-    (r) => !!r?.seals.skill && !!r?.seals.pure,
-  );
+  const recs = Array.from({ length: FAST_ROOMS }, (_, k) => progress.levels[`${act.numeral}-${k + 1}`]);
+  const full = (r?: LevelRecord) => !!r?.seals.skill && !!r?.seals.pure;
+  // Komnata bez záznamu před hotovou komnatou 3 vznikne jen převodem postupu (nová II-2 v rozvržení 5):
+  // hráč, kterému brána už byla otevřená, o ni nepřijde. Jinak se základní cesta otevírá po jedné.
+  return full(recs[FAST_ROOMS - 1]) && recs.every((r) => !r || full(r));
 }
 
 /**

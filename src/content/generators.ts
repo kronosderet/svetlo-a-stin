@@ -97,16 +97,36 @@ export function genI15Glyphs(rng: Rng): InscriptionConfig {
 
 // --- Akt II ---
 
-/** II-2 (Dvě řady): tři součty bez přenosu. */
+/** II-2: jediná dvojice ve sloupci s váhou 2 nebo 4, vlevo od ní volno, a aspoň jedno samotné světlo (součet do 15). */
+const PAIR_ONE: readonly (readonly [number, number])[] = [
+  [0b0011, 0b0010],
+  [0b1010, 0b0010],
+  [0b1010, 0b0011],
+  [0b1011, 0b0010],
+  [0b0101, 0b0100],
+  [0b0110, 0b0100],
+  [0b0110, 0b0101],
+  [0b0111, 0b0100],
+];
+/** II-2: dvě dvojice naráz; dvojice osmiček přeteče do pátého krystalu. */
+const PAIR_TWO: readonly (readonly [number, number])[] = [
+  [0b1101, 0b1001],
+  [0b1011, 0b1010],
+];
+/** Sčítanci v náhodném pořadí. */
+const either = (rng: Rng, [a, b]: readonly [number, number]): CascadeTask => (rng() < 0.5 ? add(a, b) : add(b, a));
+
+/**
+ * II-2 (Dvě dvojky): pevné 5 + 1, 2 + 2 a 8 + 8 (Echo je komentuje), pak losovaný součet s jednou dvojicí
+ * a nakonec dvě dvojice naráz. Vlevo od každé dvojice je volno: bez krystalů přenosu by srážka nebyla vidět.
+ */
 export function genII2(rng: Rng): CascadeConfig {
-  const tasks = sequence(
-    rng,
-    3,
-    () => add(int(rng, 1, 15), int(rng, 1, 15)),
-    (t) => (t.operands[0] & t.operands[1]) === 0 && popcount(t.operands[0] | t.operands[1]) >= 3,
-    pairKey,
-  );
-  return { width: 4, carries: 'none', tasks };
+  return {
+    width: 5,
+    bits: 4,
+    carries: 'none',
+    tasks: [add(0b0101, 0b0001), add(0b0010, 0b0010), add(0b1000, 0b1000), either(rng, pick(rng, PAIR_ONE)), either(rng, pick(rng, PAIR_TWO))],
+  };
 }
 
 /** II-3: po ukázce 3 + 1 tři součty s přenosy; třetí má sloupec se třemi světly, poslední přeteče do pátého krystalu. */

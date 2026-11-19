@@ -236,6 +236,51 @@ export function qByteHex(rng: Rng): QuizQuestion {
 
 const MISTNYCH: Record<number, string> = { 4: 'čtyřmístných', 5: 'pětimístných', 6: 'šestimístných', 8: 'osmimístných' };
 
+/** Jediná dvojice ve sloupci s váhou 2 nebo 4, vlevo od ní volno, aspoň jedno samotné světlo, součet do 15. */
+const onePair = (a: number, b: number): boolean => {
+  const p = a & b;
+  return popcount(p) === 1 && (p & 0b0110) !== 0 && ((p << 1) & (a | b)) === 0 && (a ^ b) !== 0 && a + b < 16;
+};
+
+/** II-2 (Dvě dvojky): součet s jednou dvojicí, která přeteče do prázdného sloupce. */
+export function qPairSum(rng: Rng): QuizQuestion {
+  let a = 0;
+  let b = 0;
+  do {
+    a = int(rng, 1, 15);
+    b = int(rng, 1, 15);
+  } while (!onePair(a, b));
+  const w = a & b;
+  const s = a + b;
+  return make(
+    `Kolik je ${bin(a, 4)} + ${bin(b, 4)}?`,
+    bin(s, 4),
+    [
+      [bin(a | b, 4), `Ve sloupci s váhou ${w} svítí obě světla. Nezůstane z nich jedno: dvojice přeteče o sloupec vlevo.`],
+      [bin(a ^ b, 4), `Dvojice nezmizela. Pod ní zůstal stín, ale světlo s váhou ${2 * w} se rozsvítí o sloupec vlevo.`],
+      [bin(a | b | (w << 1), 4), 'Pod dvojicí nezůstane světlo. Obě světla odtečou do jednoho krystalu vlevo.'],
+    ],
+    'Sčítej po sloupcích. Kde se slijí dvě světla, dole zůstane stín a o sloupec vlevo se rozsvítí krystal.',
+    `${bin(a, 4)} + ${bin(b, 4)} = ${bin(s, 4)}, tedy ${a} + ${b} = ${s}. Dvě světla s váhou ${w} váží ${2 * w}, a to je krystal o sloupec vlevo.`,
+  );
+}
+
+/** II-2 (Dvě dvojky): kam přeteče dvojice světel s váhou w (i mimo desku). */
+export function qPairWeight(rng: Rng): QuizQuestion {
+  const w = pick(rng, [4, 8, 16]);
+  return make(
+    `Ve sloupci s váhou ${w} se slila dvě světla a sloupec vlevo je prázdný. Který krystal výsledku se rozsvítí?`,
+    `krystal s váhou ${2 * w}`,
+    [
+      ['krystal s váhou 2', `Dvě světla nejsou dvojka. Každé z nich váží ${w}, dohromady ${2 * w}.`],
+      [`krystal s váhou ${w}`, 'Dvě světla se do jednoho krystalu nevejdou. Pod dvojicí zůstane stín.'],
+      [`krystal s váhou ${w + 1}`, `Krystal s váhou ${w + 1} neexistuje. Váhy jdou 1, 2, 4, 8, 16, 32 a každá je dvojnásobkem předchozí.`],
+    ],
+    `Kolik váží dvě světla s váhou ${w}? Který krystal váží právě tolik?`,
+    `${w} + ${w} = ${2 * w} a tolik váží krystal o sloupec vlevo. Každý krystal váží dvakrát víc než soused vpravo, proto dvojice v kterémkoli sloupci přeteče právě o jeden sloupec: ${w.toString(2)}${sub(2)} + ${w.toString(2)}${sub(2)} = ${(2 * w).toString(2)}${sub(2)}.`,
+  );
+}
+
 /** II-4: součet n-bitových čísel má nejvýš n + 1 bitů. */
 export function qSumBits(rng: Rng): QuizQuestion {
   const n = pick(rng, [4, 5, 6, 8]);

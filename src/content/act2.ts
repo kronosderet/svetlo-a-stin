@@ -29,6 +29,8 @@ import {
   qHorner,
   qNegative,
   qOverflow,
+  qPairSum,
+  qPairWeight,
   qPowerSteps,
   qRead,
   qRemainder,
@@ -43,7 +45,8 @@ import type { ActDef, LevelDef } from './types';
 const CELL_HINT = 'Zvýrazněný krystal je potřeba přepnout.';
 
 const levels: LevelDef[] = [
-  // Nultá komnata patra: jedna a jedna pod sebou. Světla se při každém doteku sama přesunou.
+  // Nultá komnata patra: hračka se sčítáním dvou krystalů (dřív komnata Soutok).
+  // 1 + 0, 0 + 1 a 1 + 1; světla se při každém doteku sama přesunou.
   {
     id: 'II-0',
     title: 'Jedna a jedna',
@@ -52,29 +55,42 @@ const levels: LevelDef[] = [
       width: 2,
       bits: 1,
       carries: 'none',
-      tasks: [{ op: 'add', operands: [1, 1] }],
+      tasks: [
+        { op: 'add', operands: [1, 0] },
+        { op: 'add', operands: [0, 1] },
+        { op: 'add', operands: [1, 1] },
+      ],
     },
     presentation: {
-      task: 'Sečti obě světla. Rozsviť dole krystal, který unese jejich váhu.',
+      task: 'Sečti obě řady. Rozsviť dole krystaly, které unesou jejich světlo.',
       showDigits: true,
       showSum: false,
       sizes: 'equal',
       ledger: true,
       showWeights: true,
       columnCounts: true,
+      showValues: true,
     },
     hints: [
       'Kolik světel je ve sloupci? A kolik váží krystaly dole?',
-      'Dvě světla váží 2. Do krystalu s váhou 1 se nevejdou, rozsviť ten s váhou 2.',
+      'Jedno světlo váží 1, dvě váží 2. Do krystalu s váhou 1 se dvě světla nevejdou, na to je krystal s váhou 2.',
       CELL_HINT,
     ],
     echo: {
       intro: [
         'Síň Počtářů. Tady Lumenité světla sčítali.',
         'Co se do krystalu nevejde, to podle jejich {{zákona sloupce|sloupec}} přeteče dál.',
-        'Dvě světla v jednom sloupci. Kolik váží dohromady?',
+        'Dvě řady, v každé jeden krystal. Sečti je.',
       ],
-      solved: ['Dvě světla se do jednoho krystalu nevejdou. Slila se do sousedního.', 'Jedna a jedna je 10: jedna-nula, ne deset.'],
+      step: {
+        0: 'Jedna a nic je jedna.',
+        1: 'Na pořadí nezáleží. A teď dvě světla v jednom sloupci.',
+      },
+      solved: [
+        'Dvě světla se do jednoho krystalu nevejdou. Slila se do sousedního.',
+        'Jedna a jedna je 10: jedna-nula, ne deset.',
+        'Víc možností dva krystaly nemají: 0 + 0, 0 + 1, 1 + 0 a 1 + 1.',
+      ],
       skill: 'Napoprvé.',
     },
   },
@@ -122,113 +138,61 @@ const levels: LevelDef[] = [
     kodex: 'preliti',
   },
   {
-    // Soutok a Dvě řady v jedné komnatě: nejdřív sloupec (1 + 1 = 10), pak součty po sloupcích.
+    // Objev: dvě světla jedné váhy jsou jedno světlo o sloupec vlevo, v každém sloupci (1 + 1 = 10, 10 + 10 = 100).
+    // Vlevo od každé dvojice je volno, takže krystaly přenosu ještě nejsou potřeba; srážka přijde v II-3.
     id: 'II-2',
-    title: 'Soutok',
-    kind: 'mixed',
-    echo: {
-      intro: ['Soutok. Světlo z řad krystalů stéká do nádrže.'],
-      solved: [
-        'Jedna a jedna jsou dvě. Lumenité to psali 10: jedna-nula, ne deset.',
-        'Sčítat se dá po sloupcích. Dokud žádný sloupec nepřeteče, stačí světla opsat dolů.',
+    title: 'Dvě dvojky',
+    kind: 'cascade',
+    config: {
+      width: 5,
+      bits: 4,
+      carries: 'none',
+      tasks: [
+        { op: 'add', operands: [0b0101, 0b0001] },
+        { op: 'add', operands: [0b0010, 0b0010] },
+        { op: 'add', operands: [0b1000, 0b1000] },
+        { op: 'add', operands: [0b0101, 0b0100] },
+        { op: 'add', operands: [0b1101, 0b1001] },
       ],
-      skill: 'Všechny soutoky napoprvé.',
     },
-    parts: [
-      {
-        id: 'II-2',
-        title: 'Soutok',
-        kind: 'cascade',
-        config: {
-          width: 2,
-          bits: 1,
-          carries: 'none',
-          tasks: [
-            { op: 'add', operands: [1, 0] },
-            { op: 'add', operands: [1, 1] },
-            { op: 'add', operands: [1, 1, 1] },
-          ],
-        },
-        presentation: {
-          task: 'První zkouška: světlo ze všech řad stéká do nádrže. Rozsviť dole tolik světla, kolik ho připlulo.',
-          showDigits: true,
-          showSum: false,
-          sizes: 'equal',
-          ledger: true,
-          showWeights: true,
-          columnCounts: true,
-          showValues: true,
-        },
-        hints: [
-          'Kolik světla stéká do sloupce? A kolik váží krystaly dole?',
-          'Jedno světlo váží 1, dvě váží 2. Dvojku ale nezapíšeš dvěma jedničkami, na to je tu krystal s váhou 2.',
-          CELL_HINT,
-        ],
-        echo: {
-          intro: ['První zkouška: kolik světla připlulo?'],
-          step: {
-            0: 'Jedna a nic je jedna. To bylo snadné.',
-            1: 'Jedna a jedna se do jednoho krystalu nevejdou. Přetekly do sousedního: 10, čti jedna-nula.',
-          },
-          complete: 'Tři světla ze tří řad: 11. Jedno zůstalo dole, jedno přeteklo.',
-          solved: ['Co se do krystalu nevejde, přeteče doleva. Teď delší řady.'],
-        },
-      },
-      {
-        id: 'II-2',
-        title: 'Dvě řady',
-        kind: 'cascade',
-        config: {
-          width: 4,
-          carries: 'none',
-          tasks: [
-            { op: 'add', operands: [0b0101, 0b0010] },
-            { op: 'add', operands: [0b1000, 0b0011] },
-            { op: 'add', operands: [0b1010, 0b0101] },
-          ],
-        },
-        generate: genII2,
-        presentation: {
-          task: 'Druhá zkouška: sečti dvě řady sloupec po sloupci.',
-          showDigits: true,
-          showSum: false,
-          sizes: 'equal',
-          ledger: true,
-          columnCounts: true,
-          showValues: true,
-        },
-        hints: [
-          'Dívej se na každý sloupec zvlášť. Kolik světla do něj stéká?',
-          'Kde stéká jedno světlo, rozsviť dole krystal. Kde nestéká žádné, nech ho zhasnutý.',
-          CELL_HINT,
-        ],
-        echo: {
-          intro: ['Delší řady. Každý sloupec teče sám za sebe.', 'Sečti je sloupec po sloupci.'],
-          step: {
-            0: 'Přijato. A přitom stačilo opsat světla dolů.',
-            1: 'Zatím žádný sloupec nepřetekl. To se brzy změní.',
-          },
-          solved: [],
-        },
-        quiz: [
-          {
-            question: 'Kolik je 1 + 1 ve dvojkové soustavě?',
-            options: ['2', '10', '11', '1'],
-            correct: 1,
-            hint: 'Ve dvojkové soustavě máš jen číslice 0 a 1. Dvojka se musí zapsat jinak.',
-            explain: '1 + 1 = 10₂ (čti jedna-nula). Jednička přeteče do sloupce s váhou 2 a ve sloupci jednotek zůstane 0.',
-          },
-          {
-            question: 'A kolik je 1 + 1 + 1 + 1?',
-            options: ['1111', '100', '11', '1000'],
-            correct: 1,
-            hint: 'Sečti po dvojicích: (1 + 1) + (1 + 1) = 10 + 10.',
-            explain: 'Čtyři = 100₂. Dvě dvojky přetečou do sloupce s váhou 4.',
-          },
-        ],
-      },
+    generate: genII2,
+    presentation: {
+      task: 'Sečti obě řady. Rozsviť dole krystaly, které unesou jejich váhu.',
+      showDigits: true,
+      showSum: false,
+      sizes: 'equal',
+      ledger: true,
+      columnCounts: true,
+      showValues: true,
+      // Váhy pod krystaly výsledku svítí v prvních třech součtech, pak zhasnou.
+      fade: { weights: 3 },
+    },
+    hints: [
+      'Najdi sloupec se dvěma světly. Kolik váží dohromady a který krystal výsledku váží stejně?',
+      'Dvě světla s váhou 2 váží 4, dvě světla s váhou 8 váží 16. Krystal pod dvojicí nech zhasnutý a rozsviť krystal o sloupec vlevo. Krystal pod samotným světlem rozsviť, světlo do něj sjede.',
+      CELL_HINT,
     ],
-    kodex: 'soutok',
+    echo: {
+      intro: [
+        'Na počítadle zhasínala světla a jedno se rozsvítilo vlevo. Proč zrovna vlevo?',
+        'Jedna a jedna je 10, to už víš. A co dvě světla v jiném sloupci?',
+        'Váhy pod krystaly výsledku vydrží jen tři součty.',
+      ],
+      step: {
+        0: 'Vpravo jedna a jedna, to znáš. Čtyřka jen sjela dolů.',
+        1: 'Dvě a dvě jsou pořád čtyři, jen se to tu píše 10 + 10 = 100. Světel ubylo, váha zůstala.',
+        2: 'Osm a osm je šestnáct. Světlo přeteklo do pátého krystalu, i když řady mají jen čtyři. Teď váhy zhasnou.',
+        3: 'Jedno světlo ve sloupci zůstane dole, dvojice přeteče. Každý sloupec teče sám za sebe.',
+      },
+      complete: 'Dva sloupce přetekly naráz a nepřekážely si. Dvě světla s váhou 8 přetekla až do pátého krystalu.',
+      solved: [
+        'Dvě světla jedné váhy jsou jedno světlo o sloupec vlevo. Krystal vlevo totiž váží dvakrát víc, v každém sloupci stejně.',
+        'Zatím měla každá dvojice vlevo volno. Co když tam už světlo bude?',
+      ],
+      skill: 'Všech pět součtů napoprvé.',
+    },
+    quiz: [qPairSum, qPairWeight],
+    kodex: 'dvojice',
   },
   {
     id: 'II-3',
@@ -261,8 +225,9 @@ const levels: LevelDef[] = [
     ],
     echo: {
       intro: [
-        'Tady sloupce přetékají.',
-        'Co se do sloupce nevejde, zapiš krystalem přenosu nad sloupec vlevo. Brána chce vidět i přenosy.',
+        'Tady dvojice přetéká i do sloupce, kde už světlo je.',
+        'Odteď zapiš každé přetečení krystalem přenosu nad sloupec vlevo, i do prázdného sloupce.',
+        'Brána chce vidět všechny přenosy.',
       ],
       step: {
         0: 'Přenos přeskočil dva sloupce. Jako voda, která se přelévá z misky do misky.',

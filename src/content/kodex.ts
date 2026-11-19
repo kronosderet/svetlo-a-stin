@@ -163,16 +163,16 @@ export const KODEX: KodexEntry[] = [
 
   // Akt II, Síň Počtářů: glyfy mají rozsvícený střed.
   {
-    id: 'soutok',
+    id: 'dvojice',
     glyph: 0b10010,
-    ancientName: 'Soutok',
-    modernName: 'Sčítání bitů',
-    ancient: 'Jedna a jedna se do jednoho krystalu nevejdou. Přetečou k sousedovi.',
+    ancientName: 'Zákon dvojice',
+    modernName: 'Sčítání pod sebou',
+    ancient: 'Dvě světla jedné váhy jsou jedno světlo o sloupec vlevo. V každém sloupci stejně.',
     modern:
-      'Sčítání ve dvojkové soustavě má jen čtyři případy: 0 + 0 = 0, 0 + 1 = 1, 1 + 1 = 10 a 1 + 1 + 1 = 11. Jakmile součet ve sloupci dosáhne dvou, jednička přeteče do sloupce vlevo, kde váží dvakrát víc. Delší čísla se sčítají pod sebou po sloupcích, stejně jako v desítkové soustavě.',
-    formula: '1 + 1 = 10₂   ·   0101₂ + 0010₂ = 0111₂',
+      'Dvě jedničky ve stejném sloupci dají dole nulu a jedničku o sloupec vlevo: 1 + 1 = 10, 10 + 10 = 100, 1000 + 1000 = 10000. Platí to v každém sloupci, protože každá váha je dvojnásobkem váhy vpravo: dvě světla s váhou w váží 2w, přesně jako jedno světlo o sloupec vlevo. Proto se čísla sčítají pod sebou: zarovnají se zprava a každý sloupec se sečte zvlášť.',
+    formula: '10₂ + 10₂ = 100₂   (2 + 2 = 4)   ·   1101₂ + 1001₂ = 10110₂   (13 + 9 = 22)',
     today:
-      'V desítkové soustavě se přetéká až při deseti (5 + 5 = 10). Ve dvojkové stačí dvě světla. Když se dvě čísla v žádném bitu nepřekrývají, dá sčítání stejný výsledek jako bitové OR, které potkáš v Zahradě Bran.',
+      'V desítkové soustavě je to totéž s desítkou: deset jednotek je jedna desítka, deset desítek jedna stovka. Ve dvojkové stačí na přechod dvě světla. A protože zákon platí v každém sloupci stejně, skládá se sčítačka v procesoru z řady stejných kousků, jednoho na sloupec. Takovou řadu poskládáš v Hlubině Strojů.',
   },
   {
     id: 'preliti',

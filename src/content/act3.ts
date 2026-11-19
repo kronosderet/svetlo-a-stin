@@ -249,8 +249,8 @@ const levels: LevelDef[] = [
     title: 'Jen jeden',
     kind: 'mixed',
     echo: {
-      intro: ['Jen jeden. Tahle runa je vybíravá.', 'Vzpomínáš na Soutok? Jedna a jedna tam dala dole stín.'],
-      solved: ['Výluka pustí světlo, když svítí právě jeden vstup.', 'Dvě světla se v ní vyruší jako v Soutoku: dole zůstane stín.'],
+      intro: ['Jen jeden. Tahle runa je vybíravá.', 'Vzpomínáš na Síň Počtářů? Jedna a jedna tam dala dole stín.'],
+      solved: ['Výluka pustí světlo, když svítí právě jeden vstup.', 'Dvě světla se v ní vyruší jako při sčítání jedna a jedna: dole zůstane stín.'],
       skill: 'Bez jediného zbytečného kroku.',
     },
     parts: [
@@ -293,7 +293,7 @@ const levels: LevelDef[] = [
             explain: 'Výluka (XOR) svítí, jen když svítí právě jeden vstup. Dvě světla se vyruší. Česky „buď, anebo“: vylučovací disjunkce.',
           },
           {
-            question: 'Vzpomeň na Soutok: 1 + 1 = 10. Kterou číslici součtu dává Výluka?',
+            question: 'Vzpomeň na Síň Počtářů: 1 + 1 = 10. Kterou číslici součtu dává Výluka?',
             options: ['tu, která zůstane dole', 'přenos', 'celý součet 10', 'žádnou'],
             correct: 0,
             hint: 'Porovnej desku Výluky se spodní číslicí součtů 0 + 0, 0 + 1, 1 + 0 a 1 + 1.',
