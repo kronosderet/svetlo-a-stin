@@ -35,7 +35,7 @@
   import { saveSettings, settings } from '../../game/settings.svelte.ts';
   import { plainText } from '../../game/text';
   import * as sound from '../../audio/sound';
-  import { freshFlags, type LevelCtx } from './level/context';
+  import { freshFlags, mergeSpeech, type LevelCtx } from './level/context';
   import { onAltar } from './level/altarEvents';
   import { onInscription } from './level/inscriptionEvents';
   import { onCascade } from './level/cascadeEvents';
@@ -75,6 +75,8 @@
   const deepId = $derived(isGate && result ? (advancedRooms(act).find((l) => !isCompleted(l.id) && isUnlocked(l.id))?.id ?? null) : null);
 
   let announcement = $state('');
+  /** Hlášení z jedné chvíle (tah, replika Echa, nápověda): čtečka je dostane najednou a bez opakování. */
+  let speech: string[] = [];
   let pulse = $state(0);
   let showComplete = $state(false);
   /** Komnata je otevřená: výsledek je zapsaný a hráč si v ní může dál zkoušet (volná hra). */
@@ -97,6 +99,10 @@
   let readTimer: ReturnType<typeof setTimeout> | undefined;
 
   const echo = new Echo();
+  /** Slova, která Kodex už přeložil, čtečka přečte. */
+  const known = (key: string) => progress.kodex.includes(key);
+  // Repliky Echa slyší i čtečka obrazovky: každou, která se objeví v bublině (bublina sama je jen pro oko).
+  echo.onLine = (line) => announce(plainText(line, known));
 
   /**
    * Uvíznutí: kdo v úloze dvakrát chybuje, tomu se rozzáří tlačítko nápovědy (náznak nic nestojí).
@@ -116,7 +122,7 @@
     if (ev.type === 'step' || ev.type === 'complete') {
       slips = 0;
       nudgeHint = false;
-    } else if (ev.type === 'wrong' || ev.type === 'reset' || (ev.type === 'pick' && ev.correct === false)) {
+    } else if (ev.type === 'wrong' || ev.type === 'slip' || ev.type === 'reset' || (ev.type === 'pick' && ev.correct === false)) {
       slips += 1;
       if (slips >= NUDGE_SLIPS) nudgeHint = true;
     }
@@ -181,6 +187,7 @@
     level: () => game.level,
     bits: () => bits,
     echo,
+    readOn: () => readOn(echo.serial, echo.lines.length - 1),
     announce,
     words,
     failFx,
@@ -316,13 +323,18 @@
   /** Smíšená brána: po splněné části přijde další hádanka. */
   function nextPart() {
     const done = knownBoard ? ['Dobře. Desku napiš zpaměti, lampu zahalím.'] : level.echo.solved;
-    if (done.length) echo.say(done);
+    announce(`Část ${partIndex + 1} z ${parts.length} splněna.`);
+    // Replika posledního kroku přišla v téže chvíli: nezmizí, závěr části se za ni jen přidá.
+    const kept = echo.fresh;
+    if (done.length) echo.follow(done);
+    const topic = echo.topic;
     const doneSerial = echo.serial;
+    /** Odkud v replikách začne úvod další části. */
+    const until = echo.lines.length;
     const said = Date.now();
     pulse += 1;
     sound.playGrind(0.8);
     stepFx('.row', '.board', '.register', '.wall');
-    announce(`Část ${partIndex + 1} z ${parts.length} splněna. ${done.map((t) => plainText(t, known)).join(' ')}`);
     partTimer = setTimeout(
       () => {
         finished[partIndex] = game;
@@ -338,11 +350,12 @@
         slips = 0;
         nudgeHint = false;
         game = createGame();
-        // Závěr části často nese hlavní myšlenku („Stejná deska… Zrcadlo!“): úvod další části se
-        // za něj jen přidá a Echo na něj přejde samo, až jde závěr přečíst (vypisování a čtení).
-        if (done.length && echo.serial === doneSerial) {
+        // Závěr části (i replika kroku před ním) často nese hlavní myšlenku („Stejná deska… Zrcadlo!“):
+        // úvod další části se za něj jen přidá a Echo na něj přejde samo, až jde závěr přečíst
+        // (vypisování a čtení). Kdo mezitím listoval dál sám, má na aktuální replice čas od začátku.
+        if ((kept || done.length) && echo.topic === topic) {
           echo.add(level.echo.intro);
-          readOn(doneSerial, done.length, Date.now() - said);
+          readOn(echo.serial, until, echo.serial === doneSerial ? Date.now() - said : 0);
         } else echo.say(level.echo.intro);
         announce(`Část ${partIndex + 1} z ${parts.length}: ${level.title}. ${level.presentation.task}`);
       },
@@ -350,11 +363,15 @@
     );
   }
 
-  /** Slova, která Kodex už přeložil, čtečka přečte. */
-  const known = (key: string) => progress.kodex.includes(key);
-
   function announce(text: string) {
-    announcement = announcement === text ? `${text} ` : text;
+    if (speech.length === 0) queueMicrotask(flushSpeech);
+    speech.push(text);
+  }
+
+  function flushSpeech() {
+    const text = mergeSpeech(speech);
+    speech = [];
+    if (text) announcement = announcement === text ? `${text} ` : text;
   }
 
   function words(mask: number): string {
@@ -446,12 +463,20 @@
         nudgeHint = false;
         const step = e.level >= 3 ? stepText : null;
         if (step) saidStep = step;
-        const text = (step ?? level.hints[e.level - 1]) + (e.extra ? ' Na konec pak přibude ještě jedna podobná zkouška, tu zkus bez ukázky.' : '');
+        // Úloha Brány může mít vlastní nápovědy (zkoumání nebo větvení uprostřed komnaty s řetězy).
+        const hints = ('taskHints' in game && game.taskHints) || level.hints;
+        const text = (step ?? hints[e.level - 1]) + (e.extra ? ' Na konec pak přibude ještě jedna podobná zkouška, tu zkus bez ukázky.' : '');
         recordHint(room.id, e.level >= 3);
         echo.say([text], 'hint');
-        announce(`Nápověda ${e.level}: ${text}`);
+        announce(`Nápověda ${e.level}: ${plainText(text, known)}`);
         break;
       }
+      case 'settled':
+        // Deska sedí a ukázka kroku by nic neukázala: hra jen řekne, co zbývá, a nic nezapočítá.
+        nudgeHint = false;
+        echo.say([e.text], 'hint');
+        announce(`Nápověda: ${e.text}`);
+        break;
       case 'quiz': {
         const btn = document.activeElement instanceof HTMLElement ? document.activeElement.getBoundingClientRect() : null;
         const at = btn ? { x: btn.left + btn.width / 2, y: btn.top + btn.height / 2 } : centerOf('.quiz');

@@ -230,10 +230,10 @@ const levels: LevelDef[] = [
       intro: [
         'Tady dvojice přetéká i do sloupce, kde už světlo je.',
         'Odteď zapiš každé přetečení krystalem přenosu nad sloupec vlevo, i do prázdného sloupce.',
-        'Brána chce vidět všechny přenosy.',
+        'Kaskáda chce vidět všechny přenosy.',
       ],
       step: {
-        0: 'Přenos přeskočil dva sloupce. Jako voda, která se přelévá z misky do misky.',
+        0: 'Přenos prošel dvěma sloupci, jeden za druhým. Jako voda, která se přelévá z misky do misky.',
         2: 'Tři světla v jednom sloupci: jedno zůstane, jedno přeteče.',
       },
       complete: 'Přenos doputoval až do pátého krystalu.',
@@ -293,7 +293,7 @@ const levels: LevelDef[] = [
       complete: 'Sto dvacet šest. Sedm krystalů, i když řady měly jen šest.',
       solved: [
         'Přenos se může řetězit přes celou řadu jako kaskáda vodopádů.',
-        'Proto má součet o krystal víc než sčítance.',
+        'Proto může mít součet o krystal víc než sčítance, nikdy ne o dva.',
       ],
       skill: 'Celá kaskáda bez jediného zaváhání.',
     },
@@ -350,14 +350,14 @@ const levels: LevelDef[] = [
     },
     quiz: [
       {
-        question: 'Kolik krystalů by nádoba potřebovala, aby se do ní vešlo 1100 + 0110 = 18?',
+        question: 'Kolik krystalů by nádoba potřebovala, aby se do ní vešel součet 1100₂ + 0110₂ = 18?',
         options: ['4', '5', '6', '8'],
         correct: 1,
         hint: 'Čtyři krystaly unesou nejvýš 15, pět krystalů nejvýš 31.',
-        explain: '18 = 10010₂ má pět číslic. Pětijiskrová nádoba unese až 31.',
+        explain: '18 = 10010₂ má pět číslic. Nádoba s pěti krystaly unese až 31.',
       },
       {
-        question: 'Nádoba z osmi krystalů (bajt) unese nejvýš 255. Co v ní zůstane, když přičteš 1?',
+        question: 'V nádobě z osmi krystalů (bajt) svítí všechna světla: 255. Co v ní zůstane, když přičteš 1?',
         options: ['256', '0', '255', '1'],
         correct: 1,
         hint: '255 = 1111 1111. Přenos proběhne všemi osmi krystaly.',
@@ -455,10 +455,11 @@ const levels: LevelDef[] = [
         ],
         echo: {
           intro: [
-            'První zkouška: tři součty, pět krystalů v řadě.',
+            'První zkouška: sčítání, pět krystalů v řadě.',
             'Brána krystaly nehlídá: rozsvítí se, i když do nich žádné světlo nepřiteče. Co kam teče, musíš spočítat ty.',
           ],
-          step: { 0: 'Sečteno. Brána se pohnula.', 1: 'Ještě jeden součet.' },
+          // Repliky bez počtu: po ukázce kroku přidá brána na konec zkoušku navíc.
+          step: { 0: 'Sečteno. Brána se pohnula.', 1: 'I tenhle součet sedí.' },
           solved: ['Kaskáda proběhla. Teď páky.'],
         },
       },
@@ -488,7 +489,7 @@ const levels: LevelDef[] = [
         echo: {
           intro: ['Druhá zkouška: páky. Kolikrát zdvojit, kolikrát rozpůlit?'],
           spill: 'Světlo spadlo přes okraj. Co přeteče, je pryč.',
-          step: { 0: 'Správně. Brána se pohnula.', 1: 'Poslední váha.' },
+          step: { 0: 'Správně. Brána se pohnula.', 1: 'I tahle váha sedí.' },
           complete: 'Páky dosáhly všech vah. Brána se ptá naposledy.',
           solved: [],
         },
@@ -501,8 +502,9 @@ const levels: LevelDef[] = [
     kodex: 'pocetari',
   },
   {
+    // Odčítání se jmenuje Výpůjčka: „odliv“ patří posunu vpravo v Přílivu a odlivu (II-6).
     id: 'II-8',
-    title: 'Odliv',
+    title: 'Výpůjčka',
     kind: 'cascade',
     config: {
       width: 4,
@@ -528,17 +530,17 @@ const levels: LevelDef[] = [
     },
     hints: [
       'Začni vpravo. Jde v tomhle sloupci odečítat? Když ne, kdo ti může půjčit?',
-      'Půjčené světlo má ve sloupci váhu dvou: 0 − 1 s výpůjčkou je 10 − 1 = 1. Výpůjčku zapiš krystalem pod spodní řadu ve sloupci vlevo, odečte se spolu s ní. Nad sloupcem vpravo se objeví dva krystaly.',
+      'Půjčené světlo má ve sloupci váhu dvou: 0 − 1 s výpůjčkou je 10 − 1 = 1. Výpůjčku zapiš krystalem pod spodní řadu ve sloupci vlevo. Tam se odečte spolu se spodní řadou. Nad sloupcem vpravo se objeví dva krystaly.',
       CELL_HINT,
     ],
     echo: {
       intro: [
         'Hlubší síně Počtářů. Tady se počítá i pozpátku.',
-        'Odliv: světla ubývají. Kde nemáš z čeho brát, půjč si od souseda vlevo.',
+        'Výpůjčka. Světla tu ubývají. Kde nemáš z čeho brát, půjč si od souseda vlevo.',
       ],
       step: {
         0: 'Sedm bez dvou je pět. Zatím bez půjčování. V další úloze jsem výpůjčky zapsal za tebe: krystal pod spodní řadou ve sloupci, od kterého se půjčuje, a nad sloupcem vpravo dva krystaly. Dopočítej výsledek.',
-        1: 'Půjčené světlo se ve sloupci rozpadlo na dvě. Jedno se odečetlo, jedno zůstalo. Teď si půjčuj sám.',
+        1: 'Půjčené světlo se ve sloupci rozpadlo na dvě. Jedno se odečetlo, jedno zůstalo. Teď výpůjčky zapisuješ ty.',
         2: 'Výpůjčka prošla několika sloupci. Přenos pozpátku.',
       },
       solved: ['Odčítání je sčítání pozpátku: místo přenosu si půjčuješ.', 'Půjčené světlo váží ve sloupci vpravo dvě.'],
@@ -611,7 +613,7 @@ const levels: LevelDef[] = [
     },
     generate: genII10,
     presentation: {
-      task: 'Násob po lumenitsku: rozsviť kopie prvního čísla podle jedniček druhého a sečti je.',
+      task: 'Násob po lumenitsku: rozsviť kopie prvního činitele podle jedniček druhého a sečti je.',
       showDigits: true,
       showSum: false,
       sizes: 'equal',
@@ -619,18 +621,18 @@ const levels: LevelDef[] = [
       showValues: true,
     },
     hints: [
-      'Podívej se na druhé číslo. Které jeho krystaly svítí? A co znamená kopie posunutá o jedno místo?',
-      'Posun vlevo zdvojuje: kopie ×1 není posunutá, ×2 o jedno místo, ×4 o dvě. Rozsviť kopie, které patří k jedničkám druhého čísla, a sečti je jako obvykle.',
+      'Podívej se na druhý činitel. Které jeho krystaly svítí? A co znamená kopie posunutá o jedno místo?',
+      'Posun vlevo zdvojuje: kopie ×1 není posunutá, ×2 o jedno místo, ×4 o dvě. Rozsviť kopie, které patří k jedničkám druhého činitele, a sečti je jako obvykle.',
       CELL_HINT,
     ],
     echo: {
       intro: [
         'Násobení po lumenitsku. Násobilku tu nikdo neznal, a přesto násobili.',
-        'Stěna nabízí kopie prvního čísla, každou posunutou jinak. Které z nich se sčítají, rozhodneš ty.',
+        'Stěna nabízí kopie prvního činitele, každou posunutou jinak. Které z nich se sčítají, rozhodneš ty.',
       ],
       step: {
         0: 'Pětkrát tři: tři je 11, takže pětka a k ní zdvojená pětka. Patnáct.',
-        1: 'Každá jednička druhého čísla přinesla jednu posunutou kopii.',
+        1: 'Každá jednička druhého činitele přinesla jednu posunutou kopii.',
       },
       complete: 'Žádná násobilka. Jen posun a sčítání.',
       solved: [
@@ -716,7 +718,7 @@ const levels: LevelDef[] = [
     },
     hints: [
       'Spočítej ve sloupci všechna světla, i ta, která do něj přitekla shora.',
-      'Dvě světla = 10, tři = 11, čtyři = 100, pět = 101. Poslední číslice zůstane dole, prostřední jde do sousedního sloupce, první o dvě místa do horní řady.',
+      'Dvě světla = 10, tři = 11, čtyři = 100, pět = 101. Číslice čti zprava: první zůstane dole, druhá jde do sousedního sloupce, třetí o dvě místa do horní řady.',
       CELL_HINT,
     ],
     echo: {
@@ -732,7 +734,7 @@ const levels: LevelDef[] = [
         options: ['dole 1, o dvě místa 1', 'dole 1, vedle 2', 'dole 5', 'dole 0, vedle 1, o dvě místa 1'],
         correct: 0,
         hint: 'Pět je 101₂.',
-        explain: '5 = 101₂: poslední jednička zůstane dole, prostřední nula nepošle nic vedle a první jednička putuje o dvě místa.',
+        explain: '5 = 101₂: pravá jednička zůstane dole, prostřední nula nepošle nic vedle a levá jednička putuje o dvě místa.',
       },
     ],
     kodex: 'tri-rady',
@@ -825,10 +827,11 @@ const levels: LevelDef[] = [
           carries: 'manual',
           conserve: true,
           overflow: true,
+          // Horní řada kladná (do 7), spodní záporná: nejvyšší bit nese znaménko, jak říká Kodex.
           tasks: [
             { op: 'add', operands: [0b0111, 0b1101] },
-            { op: 'add', operands: [0b1100, 0b1011] },
-            { op: 'add', operands: [0b1001, 0b1110] },
+            { op: 'add', operands: [0b0110, 0b1011] },
+            { op: 'add', operands: [0b0101, 0b1110] },
           ],
         },
         generate: genII13Add,
@@ -845,7 +848,7 @@ const levels: LevelDef[] = [
           CELL_HINT,
         ],
         echo: {
-          intro: ['Třetí zkouška: horní řada je číslo, spodní doplněk toho, co se odečítá.'],
+          intro: ['Třetí zkouška: horní řada je kladné číslo, spodní doplněk toho, co se odečítá.'],
           step: { 0: 'Přetečení spadlo do přepadu a v nádobě zbyl rozdíl.' },
           complete: 'Žádná výpůjčka, jen sčítání a přepad.',
           solved: [],
@@ -891,7 +894,7 @@ const levels: LevelDef[] = [
     ],
     echo: {
       intro: [
-        'Váhy Osudu. Nejtěžší zkouška Hlubších síní.',
+        'Váhy Osudu. Nejpřísnější zkouška Hlubších síní.',
         'Osud dovolí jen tolik tahů, kolik je nezbytně potřeba. Kdo je přečerpá, začíná znovu.',
       ],
       reset: 'Tahy došly a misky se vrátily. Promysli cestu dřív, než zatáhneš.',
@@ -899,7 +902,8 @@ const levels: LevelDef[] = [
       complete: 'Poslední miska se vyrovnala.',
       solved: [
         'Váhy Osudu se vyrovnaly.',
-        'Umíš sčítat, odčítat, násobit i dělit. Stačí ti k tomu světlo a posun.',
+        // Shrnutí celého patra patří až velké bráně (II-15).
+        'Posun dělá velké kroky, ±1 malé. Nejkratší cesta potřebuje obojí.',
       ],
       skill: 'Misky se ani jednou nevrátily.',
     },
@@ -913,7 +917,7 @@ const levels: LevelDef[] = [
     title: 'Velká brána Síně',
     kind: 'mixed',
     echo: {
-      intro: ['Velká brána Síně Počtářů. Neprojde nikdo, kdo jen hádá.', 'Tři zkoušky: odliv, násobení a Váhy Osudu.'],
+      intro: ['Velká brána Síně Počtářů. Neprojde nikdo, kdo jen hádá.', 'Tři zkoušky: odčítání, násobení a Váhy Osudu.'],
       solved: [
         'Velká brána Síně se otevírá. Na dveřích svítí celý glyf.',
         'Sčítat, odčítat, násobit i dělit umíš jen se světlem a posunem.',
@@ -923,7 +927,7 @@ const levels: LevelDef[] = [
     parts: [
       {
         id: 'II-15',
-        title: 'Odliv',
+        title: 'Odčítání',
         kind: 'cascade',
         config: {
           width: 5,
@@ -947,8 +951,8 @@ const levels: LevelDef[] = [
           CELL_HINT,
         ],
         echo: {
-          intro: ['První zkouška: odliv, pět krystalů v řadě.', 'Ani tahle brána krystaly nehlídá. Co kam teče, musíš spočítat ty.'],
-          solved: ['Odliv zvládnutý. Teď násobení.'],
+          intro: ['První zkouška: odčítání, pět krystalů v řadě.', 'Ani tahle brána krystaly nehlídá. Co kam teče, musíš spočítat ty.'],
+          solved: ['Rozdíly sedí. Teď násobení.'],
         },
       },
       {

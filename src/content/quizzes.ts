@@ -77,8 +77,8 @@ export function qCombosOf(rng: Rng): QuizQuestion {
     `Kolik kombinací má řada ${n} krystalů${n === 8 ? ', celá oktáva' : ''}?`,
     2 ** n,
     [
-      [2 ** (n - 1), `To je o jeden krystal míň. Zdvojuj ${n}×, začni u jednoho krystalu se dvěma kombinacemi.`],
-      [2 ** (n + 1), 'To je o jeden krystal víc. Zdvojuj jednou za každý krystal.'],
+      [2 ** (n - 1), `To je o jeden krystal míň. Jeden krystal má 2 kombinace a každý z dalších ${n - 1} krystalů jejich počet zdvojí.`],
+      [2 ** (n + 1), 'To je o jeden krystal víc. První krystal dá rovnou 2 kombinace, zdvojují až ty další.'],
       [2 * n, 'Kombinace se nesčítají po dvou, s každým krystalem se násobí dvěma.'],
     ],
     'Začni u jednoho krystalu (2 kombinace) a s každým dalším zdvojnásob.',
@@ -104,16 +104,19 @@ export function qFlips(rng: Rng): QuizQuestion {
   const k = int(rng, 2, 7);
   const high = int(rng, 0, 2 ** (7 - k) - 1);
   const v = (high << (k + 1)) | (2 ** k - 1);
+  // „2 jedničky zhasnou“, „5 jedniček zhasne“.
+  const ones = `${k} ${plural(k, 'jednička', 'jedničky', 'jedniček')}`;
+  const goOut = plural(k, 'zhasne', 'zhasnou', 'zhasne');
   return make(
     `Kolik krystalů se změní, když k ${oct(v)} přičteš jedničku?`,
     k + 1,
     [
       [1, 'Přičtení jedničky nemusí změnit jen jeden krystal. Předání běží přes všechny jedničky vpravo.'],
-      [k, `Zhasne ${k} jedniček, ale rozsvítí se ještě nula za nimi.`],
+      [k, `${plural(k, 'Zhasne', 'Zhasnou', 'Zhasne')} ${ones}, ale rozsvítí se ještě nula za nimi.`],
       k + 2 > 8 ? k - 1 : k + 2,
     ],
     'Předání běží zprava přes všechny jedničky, dokud nenarazí na nulu.',
-    `${k} jedniček vpravo zhasne a nula za nimi se rozsvítí: ${oct(v)} + 1 = ${oct(v + 1)}. Změní se ${krystaly(k + 1)}.`,
+    `${ones} vpravo ${goOut} a nula za nimi se rozsvítí: ${oct(v)} + 1 = ${oct(v + 1)}. Změní se ${krystaly(k + 1)}.`,
   );
 }
 
@@ -155,7 +158,7 @@ export function qGrayMoves(rng: Rng): QuizQuestion {
   const n = int(rng, 3, 5);
   const all = 2 ** n;
   return make(
-    `Kolik doteků nejméně potřebuješ, abys prošel všech ${all} kombinací řady ${n} krystalů?`,
+    `Kolik doteků nejméně stačí na všech ${all} kombinací řady ${n} krystalů?`,
     all - 1,
     [
       [all, 'První kombinaci, tmu, už máš bez doteku. Doteků je o jeden míň než kombinací.'],
@@ -289,7 +292,7 @@ export function qSumBits(rng: Rng): QuizQuestion {
     `Kolik krystalů nejvýš potřebuje součet dvou ${MISTNYCH[n]} dvojkových čísel?`,
     n + 1,
     [
-      [n, `Největší součet ${max} + ${max} = ${2 * max} se do ${krystaly(n)} nevejde.`],
+      [n, `Největší součet ${max} + ${max} = ${2 * max} se do ${n} krystalů nevejde.`],
       n + 2,
       [2 * n, 'Krystaly se nesčítají. Součet přidá nejvýš jedno místo vlevo, kam přeteče přenos.'],
     ],
@@ -427,17 +430,20 @@ export function qCopies(rng: Rng): QuizQuestion {
   const len = Math.max(4, bitLength(m));
   const shifts = Array.from({ length: len }, (_, i) => i).filter((i) => (m >> i) & 1);
   const p = shifts.length;
+  // Výčet „1, 2 a 3“; tvar slova se řídí posledním číslem („o 0 a 3 místa“, „o 1, 3 a 4 místa“).
+  const list = (xs: string[]) => `${xs.slice(0, -1).join(', ')} a ${xs[xs.length - 1]}`;
+  const last = shifts[p - 1];
   return make(
-    `Kolik kopií prvního čísla sčítáš při násobení číslem ${bin(m, len)}?`,
+    `Kolik kopií prvního činitele sčítáš, když je druhý činitel ${bin(m, len)}?`,
     p,
     [
       p + 1,
       p - 1,
       [len, 'Kopie nepatří ke každému místu, jen k místu s jedničkou.'],
-      [m, 'Kopií není tolik, kolik je druhé číslo. Stačí jedna za každou jedničku jeho zápisu.'],
+      [m, 'Kopií není tolik, kolik je druhý činitel. Stačí jedna za každou jedničku jeho zápisu.'],
     ],
     'Kopie přibude za každou jedničku.',
-    `${bin(m, len)} má ${p} ${plural(p, 'jedničku', 'jedničky', 'jedniček')}: kopie posunuté o ${shifts.join(', ')} míst (×${shifts.map((s) => 2 ** s).join(', ×')}). ${shifts.map((s) => 2 ** s).join(' + ')} = ${m}.`,
+    `${bin(m, len)} má ${p} ${plural(p, 'jedničku', 'jedničky', 'jedniček')}: kopie posunuté o ${list(shifts.map(String))} ${plural(last, 'místo', 'místa', 'míst')} (${list(shifts.map((s) => `×${2 ** s}`))}). ${shifts.map((s) => 2 ** s).join(' + ')} = ${m}.`,
   );
 }
 
@@ -497,10 +503,10 @@ export function qNegative(rng: Rng): QuizQuestion {
   );
 }
 
-/** II-13: odčítání přičtením doplňku. */
+/** II-13: odčítání přičtením doplňku. Menšenec do 7, aby nejvyšší bit nesl znaménko jako v Kodexu. */
 export function qComplementSum(rng: Rng): QuizQuestion {
-  const b = int(rng, 1, 7);
-  const a = int(rng, b + 1, 15);
+  const a = int(rng, 2, 7);
+  const b = int(rng, 1, a - 1);
   const c = (16 - b) & 15;
   const r = a - b;
   const full = bin(a + c, 5);
@@ -573,7 +579,7 @@ export function qTableLit(rng: Rng): QuizQuestion {
       1,
       [
         [n, 'Lampa nesvítí jednou za každý vstup. Všechny vstupy svítí naráz jen v jednom řádku.'],
-        [rows / 2, 'V polovině řádků svítí jeden vstup. Pouto chce všechny naráz.'],
+        [rows / 2, 'Každý vstup svítí v polovině řádků. Pouto chce všechny naráz.'],
         [rows - 1, 'Tak často svítí Rozcestí. Pouto svítí, jen když svítí všechno.'],
       ],
       'Kolik řádků desky má světlo na všech vstupech?',
@@ -604,7 +610,7 @@ export function qTableRows(rng: Rng): QuizQuestion {
       [2 ** (n + 1), 'To je o jeden vstup víc.'],
       n + 1,
     ],
-    'Každý řádek je jedna kombinace vstupů. Kolik kombinací má n krystalů?',
+    `Každý řádek je jedna kombinace vstupů. Kolik kombinací ${plural(n, 'má', 'mají', 'má')} ${krystaly(n)}?`,
     `Každý vstup je světlo, nebo stín, takže řádků je 2${sup(n)} = ${2 ** n}. Stejně jako kombinací ${n} krystalů v Předsíni.`,
   );
 }
@@ -721,7 +727,7 @@ export function qTrailing(rng: Rng): QuizQuestion {
     k,
     [
       [popcount(v & 0xff), 'To je počet světel. Dělení dvěma ale hlídá stíny vpravo.'],
-      [k + 1, `Vpravo jsou jen ${zeros(k)}. Potom přijde světlo a půlit beze zbytku už nejde.`],
+      [k + 1, `${k === 1 ? 'Vpravo je jen jeden stín.' : `Vpravo jsou jen ${zeros(k)}.`} Potom přijde světlo a půlit beze zbytku už nejde.`],
       [k - 1 || k + 2, 'Počítej stíny vpravo, dokud nepřijde první světlo.'],
       k + 2,
       k + 3,

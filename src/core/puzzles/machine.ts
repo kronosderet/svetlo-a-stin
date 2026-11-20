@@ -68,7 +68,7 @@ export interface MachineNode {
    * column = sčítačka jako sloupec Kaskády: A a B shora, přenos zprava, součet dolů a přenos doleva.
    */
   turn?: 'right' | 'down' | 'column';
-  /** Krátká poznámka pod jménem runy (násobička: které krystaly kámen násobí, třeba A₁ × B₀). */
+  /** Krátká poznámka pod jménem runy (násobička: které krystaly kámen násobí, třeba A₂ × B₁; index je váha). */
   note?: string;
 }
 
@@ -122,6 +122,8 @@ export interface MachineTask {
   rule?: string;
   /** Zadání úlohy, když se liší od zadání komnaty. */
   say?: string;
+  /** Druh stroje (rozdělovač, výhybka…): zkouška navíc v bráně přidá úlohu stejného druhu. */
+  kind?: string;
 }
 
 export interface MachineConfig {

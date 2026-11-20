@@ -10,6 +10,7 @@ import {
   setDial,
   shownMask,
   toggle as toggleCrystal,
+  writeSlip,
   type InscriptionConfig,
   type InscriptionEvent,
   type InscriptionState,
@@ -19,6 +20,13 @@ import type { InscriptionLevel } from '../content/types';
 import { flipBit, isBitSet, maxValue } from '../core/bits';
 import { BaseGame, type GameEvent } from './baseGame.svelte.ts';
 import { readStep, valueStep } from './stepWords';
+
+/**
+ * Jak dlouho musí krystaly při zápisu ukazovat typickou chybu, než ji Echo pojmenuje. Cestou
+ * k zadání se přes „jeden krystal vedle“ prochází, proto ne hned po doteku, ale až když se hráč
+ * zastaví (myslí si, že je hotovo, nebo neví dál).
+ */
+const SLIP_DWELL_MS = 2500;
 
 /** Reaktivní obal kolem Nápisu: čtení na kotoučích a zápis krystaly. */
 export class InscriptionGame extends BaseGame<InscriptionLevel> {
@@ -32,6 +40,10 @@ export class InscriptionGame extends BaseGame<InscriptionLevel> {
   history: InscriptionState[] = $state([]);
   /** Volná hra po vyřešení: krystaly a kotouče jsou propojené (null = ukazuje se poslední nápis). */
   freeMask: number | null = $state(null);
+  #slipTimer: ReturnType<typeof setTimeout> | undefined;
+  /** Chybné zápisy, které Echo v aktuální úloze už pojmenovalo (podruhé mlčí). */
+  #slipsSaid = new Set<number>();
+  #slipStep = -1;
 
   constructor(level: InscriptionLevel, emit: (e: GameEvent) => void) {
     super(level, computePar, emit);
@@ -125,9 +137,10 @@ export class InscriptionGame extends BaseGame<InscriptionLevel> {
 
   undo(): void {
     if (!this.canUndo) return;
-    // Vrací se jen rozsvícení; vrácený dotek se do tahů počítá dál.
-    this.state = { ...this.history[this.history.length - 1], moves: this.state.moves };
+    // Vrací se jen rozsvícení; vrácený dotek se do tahů (i zbytečných doteků) počítá dál.
+    this.state = { ...this.history[this.history.length - 1], moves: this.state.moves, strays: this.state.strays };
     this.history = this.history.slice(0, -1);
+    this.#watchSlip();
   }
 
   protected taskCount(cfg: InscriptionConfig): number {
@@ -167,5 +180,30 @@ export class InscriptionGame extends BaseGame<InscriptionLevel> {
     this.state = r.state;
     for (const event of r.events) this.emit({ kind: 'inscription', event, state: r.state });
     if (r.state.complete) this.solve();
+    this.#watchSlip();
+  }
+
+  /**
+   * Zápis nemá Potvrdit: když krystaly chvíli ukazují typickou chybu (zrcadlo, jediný krystal
+   * vedle), hra ji pojmenuje stejně jako chybné čtení. Každý další dotek čekání zruší. Při ukázce
+   * kroku mlčí, tu má hráč před očima.
+   */
+  #watchSlip(): void {
+    clearTimeout(this.#slipTimer);
+    const task = this.task;
+    if (!this.writing || !task || this.hintLevel >= 3) return;
+    const { step, mask } = this.state;
+    const target = task.value;
+    if (step !== this.#slipStep) {
+      this.#slipStep = step;
+      this.#slipsSaid = new Set();
+    }
+    const slip = writeSlip(this.level.config, mask, target);
+    if (!slip || this.#slipsSaid.has(mask)) return;
+    this.#slipTimer = setTimeout(() => {
+      if (!this.writing || this.hintLevel >= 3 || this.state.step !== step || this.state.mask !== mask) return;
+      this.#slipsSaid.add(mask);
+      this.emit({ kind: 'inscription', event: { type: 'slip', mask, target, slip }, state: this.state });
+    }, SLIP_DWELL_MS);
   }
 }

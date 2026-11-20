@@ -1,39 +1,9 @@
 import { rowCount } from '../../../core/logic';
-import {
-  PARTS,
-  inputOn,
-  lampKey,
-  numberValue,
-  settle,
-  type Machine,
-  type MachineEvent,
-  type MachineState,
-  type MachineTask,
-} from '../../../core/puzzles/machine';
+import { PARTS, lampKey, settle, type MachineEvent, type MachineState, type MachineTask } from '../../../core/puzzles/machine';
 import { RUNE_NAME } from '../../../content/runes';
-import { inNum, plural } from '../../../game/text';
-import { fromWords, inputName, lampName, seatWords } from '../../../game/machineWords';
+import { failureWords, fromWords, inputName, lampsWords, seatWords, triedWords } from '../../../game/machineWords';
 import * as sound from '../../../audio/sound';
 import { sayComplete, type LevelCtx } from './context';
-
-/** Co ukazují lampy: u čísel jejich hodnota, jinak lampa po lampě. */
-export function lampsWords(m: Machine, lamps: Record<string, number | null>): string {
-  const groups = (m.numbers ?? []).filter((g) => g.bits.every((b) => b in lamps));
-  const inGroups = new Set(groups.flatMap((g) => g.bits));
-  const parts = groups.map((g) => `${g.label} ${numberValue(g, (id) => lamps[id])}`);
-  for (const l of m.lamps) if (!inGroups.has(l.id)) parts.push(`lampa ${l.label} ${lamps[l.id] ? 'svítí' : 'mlčí'}`);
-  return parts.join(', ');
-}
-
-/** Řádek vstupů slovy: čísla hodnotou, ostatní vstupy světlo nebo stín. */
-export function rowWords(m: Machine, row: number): string {
-  const groups = (m.numbers ?? []).filter((g) => g.bits.every((b) => m.inputs.some((i) => i.id === b)));
-  const inGroups = new Set(groups.flatMap((g) => g.bits));
-  const parts = groups.map((g) => `${g.label} = ${numberValue(g, (id) => inputOn(m, row, id))}`);
-  for (const inp of m.inputs)
-    if (!inGroups.has(inp.id)) parts.push(`${inputName(m, inp.id)} ${inputOn(m, row, inp.id) ? 'světlo' : 'stín'}`);
-  return parts.join(', ');
-}
 
 function taskOf(ctx: LevelCtx, state: MachineState): MachineTask | null {
   const level = ctx.level();
@@ -63,7 +33,9 @@ export function onMachine(ctx: LevelCtx, ev: MachineEvent, state: MachineState):
       ctx.stepFx('.niche.current', '.machine');
       const line = level.echo.found?.[ev.count];
       if (line) ctx.echo.say([line]);
-      ctx.announce(`Nová kombinace: ${rowWords(m, ev.row)}. Vyzkoušeno ${ev.count} z ${rowCount(n)}.`);
+      // Hlášení přepíše to po vstupu, proto musí samo říct, co lampy ukázaly.
+      const shown = settle(m, state.runes, state.wires, ev.row, state.memory).lamps;
+      ctx.announce(triedWords(m, ev.row, shown, ev.count));
       break;
     }
     case 'goal': {
@@ -87,18 +59,7 @@ export function onMachine(ctx: LevelCtx, ev: MachineEvent, state: MachineState):
     case 'wrong': {
       ctx.failFx('.trow.failed', '.example', '.machine');
       const f = ev.failure;
-      let why: string;
-      if (f.empty) why = 'Některý kámen je prázdný nebo točitý kámen nenastavený. Tudy světlo neproteče.';
-      else if (task.script) {
-        const which = f.lamps.map((id) => `lampa ${lampName(m, id)}`).join(' a ');
-        const by = m.nodes.some((g) => g.part === 'flip') ? 'vstupy a tepem' : 'vstupy';
-        why = `Zkouška se zastavila ${inNum(f.at + 1)} ${f.at + 1}. kroku: ${which} nesvítí správně. Projdi ten krok ${by} a sleduj, kudy světlo teče.`;
-      } else if (rowCount(n) > 8) {
-        why = `Stroj se splete u ${rowWords(m, f.at)}. Nastav ty vstupy a sleduj, kudy světlo teče.`;
-      } else {
-        const k = f.count;
-        why = `Lampy nesvítí správně ${inNum(k)} ${k} ${plural(k, 'řádku', 'řádcích', 'řádcích')} desky. Přepni vstupy podle nich a sleduj, kudy světlo teče.`;
-      }
+      const why = failureWords(task, f);
       ctx.echo.say([ctx.said.wrongCount++ === 0 && level.echo.wrong && !f.empty ? level.echo.wrong : why]);
       ctx.announce(`Brána se nepohnula. ${why}`);
       break;
@@ -110,7 +71,8 @@ export function onMachine(ctx: LevelCtx, ev: MachineEvent, state: MachineState):
       ctx.stepFx('.machine');
       const line = level.echo.step?.[ev.index];
       if (line) ctx.echo.say([line]);
-      ctx.announce(state.complete ? 'Brána se otevřela.' : 'Brána se pohnula. V dílně je další stroj.');
+      // Další úloha může mít vlastní zadání (task je už ta nová): čtečka ho jinak neuslyší.
+      ctx.announce(state.complete ? 'Brána se otevřela.' : `Brána se pohnula. V dílně je další stroj.${task.say ? ` ${task.say}` : ''}`);
       break;
     }
     case 'complete':

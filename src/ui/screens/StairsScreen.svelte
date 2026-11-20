@@ -11,11 +11,12 @@
   import { enterThroughDoors } from '../../game/doors.svelte.ts';
   import { go } from '../../game/nav.svelte.ts';
   import { settings } from '../../game/settings.svelte.ts';
+  import { plural } from '../../game/text';
   import * as sound from '../../audio/sound';
 
   /**
    * Schody mezi patry: karta patra (jméno, věta z příběhu, co čeká) a Strážce schodů,
-   * tři rychlé otázky ze zákonů minulého patra. Bez pečetí a dá se přeskočit: jde jen o to,
+   * tři rychlé otázky ze zákonů, které hráč už zná. Bez pečetí a dá se přeskočit: jde jen o to,
    * aby se staré zákony nevypařily (čtení čísel z Předsíně potřebuje celá Hlubina).
    */
   let { act: index }: { act: number } = $props();
@@ -74,7 +75,7 @@
 
   <article class="card panel" in:fly={{ y: 24, duration: 420 * m }}>
     <span class="seal" aria-hidden="true"><Glyph value={act.glyphBase} size={44} /></span>
-    <p class="eyebrow carved">Akt {act.numeral} · {act.theme}</p>
+    <p class="eyebrow carved">Patro {act.numeral} · {act.theme}</p>
     <h1 class="inlaid">{act.title}</h1>
     {#if act.lore}<p class="lore">{act.lore}</p>{/if}
     {#if act.preview}<p class="preview"><strong>Co tě čeká:</strong> {act.preview}</p>{/if}
@@ -86,9 +87,11 @@
       <section class="guard stone-inset" aria-labelledby="guard-title">
         <h2 id="guard-title" class="guard-title carved">Strážce schodů</h2>
         {#if phase === 'idle'}
+          <!-- Otázky nejsou jen z minulého patra: čtení čísel z Předsíně se vrací i na schodech do III a IV. -->
           <p class="note">
-            Než pustí dál, zeptá se na tři zákony z minulého patra ({prev.title}). Bez pečetí, jen aby se staré zákony
-            nevypařily.
+            Než pustí dál, zeptá se na {questions.length}
+            {plural(questions.length, 'zákon, který', 'zákony, které', 'zákonů, které')} už znáš. Bez pečetí, jen aby se
+            staré zákony nevypařily.
           </p>
           <div class="actions">
             <button type="button" class="btn btn-ghost" onclick={enter}>Přeskočit</button>
@@ -130,7 +133,7 @@
         {:else}
           <p class="note" role="status">
             {clean === questions.length
-              ? 'Strážce ustoupí. Všechno napoprvé: zákony minulého patra držíš pevně.'
+              ? 'Strážce ustoupí. Všechno napoprvé: staré zákony držíš pevně.'
               : `Strážce ustoupí. Napoprvé ${clean} z ${questions.length}. Kdyby něco vypadlo, Kodex a Shrnutí patra to připomenou.`}
           </p>
           <div class="actions">

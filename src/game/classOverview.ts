@@ -38,9 +38,13 @@ export function sealTotal(student: Student): number {
   );
 }
 
-/** Kde student právě je: první nehotová komnata základní cesty, pak Hlubších síní. */
-export function currentRoom(student: Student, basicPath: LevelDef[], all: LevelDef[]): LevelDef | null {
-  return basicPath.find((l) => !student.data.levels[l.id]) ?? all.find((l) => !student.data.levels[l.id]) ?? null;
+/**
+ * Další komnata na základní cestě: první nehotová (cesta se otevírá po jedné, takže právě ta je na řadě).
+ * Kde student opravdu hraje, soubor neříká: kdo má základ patra hotový, může být v jeho Hlubších síních.
+ * Po hotovém základu vrací null.
+ */
+export function nextBasicRoom(student: Student, basicPath: LevelDef[]): LevelDef | null {
+  return basicPath.find((l) => !student.data.levels[l.id]) ?? null;
 }
 
 export interface RoomSummary {

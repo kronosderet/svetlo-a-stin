@@ -156,6 +156,7 @@ export function chainTask(bits: number, extra = 0, first = true, any = false): M
   const machine = adderChain(bits, carry);
   return {
     mode: 'build',
+    kind: 'chain',
     machine,
     target: chainTarget(machine, bits, extra),
     rule: extra ? `Lampy mají ukázat součet A + B + ${extra}.` : 'Lampy mají ukázat součet A + B.',
@@ -684,7 +685,8 @@ export function multiplier(h1: [Pin, Pin], h2: [Pin, Pin]): Machine {
       { id: 'B0', label: 'B', x: 0, y: 8 },
     ],
     nodes: [
-      // Poznámka pod Poutem říká, které krystaly kámen násobí (váhy jako index), ať to Ema nemusí zkoušet.
+      // Poznámka pod Poutem říká, které krystaly kámen násobí, ať to Ema nemusí zkoušet. Index je váha
+      // krystalu jako na desce i v Kodexu: A₂ × B₁ je kopie s váhou 2.
       { id: 'p11', rune: 'and', in: ['A1', 'B1'], x: 4.6, y: 0.4, note: 'A₂ × B₂' },
       { id: 'p10', rune: 'and', in: ['A1', 'B0'], x: 4.6, y: 2.9, note: 'A₂ × B₁' },
       { id: 'p01', rune: 'and', in: ['A0', 'B1'], x: 4.6, y: 5.4, note: 'A₁ × B₂' },

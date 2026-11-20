@@ -24,6 +24,8 @@ export interface InscriptionState {
   dial: number;
   moves: number;
   mistakes: number;
+  /** Zbytečné doteky v aktuální úloze zápisu: ty, které světlo od zadání vzdálily. */
+  strays: number;
   /** Poslední chybný odhad při čtení (UI ho porovná s nápisem). */
   lastGuess: number | null;
   complete: boolean;
@@ -32,6 +34,11 @@ export interface InscriptionState {
 export type InscriptionEvent =
   | { type: 'toggle'; bit: number; on: boolean }
   | { type: 'wrong'; guess: number; target: number }
+  /**
+   * Zápis nemá Potvrdit, chybu hlásí sám: slip = typická chyba, na které hráč chvíli zůstal
+   * (hra ji pojmenuje), null = další zbytečný dotek. Obojí rozzáří Nápovědu jako chybné čtení.
+   */
+  | { type: 'slip'; mask: number; target: number; slip: ReadSlip | null }
   | { type: 'step'; index: number; task: InscriptionTask }
   | { type: 'complete' };
 
@@ -42,7 +49,7 @@ export const dialWheels = (bits: number, radix: 10 | 16 = 10): number =>
   radix === 16 ? Math.ceil(bits / 4) : String(maxValue(bits)).length;
 
 export function initInscription(): InscriptionState {
-  return { step: 0, mask: 0, dial: 0, moves: 0, mistakes: 0, lastGuess: null, complete: false };
+  return { step: 0, mask: 0, dial: 0, moves: 0, mistakes: 0, strays: 0, lastGuess: null, complete: false };
 }
 
 export function currentTask(cfg: InscriptionConfig, st: InscriptionState): InscriptionTask | null {
@@ -63,18 +70,25 @@ function advance(cfg: InscriptionConfig, st: InscriptionState, moves: number, ev
   const complete = step >= cfg.tasks.length;
   if (complete) events.push({ type: 'complete' });
   return {
-    state: { ...st, step, mask: complete ? st.mask : 0, dial: 0, moves, lastGuess: null, complete },
+    state: { ...st, step, mask: complete ? st.mask : 0, dial: 0, moves, strays: 0, lastGuess: null, complete },
     events,
   };
 }
 
-/** Zápis: přepne krystal. Jakmile světlo váží požadovanou hodnotu, úloha je splněná. */
+/**
+ * Zápis: přepne krystal. Jakmile světlo váží požadovanou hodnotu, úloha je splněná.
+ * Dotek, po kterém krystal nesedí se zadáním, je zbytečný. První bývá překlep, každý další
+ * se hlásí (slip bez jména), ať se slepému naklikávání rozzáří Nápověda.
+ */
 export function toggle(cfg: InscriptionConfig, st: InscriptionState, bit: number): Result {
   const task = currentTask(cfg, st);
   if (!task || task.dir !== 'write' || bit < 0 || bit >= cfg.bits) return { state: st, events: [] };
   const mask = flipBit(st.mask, bit);
   const events: InscriptionEvent[] = [{ type: 'toggle', bit, on: isBitSet(mask, bit) }];
-  const next = { ...st, mask };
+  const away = isBitSet(mask ^ task.value, bit);
+  const strays = st.strays + (away ? 1 : 0);
+  if (away && strays > 1) events.push({ type: 'slip', mask, target: task.value, slip: null });
+  const next = { ...st, mask, strays };
   if (mask === task.value) return advance(cfg, next, st.moves + 1, events);
   return { state: { ...next, moves: st.moves + 1 }, events };
 }
@@ -118,13 +132,14 @@ export function par(cfg: InscriptionConfig): number {
 }
 
 /**
- * Typická chyba čtení, kterou jde poznat z čísla na kotoučích:
- *  - swap:   dvojznak s prohozenými glyfy (levá čtveřice na pravém kotouči),
- *  - mirror: nápis čtený zrcadlově (nejlehčí krystal vlevo),
- *  - count:  hráč spočítal svítící krystaly místo jejich vah,
- *  - one:    liší se jediný krystal (weight = jeho váha).
+ * Typická chyba čtení nebo zápisu, kterou jde poznat z čísla na kotoučích (z krystalů):
+ *  - swap:    dvojznak s prohozenými glyfy (levá čtveřice na pravém kotouči),
+ *  - nibbles: dvojznak, v němž je zrcadlově každá čtveřice zvlášť (glyfy na svém místě),
+ *  - mirror:  nápis čtený zrcadlově (nejlehčí krystal vlevo),
+ *  - count:   hráč spočítal svítící krystaly místo jejich vah (jen čtení),
+ *  - one:     liší se jediný krystal (weight = jeho váha).
  */
-export type ReadSlip = { kind: 'swap' | 'mirror' | 'count' } | { kind: 'one'; weight: number };
+export type ReadSlip = { kind: 'swap' | 'nibbles' | 'mirror' | 'count' } | { kind: 'one'; weight: number };
 
 /** Zrcadlový obraz nápisu: krystal i se přesune na místo bits − 1 − i. */
 export function mirrored(value: number, bits: number): number {
@@ -133,15 +148,42 @@ export function mirrored(value: number, bits: number): number {
   return out >>> 0;
 }
 
+/** Dvojznak s prohozenými glyfy: B6 → 6B. */
+export const swappedGlyphs = (value: number): number => ((value & 0x0f) << 4) | ((value >>> 4) & 0x0f);
+
+/** Dvojznak se zrcadlem v každé čtveřici zvlášť: B6 (1011 0110) → D6 (1101 0110). */
+export const mirroredNibbles = (value: number): number => (mirrored(value >>> 4, 4) << 4) | mirrored(value & 0x0f, 4);
+
+/** Chyby ve směru: prohozené glyfy, zrcadlo po čtveřicích (jen dvojznak), zrcadlo celého nápisu. */
+function directionSlip(cfg: InscriptionConfig, guess: number, value: number): ReadSlip | null {
+  const pair = cfg.radix === 16 && cfg.bits === 8;
+  if (pair && guess === swappedGlyphs(value)) return { kind: 'swap' };
+  if (pair && guess === mirroredNibbles(value)) return { kind: 'nibbles' };
+  if (guess === mirrored(value, cfg.bits)) return { kind: 'mirror' };
+  return null;
+}
+
 /** Pozná typickou chybu čtení, nebo vrátí null (chyba bez jména, nebo žádná). */
 export function readSlip(cfg: InscriptionConfig, guess: number, value: number): ReadSlip | null {
   if (guess === value || guess < 0 || guess > maxValue(cfg.bits)) return null;
-  if (cfg.radix === 16 && cfg.bits === 8 && guess === (((value & 0x0f) << 4) | (value >>> 4))) return { kind: 'swap' };
-  if (guess === mirrored(value, cfg.bits)) return { kind: 'mirror' };
+  const dir = directionSlip(cfg, guess, value);
+  if (dir) return dir;
   if (guess === popcount(value)) return { kind: 'count' };
   const diff = guess ^ value;
   if (popcount(diff) === 1) return { kind: 'one', weight: diff };
   return null;
+}
+
+/**
+ * Pozná typickou chybu zápisu z rozsvícených krystalů (stejně jako readSlip u čtení, jen bez
+ * počtu světel, který při zápisu nic neznamená). Tma není pokus, proto nic nehlásí.
+ */
+export function writeSlip(cfg: InscriptionConfig, mask: number, value: number): ReadSlip | null {
+  if (mask === value || mask <= 0 || mask > maxValue(cfg.bits)) return null;
+  const dir = directionSlip(cfg, mask, value);
+  if (dir) return dir;
+  const diff = mask ^ value;
+  return popcount(diff) === 1 ? { kind: 'one', weight: diff } : null;
 }
 
 /** Krystal, který nápověda 3. stupně doporučí přepnout (jen při zápisu). */

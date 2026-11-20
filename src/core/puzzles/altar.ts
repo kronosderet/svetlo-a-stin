@@ -203,7 +203,7 @@ function lowestDiff(a: number, b: number, bits: number): number | null {
 export function hintBit(cfg: AltarConfig, st: AltarState): number | null {
   if (st.complete) return null;
 
-  if (cfg.goal.kind === 'all' && cfg.strict) return hamiltonStep(cfg.bits, st.mask, st.found);
+  if (cfg.goal.kind === 'all' && cfg.strict) return hamiltonStep(cfg.bits, st.mask, st.found) ?? breakStep(cfg.bits, st.mask, st.found);
 
   if (cfg.goal.kind === 'all') {
     // Nejdřív soused, který ještě není nalezený (vede k Grayovu kódu).
@@ -225,10 +225,19 @@ export function hintBit(cfg: AltarConfig, st: AltarState): number | null {
   }
 
   if (cfg.goal.kind === 'class') {
-    // Krystal, po jehož přepnutí zbývá nejméně doteků (od nejtěžšího).
+    // Nejkratší cestou k číslu právě žádané skupiny, ať zvýrazněný krystal sedí s jejím pravidlem
+    // v ukázce kroku (lichost nese pravý krystal, ne osmička). Při shodě rozhodne kratší cesta
+    // přes další skupiny (ideál) a pak krystal zprava, o kterém pravidla mluví.
+    const group = cfg.goal.targets[st.step];
+    const near = (m: number) => Math.min(...group.values.map((v) => hamming(v, m)));
     const costs = classCosts(cfg)[st.step];
-    let best: number | null = null;
-    for (let i = cfg.bits - 1; i >= 0; i--) if (best === null || costs[flipBit(st.mask, i)] < costs[flipBit(st.mask, best)]) best = i;
+    const better = (i: number, j: number) => {
+      const a = flipBit(st.mask, i);
+      const b = flipBit(st.mask, j);
+      return near(a) !== near(b) ? near(a) < near(b) : costs[a] < costs[b];
+    };
+    let best = 0;
+    for (let i = 1; i < cfg.bits; i++) if (better(i, best)) best = i;
     return best;
   }
 
@@ -274,9 +283,22 @@ function classCosts(cfg: AltarConfig): number[][] {
 }
 
 /**
+ * Tichý krok: rozehraná cesta už nejde dokončit bez opakování (slepá ulička). Ukázka kroku to
+ * pak řekne a zvýrazní krystal, který cestu vědomě přeruší, místo aby slibovala pokračování.
+ */
+export function strictDeadEnd(cfg: AltarConfig, st: AltarState): boolean {
+  return cfg.goal.kind === 'all' && !!cfg.strict && !st.complete && hamiltonStep(cfg.bits, st.mask, st.found) === null;
+}
+
+/** Ze slepé uličky: krystal, který vede na kombinaci z desky, takže tichý krok přeruší hned. */
+function breakStep(bits: number, mask: number, found: number[]): number {
+  for (let i = 0; i < bits; i++) if (found.includes(flipBit(mask, i))) return i;
+  return bits - 1;
+}
+
+/**
  * Tichý krok: krystal, kterým cesta pokračuje tak, aby prošla všechny zbylé kombinace
- * bez opakování (hledání do hloubky po krychli). Ze slepé uličky žádná cesta nevede:
- * pak nápověda ukáže krystal, který cestu přeruší, a hráč začne znovu.
+ * bez opakování (hledání do hloubky po krychli). Ze slepé uličky žádná cesta nevede (null).
  */
 function hamiltonStep(bits: number, mask: number, found: number[]): number | null {
   const total = combinations(bits);
@@ -299,5 +321,5 @@ function hamiltonStep(bits: number, mask: number, found: number[]): number | nul
     if (extend(next)) return i;
     seen.delete(next);
   }
-  return bits - 1;
+  return null;
 }

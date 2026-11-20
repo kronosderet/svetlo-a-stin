@@ -1,8 +1,7 @@
-import { BASIC_PATH, GATE, actOf, advancedRooms, gateOf, isAdvanced, roomNumber } from '../content/levels';
-import type { ActDef } from '../content/types';
 import { LAYOUT, mergeCounts, mergeSeals, migrateKodexIds, migrateLevelIds } from './migrate';
 import { settings } from './settings.svelte.ts';
 import { emptyStats, type RoomStats } from './roomStats';
+import { unlockedIn } from './unlock';
 
 const KEY = 'svetlo-stin.progress.v1';
 /** Klíč z doby, kdy se hra jmenovala Lumen & Umbra; postup se z něj převezme. */
@@ -150,41 +149,13 @@ export function isCompleted(id: string): boolean {
   return !!progress.levels[id];
 }
 
-/** Kolik prvních komnat patra musí hráč zvládnout v ideálu a bez ukázky kroku, aby smel rovnou k bráně. */
-export const FAST_ROOMS = 3;
-
 /**
- * Zkusit bránu hned: kdo vyřeší komnaty 1 až 3 patra v ideálním počtu kroků a bez ukázky kroku
- * (pečeť přesnosti i odvahy), tomu se brána otevře hned. Když ji projde, patro je otevřené
- * a komnaty 4 až 6 může dohrát později kvůli pečetím.
- */
-export function fastGate(act: ActDef): boolean {
-  const gate = gateOf(act);
-  if (isCompleted(gate) || isCompleted(`${act.numeral}-${GATE - 1}`)) return false;
-  const recs = Array.from({ length: FAST_ROOMS }, (_, k) => progress.levels[`${act.numeral}-${k + 1}`]);
-  const full = (r?: LevelRecord) => !!r?.seals.skill && !!r?.seals.pure;
-  // Komnata bez záznamu před hotovou komnatou 3 vznikne jen převodem postupu (nová II-2 v rozvržení 5):
-  // hráč, kterému brána už byla otevřená, o ni nepřijde. Jinak se základní cesta otevírá po jedné.
-  return full(recs[FAST_ROOMS - 1]) && recs.every((r) => !r || full(r));
-}
-
-/**
- * Základní cesta se otevírá po jedné komnatě napříč patry (brána otevře další patro).
- * Hlubší síně patra se otevřou po jeho bráně a pak zase po jedné. Hotová komnata je vždy otevřená.
+ * Základní cesta se otevírá po jedné komnatě, Hlubší síně po bráně patra (viz unlock.ts).
+ * Hotová komnata je vždy otevřená, takže brána prošlá dřívější zkratkou zůstane otevřená i s tím, co otevřela.
  */
 export function isUnlocked(id: string): boolean {
   // Učitelský režim (PIN v Nastavení) otevře všechno, ať jde ukázat kterákoli komnata.
-  if (settings.teacher || isCompleted(id)) return true;
-  if (isAdvanced(id)) {
-    const act = actOf(id);
-    if (!isCompleted(gateOf(act))) return false;
-    const rooms = advancedRooms(act);
-    const i = rooms.findIndex((l) => l.id === id);
-    return i === 0 || (i > 0 && isCompleted(rooms[i - 1].id));
-  }
-  if (roomNumber(id) === GATE && fastGate(actOf(id))) return true;
-  const i = BASIC_PATH.findIndex((l) => l.id === id);
-  return i === 0 || (i > 0 && isCompleted(BASIC_PATH[i - 1].id));
+  return settings.teacher || unlockedIn(id, isCompleted);
 }
 
 export function hasStarted(): boolean {

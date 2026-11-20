@@ -43,6 +43,8 @@ export interface GateTask {
   reference?: Circuit;
   /** Zadání úlohy, když se liší od zadání komnaty (třeba zkoumání před stavbou). */
   say?: string;
+  /** Nápovědy úlohy, když se liší od nápověd komnaty (zkoumání nebo větvení mezi řetězy). */
+  hints?: [string, string, string];
 }
 
 export interface GateConfig {
@@ -71,7 +73,8 @@ export type GateEvent =
   | { type: 'tried'; row: number; count: number; lamp: number }
   | { type: 'rune'; node: string; rune: Rune }
   | { type: 'wire'; key: string; source: string }
-  | { type: 'wrong'; failed: number[]; empty: boolean }
+  /** empty: některý kámen nemá runu; unwired: některý točitý kámen ještě neukazuje zdroj. */
+  | { type: 'wrong'; failed: number[]; empty: boolean; unwired: boolean }
   | { type: 'step'; index: number }
   | { type: 'complete' };
 
@@ -203,8 +206,10 @@ export function test(cfg: GateConfig, st: GateState): Result {
   const failed = lamps.flatMap((v, r) => (v !== task.target![r] ? [r] : []));
   const moves = st.moves + 1;
   if (failed.length) {
-    const empty = slotNodes(task.circuit).some((s) => !st.runes[s.id]) || sockets(task.circuit).some((s) => !st.wires[s.key]);
-    return { state: { ...st, moves, mistakes: st.mistakes + 1, failed }, events: [{ type: 'wrong', failed, empty }] };
+    // Prázdný kámen a nenatočený točitý kámen mají každý svou hlášku (v Prapečeti prázdný kámen není).
+    const empty = slotNodes(task.circuit).some((s) => !st.runes[s.id]);
+    const unwired = sockets(task.circuit).some((s) => !st.wires[s.key]);
+    return { state: { ...st, moves, mistakes: st.mistakes + 1, failed }, events: [{ type: 'wrong', failed, empty, unwired }] };
   }
   return advance(cfg, { ...st, moves }, []);
 }

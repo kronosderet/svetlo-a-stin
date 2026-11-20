@@ -1,6 +1,13 @@
 import type { AltarEvent, AltarState } from '../../../core/puzzles/altar';
+import type { Echo } from '../../../game/echo.svelte.ts';
 import * as sound from '../../../audio/sound';
 import { sayComplete, type LevelCtx } from './context';
+
+/**
+ * Echo, které právě ukázalo dopočet váhy. Události jednoho doteku jdou za sebou (toggle, reveal,
+ * step): replika kroku se pak za dopočet přidá, ať ho nepřepíše (I-4, první cíl).
+ */
+let deducedBy: Echo | null = null;
 
 /** Oltář a Počítadlo: zvuky, repliky a hlášení pro čtečku. */
 export function onAltar(ctx: LevelCtx, ev: AltarEvent, state: AltarState): void {
@@ -11,6 +18,7 @@ export function onAltar(ctx: LevelCtx, ev: AltarEvent, state: AltarState): void 
   const counter = !!level.presentation.counter;
   switch (ev.type) {
     case 'toggle': {
+      deducedBy = null;
       sound.playBit(ev.bit, ev.on);
       let msg = `Krystal ${bits - ev.bit} zleva ${ev.on ? 'rozsvícen' : 'zhasnut'}.`;
       if (level.presentation.showSum) msg += ` Světlo váží ${state.mask}.`;
@@ -25,6 +33,7 @@ export function onAltar(ctx: LevelCtx, ev: AltarEvent, state: AltarState): void 
         const known = ev.known ?? 0;
         ctx.echo.say([`${known + w} − ${known} = ${w}. Kámen váhu dopočítal ze součtu.${ev.allRevealed && level.echo.allRevealed ? ` ${level.echo.allRevealed}` : ''}`]);
         ctx.said.firstReveal = true;
+        deducedBy = ctx.echo;
       } else if (ev.allRevealed && level.echo.allRevealed) ctx.echo.say([level.echo.allRevealed]);
       else if (!ctx.said.firstReveal && level.echo.firstReveal) {
         ctx.echo.say([level.echo.firstReveal]);
@@ -61,7 +70,8 @@ export function onAltar(ctx: LevelCtx, ev: AltarEvent, state: AltarState): void 
       ctx.pulse();
       ctx.stepFx('.row');
       const line = level.echo.step?.[ev.index];
-      if (line) ctx.echo.say([line]);
+      if (line && deducedBy === ctx.echo) ctx.echo.add([line]);
+      else if (line) ctx.echo.say([line]);
       if (cfg.goal.kind === 'class') {
         const nextGroup = cfg.goal.targets[state.step];
         ctx.announce(nextGroup ? `Přijato: ${ev.target}. Oltář žádá ${nextGroup.say.toLowerCase()}` : `Přijato: ${ev.target}.`);

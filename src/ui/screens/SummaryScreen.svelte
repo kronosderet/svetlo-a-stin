@@ -52,7 +52,7 @@
   </header>
 
   <article class="sheet parchment">
-    <p class="eyebrow">Světlo &amp; Stín · Akt {act.numeral} · {act.theme}</p>
+    <p class="eyebrow">Světlo &amp; Stín · Patro {act.numeral} · {act.theme}</p>
     <h1>{act.title}</h1>
 
     {#if basic.length === 0 && deep.length === 0}

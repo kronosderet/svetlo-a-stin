@@ -1,17 +1,11 @@
-import { inputBit, rowCount } from '../../../core/logic';
-import { evaluate, type GateEvent, type GateState } from '../../../core/puzzles/gate';
+import { rowCount } from '../../../core/logic';
+import type { GateEvent, GateState } from '../../../core/puzzles/gate';
 import type { TableEvent, TableState } from '../../../core/puzzles/table';
 import { tableOf } from '../../../core/puzzles/table';
-import { ARITY, runeTable } from '../../../core/logic';
 import { RUNE_NAME } from '../../../content/runes';
-import { plural, inNum } from '../../../game/text';
+import { gateWrongWords, inputWords, rowWords, sourceWords, wrongRuneWords } from '../../../game/stepWords';
 import * as sound from '../../../audio/sound';
 import { sayComplete, type LevelCtx } from './context';
-
-/** Řádek desky slovy: „A světlo, B stín“. */
-function rowWords(names: string[], row: number): string {
-  return names.map((name, i) => `${name} ${inputBit(row, i, names.length) ? 'světlo' : 'stín'}`).join(', ');
-}
 
 /** Brána: zkoumání run a vkládání run do kamenů. */
 export function onGate(ctx: LevelCtx, ev: GateEvent, state: GateState): void {
@@ -23,8 +17,8 @@ export function onGate(ctx: LevelCtx, ev: GateEvent, state: GateState): void {
   switch (ev.type) {
     case 'input': {
       sound.playBit(n - 1 - ev.index, ev.on);
-      const lamp = evaluate(circuit, state.runes, state.inputs)[circuit.output];
-      ctx.announce(`Vstup ${circuit.inputs[ev.index]}: ${ev.on ? 'světlo' : 'stín'}. Lampa ${lamp === 1 ? 'svítí' : 'mlčí'}.`);
+      // I s točitými kameny: bez nich by čtečka v Prapečeti hlásila lampu vždy zhasnutou.
+      ctx.announce(inputWords(circuit, state.runes, state.wires, state.inputs, ev.index));
       break;
     }
     case 'tried': {
@@ -41,17 +35,13 @@ export function onGate(ctx: LevelCtx, ev: GateEvent, state: GateState): void {
       break;
     case 'wire': {
       sound.playTick();
-      const src = circuit.inputs.includes(ev.source) ? `vstupu ${ev.source}` : `runy ${circuit.nodes.findIndex((g) => g.id === ev.source) + 1}`;
-      ctx.announce(`Točitý kámen natočen: světlo teče z ${src}.`);
+      ctx.announce(`Točitý kámen natočen: světlo teče ${sourceWords(circuit, ev.source)}.`);
       break;
     }
     case 'wrong': {
       ctx.failFx('.trow.failed', '.circuit');
-      const k = ev.failed.length;
-      const why = ev.empty
-        ? 'Některý kámen je prázdný. Bez runy jím světlo neprojde.'
-        : `Lampa nesvítí správně ${inNum(k)} ${k} ${plural(k, 'řádku', 'řádcích', 'řádcích')} desky. Přepni vstupy podle nich a sleduj, kudy světlo teče.`;
-      ctx.echo.say([ctx.said.wrongCount++ === 0 && level.echo.wrong && !ev.empty ? level.echo.wrong : why]);
+      const why = gateWrongWords(ev.failed.length, ev.empty, ev.unwired);
+      ctx.echo.say([ctx.said.wrongCount++ === 0 && level.echo.wrong && !ev.empty && !ev.unwired ? level.echo.wrong : why]);
       ctx.announce(`Brána se nepohnula. ${why}`);
       break;
     }
@@ -96,16 +86,8 @@ export function onTable(ctx: LevelCtx, ev: TableEvent, state: TableState): void 
         break;
       }
       ctx.failFx('.choice.wrong', '.desk');
-      // Proč ne: první řádek, ve kterém by zvolená runa svítila jinak než lampa na desce.
-      const want = tableOf(task);
-      let why: string;
-      if (ARITY[ev.rune] !== names.length) {
-        why = `${RUNE_NAME[ev.rune]} bere ${ARITY[ev.rune] === 1 ? 'jediné světlo' : 'dvě světla'}, deska má ale ${names.length === 1 ? 'jeden vstup' : `${names.length} vstupy`}.`;
-      } else {
-        const own = runeTable(ev.rune);
-        const r = own.findIndex((v, k) => v !== want[k]);
-        why = `${RUNE_NAME[ev.rune]} by v řádku ${rowWords(names, r)} ${own[r] ? 'svítila' : 'mlčela'}. Na desce je to jinak.`;
-      }
+      // Proč ne: první řádek, ve kterém by lampa se zvolenou runou svítila jinak než na desce.
+      const why = wrongRuneWords(ev.rune, names, tableOf(task));
       ctx.echo.say([why]);
       ctx.announce(why);
       break;

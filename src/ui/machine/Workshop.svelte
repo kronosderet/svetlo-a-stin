@@ -9,7 +9,7 @@
   import { inputOn, numberValue, rowOf, settle, type MachineLamp } from '../../core/puzzles/machine';
   import { settings } from '../../game/settings.svelte.ts';
   import type { MachineGame } from '../../game/machineGame.svelte.ts';
-  import { rowWords } from '../screens/level/machineEvents';
+  import { lampsWords, rowWords } from '../../game/machineWords';
   import { scrollable } from '../scrollable';
   import { PART_ABBR, PART_FULL } from './layout';
 
@@ -177,7 +177,8 @@
           {#each rows as r (r)}
             {@const seen = view.tried.includes(r)}
             {@const lamps = lampsAt(r)}
-            <div class="niche stone-inset" class:found={seen} class:current={r === view.inputs} role="listitem" aria-label={seen ? rowWords(machine, r) : 'Zatím nevyzkoušeno'}>
+            <!-- Tečky lamp jsou aria-hidden: co lampy ukázaly, řekne čtečce popisek výklenku. -->
+            <div class="niche stone-inset" class:found={seen} class:current={r === view.inputs} role="listitem" aria-label={seen ? `${rowWords(machine, r)}, ${lampsWords(machine, lamps)}` : 'Zatím nevyzkoušeno'}>
               {#if seen}
                 <MiniPattern mask={r} bits={n} size="sm" digits={modern} />
                 <span class="dots" aria-hidden="true">

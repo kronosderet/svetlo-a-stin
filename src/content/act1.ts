@@ -1,5 +1,19 @@
 import { genI12, genI13, genI14, genI15Glyphs, genI15Octave, genI5, genI6, genI7, genI8 } from './generators';
-import { qBitsFor, qByteHex, qCombosNext, qCombosOf, qGlyphOf, qGlyphWeight, qGrayMoves, qGrayPair, qMaxValue, qOdd, qTrailing } from './quizzes';
+import {
+  qBitsFor,
+  qByteHex,
+  qCombosNext,
+  qCombosOf,
+  qGlyphOf,
+  qGlyphWeight,
+  qGrayMoves,
+  qGrayPair,
+  qMaxValue,
+  qOdd,
+  qRead,
+  qTrailing,
+  qWrite,
+} from './quizzes';
 import type { AltarClass } from '../core/puzzles/altar';
 import type { ActDef, LevelDef } from './types';
 
@@ -20,8 +34,8 @@ const levels: LevelDef[] = [
     presentation: { task: 'Probuď krystal.', showDigits: false, showSum: false, sizes: 'equal', ledger: false },
     hints: [
       'Krystal před tebou čeká na dotek.',
-      'Klikni na krystal.',
-      'Krystal je zvýrazněný. Stačí na něj kliknout.',
+      'Dotkni se krystalu.',
+      'Krystal je zvýrazněný. Stačí se ho dotknout.',
     ],
     echo: {
       intro: ['…{{ticho}}… {{věky}} ticha…', 'Jsem {{Echo|sifra}}. Hlas, který tu zůstal.', 'Někdo přišel. Dotkni se krystalu.'],
@@ -36,8 +50,8 @@ const levels: LevelDef[] = [
     presentation: { task: 'Napodob krystal ve stěně.', showDigits: false, showSum: false, sizes: 'equal', ledger: false },
     hints: [
       'Porovnej krystal s reliéfem ve stěně.',
-      'Když krystal ve stěně svítí, rozsviť ho. Když mlčí, zhasni ho.',
-      'Krystal je zvýrazněný. Stačí na něj kliknout.',
+      'Když krystal ve stěně svítí, rozsviť i svůj. Když mlčí, svůj zhasni.',
+      'Krystal je zvýrazněný. Stačí se ho dotknout.',
     ],
     echo: {
       intro: ['Krystal umí svítit. Umí ale i mlčet.', 'Stěna si pamatuje, jak kdysi zářil. Napodob ji.'],
@@ -64,12 +78,12 @@ const levels: LevelDef[] = [
     },
     hints: [
       'Porovnej krystaly s reliéfem ve stěně.',
-      'Rozsviť krystaly, které ve stěně září, a zhasni ty ostatní.',
+      'Rozsviť krystaly na místech, kde ve stěně září, a zhasni ty ostatní.',
       'Zvýrazněný krystal je v jiném stavu než ve stěně.',
     ],
     echo: {
       intro: ['Dva krystaly. Stěna si pamatuje, jak kdysi svítily.', 'Lumenité každé takové kombinaci říkali {{podoba|podoby}}.', 'Napodob, co vidíš.'],
-      step: { 0: 'Ano. Pravá svítí, levá mlčí.', 2: 'Zbývá poslední kombinace. Ta nejtišší.' },
+      step: { 0: 'Ano. Pravý svítí, levý mlčí.', 2: 'Zbývá poslední kombinace. Ta nejtišší.' },
       solved: [
         'Dva krystaly, čtyři kombinace. Víc jich není.',
         'Lumenité psali jen dvěma znaky: světlem a stínem. Kodex ti je teď přeloží.',
@@ -176,13 +190,15 @@ const levels: LevelDef[] = [
         'Na dveřích komnat jsou vytesané {{glyfy|glyf}}, čtveřice krystalů. Možná je jednou přečteš.',
       ],
       firstReveal: 'Osm. Sedí to s tvým odhadem?',
-      step: { 2: 'Osm, čtyři, dva, jedna. Víc vah tu není.' },
+      step: { 2: 'Osm, čtyři, dvě, jedna. Víc vah tu není.' },
       solved: [
         'Čtyři krystaly: šestnáct kombinací, váhy od nuly do patnácti.',
         'Předsíň se probouzí.',
       ],
       skill: 'Bez jediného zbytečného doteku. Lumenité by byli spokojeni.',
     },
+    // Zápis čísla krystaly: kvíz ho zkouší i bez oltáře a dává otázky pracovnímu listu patra.
+    quiz: [qWrite],
     kodex: 'prevod',
   },
   {
@@ -229,6 +245,7 @@ const levels: LevelDef[] = [
       solved: ['Číst světlo je snadné: sečti váhy krystalů, které svítí.', 'Stín neváží nic.'],
       skill: 'Každý nápis napoprvé.',
     },
+    quiz: [qRead],
     kodex: 'cteni',
   },
   {
@@ -264,7 +281,7 @@ const levels: LevelDef[] = [
         'Brána Předsíně. Projde jen ten, kdo umí světlem číst i psát.',
         'Pět zkoušek, čtyři krystaly, žádné váhy ani součet.',
       ],
-      step: { 0: 'Zapsáno. Teď čti.', 1: 'Správně. Brána se pohnula.', 3: 'Poslední zkouška: nejtěžší světlo čtyř krystalů.' },
+      step: { 0: 'Zapsáno. Teď čti.', 1: 'Správně. Brána se pohnula.', 3: 'Teď nejtěžší světlo čtyř krystalů.' },
       wrong: 'Brána se nepohnula. Porovnej obě kombinace.',
       solved: [
         'Brána Předsíně se otevírá. Za ní vedou schody do Síně Počtářů, kde se světla začnou sčítat.',
@@ -320,8 +337,8 @@ const levels: LevelDef[] = [
         targets: [
           group('Liché číslo', (v) => v % 2 === 1, 'Liché číslo má rozsvícený pravý krystal, ten s váhou 1. Všechny ostatní váhy jsou sudé.'),
           group('Sudé číslo větší než 8', (v) => v % 2 === 0 && v > 8, 'Sudé číslo má pravý krystal ve stínu. Větší než 8 potřebuje k osmičce ještě další světlo.'),
-          group('Liché číslo menší než 6', (v) => v % 2 === 1 && v < 6, 'Lichý je jen pravý krystal. Zbytek musí vážit nejvýš 4.'),
-          group('Číslo dělitelné čtyřmi (ne nula)', (v) => v % 4 === 0 && v > 0, 'Dělitelné čtyřmi má oba pravé krystaly ve stínu, jinak by zbyla jednička nebo dvojka.'),
+          group('Liché číslo menší než 6', (v) => v % 2 === 1 && v < 6, 'Lichou váhu má jen pravý krystal. Zbytek musí vážit nejvýš 4.'),
+          group('Číslo dělitelné čtyřmi (ne nula)', (v) => v % 4 === 0 && v > 0, 'Dělitelné čtyřmi má oba pravé krystaly ve stínu, jinak by zbyla jednička, dvojka nebo trojka.'),
           group('Číslo dělitelné osmi (ne nula)', (v) => v % 8 === 0 && v > 0, 'Dělitelné osmi má tři pravé krystaly ve stínu. Ve čtyřech krystalech je to jen osmička.'),
         ],
       },
@@ -414,7 +431,7 @@ const levels: LevelDef[] = [
       ],
       reset: 'Tuhle kombinaci deska už znala. Tichý krok se přerušil, začni znovu.',
       found: { 8: 'Polovina cesty. Teď přijde zrcadlo.', 15: 'Poslední krok.' },
-      complete: 'Šestnáct kombinací, patnáct kroků. Ani jeden navíc.',
+      complete: 'Šestnáct kombinací a každá právě jednou.',
       solved: ['Tichý krok má i moderní jméno: Grayův kód.', 'Polovina cesty, zrcadlo a druhá polovina pozpátku.'],
       skill: 'Celá cesta napoprvé.',
     },
@@ -440,7 +457,7 @@ const levels: LevelDef[] = [
     generate: genI12,
     presentation: {
       task: 'Přečti nápis a nastav jeho váhu na kotoučích.',
-      writeTask: 'Rozsviť krystaly tak, aby světlo vážilo, kolik žádá brána.',
+      writeTask: 'Rozsviť krystaly tak, aby světlo vážilo, kolik žádá nápis.',
       showDigits: true,
       showSum: false,
       sizes: 'equal',
@@ -449,13 +466,13 @@ const levels: LevelDef[] = [
     hints: [
       'Oktáva váží zprava 1, 2, 4, 8, 16, 32, 64, 128.',
       'Čtení: sečti váhy svítících krystalů. Zápis: začni u 128 a ber každou váhu, která se ještě vejde.',
-      'Brána ukazuje krok: při psaní zvýrazní krystal, při čtení odhalí váhy.',
+      'Ukázka kroku: při psaní zvýrazní krystal, při čtení odhalí váhy.',
     ],
     echo: {
       intro: ['Velký nápis. Celá oktáva v jediném slově.', 'Tři kotouče, osm krystalů. Váhy už znáš až po sto dvacet osm.'],
-      step: { 0: 'Zapsáno. Teď čti.', 2: 'Poslední zkouška.' },
+      step: { 0: 'Zapsáno. Teď čti.', 2: 'Poslední nápis.' },
       wrong: 'Kotouče nezapadly. Porovnej obě kombinace.',
-      solved: ['Oktáva unese čísla od nuly do dvě stě padesáti pěti.', 'A každé z nich teď umíš přečíst i zapsat.'],
+      solved: ['Oktáva unese čísla od nuly do dvou set padesáti pěti.', 'A každé z nich teď umíš přečíst i zapsat.'],
       skill: 'Celá oktáva bez chyby a bez zbytečného doteku.',
     },
   },
@@ -478,7 +495,7 @@ const levels: LevelDef[] = [
     generate: genI13,
     presentation: {
       task: 'Přečti čtveřici krystalů a nastav na kotouči její glyf.',
-      writeTask: 'Rozsviť krystaly podle glyfu, který žádá brána.',
+      writeTask: 'Rozsviť krystaly podle glyfu, který žádá nápis.',
       showDigits: true,
       showSum: false,
       sizes: 'equal',
@@ -487,7 +504,7 @@ const levels: LevelDef[] = [
     hints: [
       'Podívej se na glyf na kotouči: čtyři strany, čtyři krystaly.',
       'Glyf čti po směru hodinových ručiček od horní strany: horní váží 8, pravá 4, dolní 2, levá 1. Krystaly zleva taky 8, 4, 2, 1.',
-      'Brána ukazuje krok: při psaní zvýrazní krystal, při čtení odhalí váhy.',
+      'Ukázka kroku: při psaní zvýrazní krystal, při čtení odhalí váhy.',
     ],
     echo: {
       intro: [
@@ -526,7 +543,7 @@ const levels: LevelDef[] = [
     generate: genI14,
     presentation: {
       task: 'Přečti oktávu jako dva glyfy a nastav je na kotoučích.',
-      writeTask: 'Rozsviť oktávu podle dvou glyfů, které žádá brána.',
+      writeTask: 'Rozsviť oktávu podle dvou glyfů, které žádá nápis.',
       showDigits: true,
       showSum: false,
       sizes: 'equal',
@@ -535,13 +552,13 @@ const levels: LevelDef[] = [
     hints: [
       'Rozděl oktávu na dvě čtveřice. Každá je jeden glyf.',
       'Levá čtveřice patří na levý kotouč, pravá na pravý. Každou čti zvlášť: 8, 4, 2, 1.',
-      'Brána ukazuje krok: při psaní zvýrazní krystal, při čtení odhalí váhy.',
+      'Ukázka kroku: při psaní zvýrazní krystal, při čtení odhalí váhy.',
     ],
     echo: {
       intro: ['Dvojznak. Celá oktáva se dá napsat dvěma glyfy.', 'Levá čtveřice, pravá čtveřice. Dva znaky místo osmi světel.'],
       step: { 0: 'Dva glyfy, jedna oktáva.', 3: 'Poslední dvojznak.' },
       wrong: 'Kotouče nezapadly. Porovnej obě kombinace.',
-      solved: ['Dva glyfy unesou celou oktávu, od 00 do FF.', 'Tak se dodnes zapisují bajty: krátce a bez chyb.'],
+      solved: ['Dva glyfy unesou celou oktávu, od 00 do FF.', 'Tak se dodnes zapisují bajty: krátce a přehledněji než osm nul a jedniček.'],
       skill: 'Každý dvojznak napoprvé.',
     },
     quiz: [

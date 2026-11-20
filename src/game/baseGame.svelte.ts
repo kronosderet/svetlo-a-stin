@@ -11,6 +11,7 @@ import { shuffleOptions } from '../content/random';
 import { isGateRoom } from '../content/levels';
 import { extraTaskFor } from './extraTask';
 import { settings } from './settings.svelte.ts';
+import { settledHint as settledFor } from './settledHint';
 
 export interface LevelResult {
   moves: number;
@@ -47,6 +48,8 @@ export type GameEvent =
   | { kind: 'machine'; event: MachineEvent; state: MachineState }
   /** extra: brána za ukázku kroku přidala na konec zkoušku navíc. */
   | { kind: 'hint'; level: number; extra: boolean }
+  /** Ukázka kroku na desce, která už sedí: nic neukáže ani nestojí, text řekne, co zbývá. */
+  | { kind: 'settled'; text: string }
   | { kind: 'quiz'; correct: boolean; question: number }
   | { kind: 'solved'; result: LevelResult };
 
@@ -98,6 +101,8 @@ export abstract class BaseGame<L extends PuzzleLevel = PuzzleLevel> {
     this.quiz = (level.quiz ?? []).map((q) => shuffleOptions(typeof q === 'function' ? q(Math.random) : q));
   }
 
+  /** Stav hádanky (drží potomek, každý archetyp má vlastní). */
+  abstract state: unknown;
   abstract get moves(): number;
   /** Pořadí rozpracované úlohy. */
   abstract get step(): number;
@@ -152,8 +157,18 @@ export abstract class BaseGame<L extends PuzzleLevel = PuzzleLevel> {
     this.showSolved();
   }
 
+  /** Deska sedí a chybí jen potvrzení: co hra řekne místo ukázky kroku (settledHint.ts), jinak null. */
+  get settledHint(): string | null {
+    return this.phase === 'play' && !this.holding ? settledFor(this.level, this.state) : null;
+  }
+
   useHint(): void {
     if (this.phase !== 'play' || this.hintLevel >= 3) return;
+    // Ukázka kroku by na hotové desce nic neukázala: hra jen řekne, co zbývá, a nic nezapočítá
+    // (pečeť odvahy zůstane, brána nepřidá zkoušku navíc). Stupeň nápovědy se nezvýší, takže
+    // kdyby hráč desku potom pokazil, ukázka kroku zase něco ukáže a započítá se.
+    const settled = this.hintLevel === 2 ? this.settledHint : null;
+    if (settled) return this.emit({ kind: 'settled', text: settled });
     this.hintLevel += 1;
     this.hintsUsed += 1;
     if (this.hintLevel >= 3) this.stepHints += 1;

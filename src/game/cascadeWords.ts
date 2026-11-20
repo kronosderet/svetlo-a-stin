@@ -18,6 +18,7 @@ import {
   type FlowMarks,
 } from '../core/puzzles/cascade';
 import { isBitSet } from '../core/bits';
+import { plural } from './text';
 
 /** Sloupce Kaskády: v … sloupci, nad … sloupcem, do … sloupce. */
 /** „v prvním“, „ve druhém“… (sloupce zprava). */
@@ -26,7 +27,12 @@ const LOC_UP = LOC.map((w) => w[0].toUpperCase() + w.slice(1));
 const INS = ['prvním', 'druhým', 'třetím', 'čtvrtým', 'pátým', 'šestým', 'sedmým', 'osmým'];
 const GEN = ['prvního', 'druhého', 'třetího', 'čtvrtého', 'pátého', 'šestého', 'sedmého', 'osmého'];
 const FLOW = ['žádné světlo', 'jedno světlo', 'dvě světla', 'tři světla', 'čtyři světla', 'pět světel'];
-const places = (n: number) => (n === 1 ? 'místo' : n >= 2 && n <= 4 ? 'místa' : 'míst');
+/** Sloveso se shoduje s počtem: „se slila dvě světla“, ale „se slilo pět světel“. */
+const poured = (n: number) => `${plural(n, 'slilo', 'slila', 'slilo')} ${FLOW[n]}`;
+const pouring = (n: number) => `${plural(n, 'slévá', 'slévají', 'slévá')} ${FLOW[n]}`;
+const places = (n: number) => plural(n, 'místo', 'místa', 'míst');
+/** Kopie při násobení: „Neposunutá kopie (×1)“, „Kopie posunutá o 2 místa (×4)“. */
+const copyName = (c: number) => (c === 0 ? 'Neposunutá kopie (×1)' : `Kopie posunutá o ${c} ${places(c)} (×${2 ** c})`);
 
 type Wrong = Extract<CascadeEvent, { type: 'wrong' }>;
 
@@ -40,16 +46,16 @@ export function cascadeWhy(cfg: CascadeConfig, state: CascadeState, ev: Wrong, e
   const c = ev.cell.column;
   if (ev.cell.row === 'copy') {
     return ev.expected
-      ? `Druhý činitel má na místě s váhou ${2 ** c} jedničku. Kopie posunutá o ${c} ${places(c)} do součtu patří.`
-      : `Druhý činitel má na místě s váhou ${2 ** c} nulu. Kopie posunutá o ${c} ${places(c)} se nesčítá.`;
+      ? `Druhý činitel má na místě s váhou ${2 ** c} jedničku. ${copyName(c)} do součtu patří.`
+      : `Druhý činitel má na místě s váhou ${2 ** c} nulu. ${copyName(c)} se nesčítá.`;
   }
   if (ev.cell.row === 'far') {
     return ev.expected
-      ? `O dvě místa vpravo se slila ${FLOW[ev.inflow]}, to je ${ev.inflow.toString(2)}. Jedno světlo putuje o dvě místa: rozsviť horní krystal nad ${INS[c]} sloupcem zprava.`
+      ? `O dvě místa vpravo se ${poured(ev.inflow)}, to je ${ev.inflow.toString(2)}. Jedno světlo putuje o dvě místa: rozsviť horní krystal nad ${INS[c]} sloupcem zprava.`
       : `Do ${GEN[c]} sloupce zprava nic o dvě místa nepřiteklo. Sloupec o dvě místa vpravo neměl čtyři světla.`;
   }
   if (ev.cell.row === 'carry' && !ev.expected && ev.inflow >= 4) {
-    return `Ve sloupci vpravo se slila ${FLOW[ev.inflow]}, to je ${ev.inflow.toString(2)}. Do sousedního sloupce nepřetéká nic, světlo jde o dvě místa dál.`;
+    return `Ve sloupci vpravo se ${poured(ev.inflow)}, to je ${ev.inflow.toString(2)}. Do sousedního sloupce nepřetéká nic, světlo jde o dvě místa dál.`;
   }
   if (ev.cell.row === 'carry') {
     if (c === cfg.width) {
@@ -61,7 +67,7 @@ export function cascadeWhy(cfg: CascadeConfig, state: CascadeState, ev: Wrong, e
         : `Sloupec vpravo si nepůjčoval. ${LOC_UP[c]} sloupci zprava výpůjčka být nemá.`;
     }
     return ev.expected
-      ? `Ve sloupci vpravo se slila ${FLOW[ev.inflow]} a jedno přeteklo. Nad ${INS[c]} sloupcem zprava chybí krystal přenosu.`
+      ? `Ve sloupci vpravo se ${poured(ev.inflow)} a jedno přeteklo. Nad ${INS[c]} sloupcem zprava chybí krystal přenosu.`
       : `Nad ${INS[c]} sloupcem zprava svítí krystal přenosu, ale sloupec vpravo nepřetekl.`;
   }
   if (sub) {
@@ -76,9 +82,11 @@ export function cascadeWhy(cfg: CascadeConfig, state: CascadeState, ev: Wrong, e
     return `Ve sloupci vpravo se slila dvě světla. Dohromady váží ${2 ** c}, tolik jako krystal ${LOC[c]} sloupci zprava. Rozsviť tento krystal.`;
   }
   if (ev.inflow >= 2) {
-    if (explicit)
-      return `${LOC_UP[c]} sloupci zprava se slévají ${FLOW[ev.inflow]}, to je ${ev.inflow.toString(2)}. Dole zůstane ${ev.inflow & 1 ? 'světlo' : 'stín'} a jedno světlo přeteče do sloupce vlevo.`;
-    return `${LOC_UP[c]} sloupci zprava se slévají ${FLOW[ev.inflow]}. Do jednoho krystalu se nevejdou: co zůstane dole a co přeteče?`;
+    const below = ev.inflow & 1 ? 'světlo' : 'stín';
+    // Čtyři a pět světel (100, 101) nepošlou do sousedního sloupce nic, jedno světlo jde o dvě místa.
+    const onward = ev.inflow >= 4 ? ', do sousedního sloupce nic a jedno světlo putuje o dvě místa' : ' a jedno světlo přeteče do sloupce vlevo';
+    if (explicit) return `${LOC_UP[c]} sloupci zprava se ${pouring(ev.inflow)}, to je ${ev.inflow.toString(2)}. Dole zůstane ${below}${onward}.`;
+    return `${LOC_UP[c]} sloupci zprava se ${pouring(ev.inflow)}. Do jednoho krystalu se nevejdou: co zůstane dole a co přeteče?`;
   }
   return ev.inflow === 1
     ? `${LOC_UP[c]} sloupci zprava je jedno světlo. Nikam nepřetéká, zůstane dole.`

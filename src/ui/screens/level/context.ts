@@ -12,6 +12,8 @@ export interface LevelCtx {
   /** Počet krystalů aktuální hádanky (u Kaskády sloupců). */
   bits(): number;
   echo: Echo;
+  /** Echo samo přejde na repliky, které na něj čekají, až jde ta současná přečíst. */
+  readOn(): void;
   announce(text: string): void;
   /** Kombinace slovy nebo číslicemi podle toho, jestli je už „přeložená“. */
   words(mask: number): string;
@@ -39,8 +41,24 @@ export interface SaidFlags {
 
 export const freshFlags = (): SaidFlags => ({ firstReveal: false, repeat: false, spill: false, wrongCount: 0 });
 
-/** Po splnění hádanky s kvízem ohlásí Echo závěrečnou repliku (bez kvízu ji řekne výsledek komnaty). */
+/**
+ * Po splnění hádanky s kvízem ohlásí Echo závěrečnou repliku (bez kvízu ji řekne výsledek komnaty).
+ * Replika posledního kroku přichází v téže chvíli a často nese vysvětlení: nezmizí, závěr se za ni
+ * přidá a Echo na něj přejde samo. Bez ní závěr nahradí, co Echo říkalo předtím.
+ */
 export function sayComplete(ctx: LevelCtx): void {
   const level = ctx.level();
-  if (level.quiz?.length && level.echo.complete) ctx.echo.say([level.echo.complete]);
+  if (!level.quiz?.length || !level.echo.complete) return;
+  const kept = ctx.echo.fresh;
+  ctx.echo.follow([level.echo.complete]);
+  if (kept) ctx.readOn();
+}
+
+/**
+ * Hlášení čtečce z jedné chvíle (tah, replika Echa, nápověda) v jednom textu. Co zazní celé
+ * v jiném hlášení („Výsledek nepřijat. …“ a táž replika Echa), se neopakuje.
+ */
+export function mergeSpeech(parts: string[]): string {
+  const uniq = [...new Set(parts.map((t) => t.trim()).filter(Boolean))];
+  return uniq.filter((t) => !uniq.some((o) => o !== t && o.includes(t))).join(' ');
 }

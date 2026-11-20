@@ -477,7 +477,8 @@ for (const act of ACTS) {
         const variants = new Set(Array.from({ length: 40 }, (_, s) => configs(instantiate(level, seeded(1000 + s)))));
         // Obvodů ze dvou tří run je málo, proto u Zahrady Bran stačí menší pestrost.
         const logic = partsOf(level).every((p) => p.kind === 'gate' || p.kind === 'table' || p.kind === 'mask' || p.kind === 'machine');
-        expect(variants.size).toBeGreaterThanOrEqual(logic ? 10 : 25);
+        // Řetězy mají jen dvě pořadí a čtyři větvení s jedním Obracečem (D-III-02): 8 variant.
+        expect(variants.size).toBeGreaterThanOrEqual(level.id === 'III-6' ? 8 : logic ? 10 : 25);
       });
     }
 

@@ -6,10 +6,13 @@
 
 type AnyTask = object;
 
-/** Druh úlohy: směr Nápisu, operace Kaskády nebo Masky, režim Brány a Desky. Příliv druh nemá. */
+/**
+ * Druh úlohy: směr Nápisu, operace Kaskády nebo Masky, druh stroje v Dílně (všechny mají režim
+ * build), režim Brány a Desky. Příliv druh nemá.
+ */
 function kindOf(task: AnyTask): string {
-  const t = task as { dir?: string; op?: string; mode?: string };
-  return t.dir ?? t.op ?? t.mode ?? '';
+  const t = task as { dir?: string; op?: string; kind?: string; mode?: string };
+  return t.dir ?? t.op ?? t.kind ?? t.mode ?? '';
 }
 
 /**

@@ -47,7 +47,7 @@
   </header>
 
   <article class="sheet parchment">
-    <p class="eyebrow">Světlo &amp; Stín · Akt {act.numeral} · {act.theme} · varianta {variant}</p>
+    <p class="eyebrow">Světlo &amp; Stín · Patro {act.numeral} · {act.theme} · varianta {variant}</p>
     <h1>{act.title}: pracovní list</h1>
     <p class="who">Jméno: <span class="line"></span> Třída: <span class="line short"></span></p>
     <p class="note">Bez hry, jen s tužkou. U každé otázky zakroužkuj jednu odpověď.</p>

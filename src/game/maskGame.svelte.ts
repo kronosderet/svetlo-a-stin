@@ -61,7 +61,9 @@ export class MaskGame extends BaseGame<MaskLevel> {
     const bit = this.hintTarget;
     if (bit === null) return null;
     const on = ((this.state.mask >> bit) & 1) === 1;
-    return maskStep(this.view.task, bit, !on);
+    // Tajná řeč: řady jsou Šifra a Zpráva i u poslední úlohy, která klíč nezná (jako popisky v Mask.svelte).
+    const cipher = this.level.config.tasks.some((t) => t.key !== undefined);
+    return maskStep(this.view.task, bit, !on, cipher);
   }
 
   get canUndo(): boolean {

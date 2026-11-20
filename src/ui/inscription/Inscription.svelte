@@ -12,6 +12,7 @@
   import { FX } from '../../game/fx.svelte.ts';
   import { settings } from '../../game/settings.svelte.ts';
   import type { InscriptionGame } from '../../game/inscriptionGame.svelte.ts';
+  import { demandLabel } from '../../game/inscriptionWords';
   import { aidOn } from '../../content/types';
 
   let { game, pulse, onNudge }: { game: InscriptionGame; pulse: number; onNudge: (wheel: number, delta: number) => void } =
@@ -88,7 +89,7 @@
             value={task ? fmt(task.value) : null}
             glyphs={task && hex ? nibbles(task.value, bits) : null}
             turn={st.step * 60}
-            label="Brána žádá"
+            label={demandLabel(level.id)}
           />
         </div>
       {/if}
@@ -134,7 +135,7 @@
             {#if st.lastGuess > maxValue(bits)}
               <p>Číslo {st.lastGuess} se do {bits} krystalů nevejde. Nejvíc unesou {maxValue(bits)}.</p>
             {:else}
-              <p class="cmp-title">Kotouče nezapadly. Porovnej kombinace:</p>
+              <p class="cmp-title">{game.wheels === 1 ? 'Kotouč nezapadl' : 'Kotouče nezapadly'}. Porovnej kombinace:</p>
               <div class="cmp-grid">
                 <span class="cmp-name">nápis</span>
                 <MiniPattern mask={task.value} {bits} size="md" {digits} label="Nápis: {words(task.value)}" />

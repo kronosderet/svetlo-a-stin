@@ -4,11 +4,12 @@
  * Čisté funkce nad stavem hádanky; texty bez zájmen bez předmětu („rozsviť ho“).
  */
 import { isBitSet } from '../core/bits';
-import { inputBit, type Rune } from '../core/logic';
+import { ARITY, inputBit, runeTable, type Rune } from '../core/logic';
 import { evaluate, type Circuit } from '../core/puzzles/gate';
 import { applyOp, type TideConfig, type TideOp, type TideState, bestOp, currentTarget } from '../core/puzzles/tide';
 import type { MaskTask } from '../core/puzzles/mask';
 import { RUNE_NAME, RUNE_RULE } from '../content/runes';
+import { inNum, plural } from './text';
 
 /** Zápis čísla krystaly (Oltář, zápis Nápisu): kolik zbývá po těžších krystalech a vejde se váha? */
 export function valueStep(target: number, bit: number, needed: boolean): string {
@@ -47,13 +48,51 @@ export function tableStep(circuit: Circuit, row: number): string {
     const r = real[0].rune as Rune;
     return `${head} ${RUNE_NAME[r]} ${RUNE_RULE[r]}, takže lampa ${lamp ? 'svítí' : 'mlčí'}.`;
   }
-  const steps = real.map((g) => `${RUNE_NAME[g.rune as Rune]} dá ${light(values[g.id])}`);
+  // Runa s jedním vstupem přímo u krystalu řekne, ke kterému patří: dva Obraceče se jinak nerozliší.
+  const steps = real.map((g) => {
+    const at = ARITY[g.rune as Rune] === 1 && circuit.inputs.includes(g.from[0]) ? ` u ${g.from[0]}` : '';
+    return `${RUNE_NAME[g.rune as Rune]}${at} dá ${light(values[g.id])}`;
+  });
   return `${head} ${steps.join(', ')}. Lampa ${lamp ? 'svítí' : 'mlčí'}.`;
 }
 
 /** Runa pod závojem: jméno a zákon. */
 export function identifyStep(rune: Rune): string {
   return `Pod závojem je ${RUNE_NAME[rune]}: ${RUNE_RULE[rune]}.`;
+}
+
+/** Odkud bere světlo točitý kámen: „ze vstupu A“, nebo „z runy 1“ (runy čísluje deska Prapečeti). */
+export function sourceWords(circuit: Circuit, source: string): string {
+  return circuit.inputs.includes(source) ? `ze vstupu ${source}` : `z runy ${circuit.nodes.findIndex((g) => g.id === source) + 1}`;
+}
+
+/** Hlášení po přepnutí vstupu: lampa i se světlem z točitých kamenů (Prapečeť). */
+export function inputWords(circuit: Circuit, runes: Record<string, Rune>, wires: Record<string, string>, inputs: number, index: number): string {
+  const on = inputBit(inputs, index, circuit.inputs.length) === 1;
+  const lamp = evaluate(circuit, runes, inputs, wires)[circuit.output];
+  return `Vstup ${circuit.inputs[index]}: ${on ? 'světlo' : 'stín'}. Lampa ${lamp === 1 ? 'svítí' : 'mlčí'}.`;
+}
+
+/** Brána po neúspěšné Zkoušce: prázdný kámen, nenatočený točitý kámen, nebo kolik řádků nesedí. */
+export function gateWrongWords(failed: number, empty: boolean, unwired: boolean): string {
+  if (empty) return 'Některý kámen je prázdný. Bez runy jím světlo neprojde.';
+  if (unwired) return 'Některý točitý kámen ještě není natočený. Dokud neukazuje vstup nebo runu, světlo jím neprojde.';
+  if (failed === 1) return 'Lampa nesvítí správně v jednom řádku desky. Přepni vstupy na ten řádek a sleduj, kudy světlo teče.';
+  return `Lampa nesvítí správně ${inNum(failed)} ${failed} řádcích desky. Přepínej vstupy na ty řádky jeden po druhém a sleduj, kudy světlo teče.`;
+}
+
+/**
+ * Špatně poznaná runa pod závojem: první řádek, ve kterém by lampa se zvolenou runou svítila jinak.
+ * Podmětem je lampa, protože jména run mají různý rod (Pouto, Důsledek, Výluka).
+ */
+export function wrongRuneWords(rune: Rune, names: string[], want: number[]): string {
+  const n = names.length;
+  if (ARITY[rune] !== n) {
+    return `${RUNE_NAME[rune]} bere ${ARITY[rune] === 1 ? 'jediné světlo' : 'dvě světla'}, deska má ale ${n === 1 ? 'jeden vstup' : `${n} ${plural(n, 'vstup', 'vstupy', 'vstupů')}`}.`;
+  }
+  const own = runeTable(rune);
+  const r = own.findIndex((v, k) => v !== want[k]);
+  return `S runou ${RUNE_NAME[rune]} by lampa v řádku ${rowWords(names, r)} ${own[r] ? 'svítila' : 'mlčela'}. Na desce je to jinak.`;
 }
 
 const LEVER: Record<TideOp, string> = {
@@ -80,8 +119,11 @@ export function tideStep(cfg: TideConfig, st: TideState): string | null {
   return `Nejkratší cesta k ${target}: ${path.join(' → ')}. První krok je páka ${LEVER[first]}.`;
 }
 
-/** Maska: co má runa na zvýrazněném krystalu udělat a jak k tomu musí svítit maska. */
-export function maskStep(task: MaskTask, bit: number, goalOn: boolean): string {
+/**
+ * Maska: co má runa na zvýrazněném krystalu udělat a jak k tomu musí svítit maska.
+ * cipher: Tajná řeč, kde řady na desce nesou popisky Šifra a Zpráva místo Nápis a Výsledek.
+ */
+export function maskStep(task: MaskTask, bit: number, goalOn: boolean, cipher = false): string {
   const act = goalOn ? 'Zvýrazněný krystal masky rozsviť.' : 'Zvýrazněný krystal masky zhasni.';
   if (task.key !== undefined) return `Maska má být přesně klíč a klíč tu ${goalOn ? 'svítí' : 'mlčí'}. ${act}`;
   const v = isBitSet(task.value, bit);
@@ -93,6 +135,8 @@ export function maskStep(task: MaskTask, bit: number, goalOn: boolean): string {
   } else if (task.op === 'or') {
     if (v) why = 'Nápis tu svítí sám, maska ze zadání tu ale svítí taky.';
     else why = t ? 'Tady má výsledek svítit a nápis mlčí. Rozcestí rozsvítí, kde svítí maska.' : 'Tady má výsledek mlčet, a tak musí mlčet i maska.';
+  } else if (cipher) {
+    why = v !== t ? 'Tady se zpráva liší od šifry. Výluka krystal přepne, kde svítí maska.' : 'Tady má zpráva zůstat jako šifra, a tak maska musí mlčet.';
   } else {
     why = v !== t ? 'Tady se výsledek liší od nápisu. Výluka krystal přepne, kde svítí maska.' : 'Tady má výsledek zůstat jako nápis, a tak maska musí mlčet.';
   }

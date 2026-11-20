@@ -3,7 +3,7 @@
   import Icon from '../Icon.svelte';
   import { ACTS, BASIC_PATH, LEVELS, actOf, roomNumber } from '../../content/levels';
   import { KODEX } from '../../content/kodex';
-  import { currentRoom, floorProgress, isTroublesome, roomSummaries, sealTotal, type Student } from '../../game/classOverview';
+  import { floorProgress, isTroublesome, nextBasicRoom, roomSummaries, sealTotal, type Student } from '../../game/classOverview';
   import { go } from '../../game/nav.svelte.ts';
   import { parseProgress } from '../../game/progressFile';
   import { settings } from '../../game/settings.svelte.ts';
@@ -107,13 +107,13 @@
                   <th scope="col">Patro {a.numeral}<span class="sub">základ · hlubší</span></th>
                 {/each}
                 <th scope="col">Pečetě</th>
-                <th scope="col">Teď v komnatě</th>
+                <th scope="col">Další na základní cestě</th>
                 <th scope="col">Ukázky kroku</th>
               </tr>
             </thead>
             <tbody>
               {#each students as s (s.file)}
-                {@const here = currentRoom(s, BASIC_PATH, LEVELS)}
+                {@const here = nextBasicRoom(s, BASIC_PATH)}
                 <tr>
                   <th scope="row" title={s.file}>{s.name}</th>
                   {#each ACTS as a (a.numeral)}
@@ -121,7 +121,7 @@
                     <td class:full={f.basic === f.basicTotal}>{f.basic}/{f.basicTotal} · {f.deep}/{f.deepTotal}</td>
                   {/each}
                   <td>{sealTotal(s)}</td>
-                  <td>{here ? `${here.id} ${here.title}` : 'vše hotovo'}</td>
+                  <td>{here ? `${here.id} ${here.title}` : 'základ hotov'}</td>
                   <td>{Object.values(s.data.stats).reduce((n, st) => n + st.stepHints, 0) || '–'}</td>
                 </tr>
               {/each}

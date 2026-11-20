@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { ACTS, BASIC_PATH, LEVELS, getLevel } from '../content/levels';
-import { currentRoom, floorProgress, isTroublesome, roomSummaries, sealTotal, type Student } from './classOverview';
+import { ACTS, BASIC_PATH, getLevel } from '../content/levels';
+import { floorProgress, isTroublesome, nextBasicRoom, roomSummaries, sealTotal, type Student } from './classOverview';
 import type { ProgressData } from './progress.svelte.ts';
 import type { RoomStats } from './roomStats';
 
@@ -33,9 +33,9 @@ describe('přehled třídy', () => {
     expect(sealTotal(petr)).toBe(9);
   });
 
-  it('ukáže, kde student právě je', () => {
-    expect(currentRoom(jana, BASIC_PATH, LEVELS)?.id).toBe('II-0');
-    expect(currentRoom(petr, BASIC_PATH, LEVELS)?.id).toBe('I-3');
+  it('ukáže další komnatu na základní cestě', () => {
+    expect(nextBasicRoom(jana, BASIC_PATH)?.id).toBe('II-0');
+    expect(nextBasicRoom(petr, BASIC_PATH)?.id).toBe('I-3');
   });
 
   it('najde komnatu, ve které se třída zasekla nebo potřebovala ukázku kroku', () => {

@@ -5,7 +5,7 @@
   import { fade } from 'svelte/transition';
   import { ACTS, BASIC_PATH, GATE, LEVELS, actOf, advancedRooms, basicRooms, gateOf, roomNumber } from '../../content/levels';
   import { go, openKodex, ui } from '../../game/nav.svelte.ts';
-  import { fastGate, isUnlocked, progress, sealCount, unseenKodex } from '../../game/progress.svelte.ts';
+  import { isUnlocked, progress, sealCount, unseenKodex } from '../../game/progress.svelte.ts';
   import { settings } from '../../game/settings.svelte.ts';
   import { fileLink } from '../../game/progressLink.svelte.ts';
   import { toHex } from '../../core/bits';
@@ -58,8 +58,6 @@
   /** Jak daleko vede červená trasa (podíl výšky cesty). */
   const routeShare = $derived(Math.min(1, (done + (actNext ? 0.5 : 0)) / Math.max(1, stops - 1)));
   const m = $derived(settings.reducedMotion ? 0 : 1);
-  /** Hráč zvládl první komnaty patra v ideálu a bez ukázky kroku: brána se mu otevřela dřív. */
-  const fast = $derived(fastGate(act));
   /** Po Řeči glyfů umí hráč číslo komnaty přečíst i šestnáctkově. */
   const hexKnown = $derived(progress.kodex.includes('glyf'));
 
@@ -145,7 +143,7 @@
       {#key shown}
       <div class="floor-sheet" in:fade={{ duration: 260 * m }}>
       <section class="head">
-        <p class="eyebrow">Akt {act.numeral} · {act.theme}</p>
+        <p class="eyebrow">Patro {act.numeral} · {act.theme}</p>
         <h1>{act.title}</h1>
         <p class="stats">
           <span>{done} / {basic.length} komnat</span>
@@ -171,8 +169,7 @@
         {#each basic as l (l.id)}
           {@const unlocked = isUnlocked(l.id)}
           {@const rec = progress.levels[l.id]}
-          {@const early = fast && roomNumber(l.id) === GATE}
-          <li class="node" class:done={!!rec} class:current={l.id === nextId} class:early class:locked={!unlocked}>
+          <li class="node" class:done={!!rec} class:current={l.id === nextId} class:locked={!unlocked}>
             <button
               type="button"
               class="node-btn"
@@ -191,14 +188,11 @@
               <span class="info">
                 <span class="code">{l.id}</span>
                 <span class="name">{l.title}</span>
-                {#if early}
-                  <span class="soon">První tři komnaty máš v ideálu a bez ukázky. Zkus bránu hned, zbytek můžeš dohrát později.</span>
-                {/if}
                 <span class="seals" aria-hidden="true">
                   {#each SEALS as s (s)}<span class="s" class:on={rec?.seals[s]}></span>{/each}
                 </span>
               </span>
-              {#if l.id === nextId}<span class="go">Vstoupit</span>{:else if early}<span class="go">Zkusit</span>{/if}
+              {#if l.id === nextId}<span class="go">Vstoupit</span>{/if}
             </button>
           </li>
         {/each}
@@ -218,7 +212,7 @@
                 </svg>
               </span>
               <span class="info">
-                <span class="code">Akt {below.numeral} · {below.theme}</span>
+                <span class="code">Patro {below.numeral} · {below.theme}</span>
                 <span class="name">{below.title}</span>
                 <span class="soon">{actDone ? 'schody jsou volné' : 'otevře se po bráně patra'}</span>
               </span>
@@ -227,14 +221,14 @@
           </li>
         {:else if act.nextAct}
           <li class="node upcoming" class:locked={!actDone} class:done={actDone}>
-            <div class="node-btn" aria-label="Akt {act.nextAct.numeral}: {act.nextAct.title}, mimo prototyp">
+            <div class="node-btn" aria-label="Patro {act.nextAct.numeral}: {act.nextAct.title}, mimo prototyp">
               <span class="medallion stairs" aria-hidden="true">
                 <svg viewBox="0 0 32 32">
                   <path d="M4 27h7v-6h6v-6h6V9h5" />
                 </svg>
               </span>
               <span class="info">
-                <span class="code">Akt {act.nextAct.numeral} · {act.nextAct.theme}</span>
+                <span class="code">Patro {act.nextAct.numeral} · {act.nextAct.theme}</span>
                 <span class="name">{act.nextAct.title}</span>
                 <span class="soon">{actDone ? 'schody jsou volné, patro ale v prototypu ještě není' : 'mimo prototyp'}</span>
               </span>
@@ -564,10 +558,6 @@
   }
   .current .medallion {
     border: 2.5px solid var(--ink-red);
-  }
-  /* Brána otevřená dřív (Zkusit bránu hned): přerušovaný kroužek bez otáčení. */
-  .early .medallion {
-    border: 2.5px dashed var(--ink-red);
   }
   .current .medallion::after {
     /* „tady“ – červený inkoustový kroužek */

@@ -60,6 +60,11 @@ export class GateGame extends BaseGame<GateLevel> {
     return { task: shownTask(this.level.config, this.state), inputs, runes, wires, tried, failed };
   }
 
+  /** Nápovědy aktuální úlohy, když má vlastní (zkoumání nebo větvení mezi řetězy); jinak null. */
+  get taskHints(): readonly string[] | null {
+    return currentTask(this.level.config, this.state)?.hints ?? null;
+  }
+
   /** Nápověda 3. stupně: vstup k přepnutí, nebo kámen a runa, která do něj patří. */
   get hintTarget(): ReturnType<typeof hint> {
     return this.playing && this.hintLevel >= 3 ? hint(this.level.config, this.state) : null;

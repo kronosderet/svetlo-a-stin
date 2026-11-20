@@ -44,17 +44,45 @@ export function branch(fixed?: { a: Rune; b: Rune; join: Rune }): Circuit {
 
 const tableFrom = (c: Circuit): number[] => lampTable(c).map((v) => v ?? 0);
 
+/** Nápověda 3. stupně u kamenů (zazní, jen když ukázka kroku nemá vlastní větu). */
+export const SLOT_HINT = 'Zvýrazněný kámen potřebuje jinou runu. Dotkni se kamene.';
+
+/** Nápovědy ke zkoumání hotové runy se dvěma vstupy. */
+export const EXPLORE_HINTS: [string, string, string] = [
+  'Každým dotekem přepni jeden vstup a sleduj lampu.',
+  'Kombinace jsou čtyři: oba stín, jen A, jen B, oba světlo. Zkus je všechny.',
+  'Zvýrazněný vstup vede k nové kombinaci.',
+];
+
+/**
+ * Nápovědy ke stavbě větvení s jedním Obracečem: lampa je v jednom řádku jiná než ve zbylých třech.
+ * Má svítit jen tam, je to Pouto a obrací se vstup, který tam mlčí; má mlčet jen tam, je to
+ * Rozcestí a obrací se vstup, který tam svítí.
+ */
+export const BRANCH_HINTS: [string, string, string] = [
+  'Začni od brány: ve kterém řádku má lampa jiný stav než ve zbylých třech?',
+  'Má lampa svítit jen v jednom řádku? Spoj cesty Poutem a obrať vstup, který v tom řádku mlčí. Má mlčet jen v jednom řádku? Spoj cesty Rozcestím a obrať vstup, který v tom řádku svítí.',
+  SLOT_HINT,
+];
+
 /** Úloha s prázdnými kameny, jejíž cíl je deska daného pevného obvodu. */
 function slotsLike(empty: Circuit, solved: Circuit): GateTask {
   return { circuit: empty, mode: 'slots', target: tableFrom(solved) };
 }
 
-/** Náhodné větvení s aspoň jedním Obracečem, spojené Poutem nebo Rozcestím. */
+/** Stavba větvení: prázdné kameny, cíl z daného větvení a nápovědy pro větvení. */
+export function branchTask(fixed: { a: Rune; b: Rune; join: Rune }): GateTask {
+  return { ...slotsLike(branch(), branch(fixed)), hints: BRANCH_HINTS };
+}
+
+/**
+ * Náhodné větvení s právě jedním Obracečem, spojené Poutem nebo Rozcestím (PLAN 3.5).
+ * Dva Obraceče by chtěly De Morgana, kterého objeví až Zrcadla (III-8).
+ */
 function randomBranch(rng: Rng): { a: Rune; b: Rune; join: Rune } {
   const [a, b] = pick(rng, [
     ['not', 'id'],
     ['id', 'not'],
-    ['not', 'not'],
   ] as [Rune, Rune][]);
   return { a, b, join: pick(rng, ['and', 'or'] as Rune[]) };
 }
@@ -78,16 +106,20 @@ export function genIII6(rng: Rng): GateConfig {
       slotsLike(chain(), chain(second, 'not')),
       slotsLike(chain(), chain('xor', 'not')),
       exploreBranch,
-      slotsLike(branch(), branch(randomBranch(rng))),
+      branchTask(randomBranch(rng)),
     ],
   };
 }
 
-/** III-6: hotové větvení (obrácené A a k tomu B) na prozkoumání, než ho hráč postaví sám. */
-const exploreBranch: GateTask = {
+/**
+ * III-6: hotové větvení (obrácené A a k tomu B) na prozkoumání, než ho hráč postaví.
+ * Má nápovědy zkoumání: nápovědy komnaty mluví o kamenech, které se tu neosazují.
+ */
+export const exploreBranch: GateTask = {
   mode: 'explore',
   circuit: branch({ a: 'not', b: 'id', join: 'and' }),
   say: 'Tohle je větvení: jeden vstup se obrátí, než se cesty sejdou. Vyzkoušej všechny čtyři kombinace. Kdy lampa svítí?',
+  hints: EXPLORE_HINTS,
 };
 
 /** III-7 (deska): vyplnit desku pro řetěz s Obracečem a pro větvení. */
@@ -102,7 +134,7 @@ export function genIII7Gate(rng: Rng): GateConfig {
   return {
     tasks: [
       slotsLike(chain(), chain(firsts[0], pick(rng, ONE))),
-      slotsLike(branch(), branch(randomBranch(rng))),
+      branchTask(randomBranch(rng)),
       slotsLike(chain(), chain(firsts[1], 'not')),
     ],
   };

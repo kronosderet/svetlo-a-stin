@@ -1,7 +1,7 @@
 {
   "name": "svetlo-a-stin",
   "private": true,
-  "version": "0.4.2-alpha",
+  "version": "0.4.3-alpha",
   "description": "Didaktická hra o binární matematice a logice pro střední školy.",
   "author": "Jakub Kotyza <kotyza.jakub@centrum.cz>",
   "contributors": [

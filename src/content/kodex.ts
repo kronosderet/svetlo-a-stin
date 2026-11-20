@@ -106,7 +106,7 @@ export const KODEX: KodexEntry[] = [
     id: 'predsin',
     glyph: 0b1001,
     ancientName: 'Zákony Předsíně',
-    modernName: 'Shrnutí Aktu I',
+    modernName: 'Shrnutí patra I',
     ancient: 'Kdo prošel Předsíní, umí světlem číst i psát.',
     modern:
       'Bit má dvě hodnoty. n bitů má 2ⁿ kombinací a zapíše čísla 0 až 2ⁿ − 1. Pozice váží zprava 1, 2, 4, 8… Čtení: sečti váhy jedniček. Zápis: od největší váhy, která se vejde.',
@@ -154,9 +154,9 @@ export const KODEX: KodexEntry[] = [
     glyph: 0b0101,
     ancientName: 'Hlubší zákony Předsíně',
     modernName: 'Shrnutí Hlubších síní I',
-    ancient: 'Kdo prošel velkou bránou Předsíně, umí krystaly počítat, číst po oktávách i psát glyfy.',
+    ancient: 'Velkou bránou Předsíně projde, kdo nosí váhy v hlavě, pozná lichost podle jediného krystalu, chodí tichým krokem, čte oktávy a píše glyfy.',
     modern:
-      'Přičtení jedničky je přenos zprava. Oktáva (bajt) nese čísla 0 až 255, n bitů nejvýš 2ⁿ − 1. Grayův kód projde všechny kombinace po jediné změně. Šestnáctková soustava zapíše každou čtveřici bitů jedním znakem.',
+      'Váhy bitů jsou mocniny dvojky: 1, 2, 4, 8, 16… Lichost nese nejnižší bit a každá nula vpravo je jedno dělení dvěma beze zbytku. Oktáva (bajt) nese čísla 0 až 255, n bitů nejvýš 2ⁿ − 1. Grayův kód projde všechny kombinace po jediné změně. Šestnáctková soustava zapíše každou čtveřici bitů jedním znakem.',
     formula: '255 = 1111 1111₂ = FF₁₆',
     today: 'Tím končí abeceda dat. Z bajtů a šestnáctkových zápisů se skládá všechno, co počítač uloží.',
   },
@@ -217,15 +217,16 @@ export const KODEX: KodexEntry[] = [
     modernName: 'Přetečení (overflow)',
     ancient: 'Co se do nádoby nevejde, vyteče a je navždy ztracené.',
     modern:
-      'Počítač ukládá čísla do pevného počtu bitů. Když součet potřebuje víc bitů, nejvyšší přenos se ztratí a zůstane jen zbytek. Ve 4 bitech je 12 + 6 = 18 − 16 = 2, v bajtu je 255 + 1 = 0.',
-    formula: '1100₂ + 0110₂ = (1)0010₂   →   ve 4 bitech zbyde 2',
+      'Počítač ukládá čísla do pevného počtu bitů. Když součet potřebuje víc bitů, nejvyšší přenos se ztratí a zůstane jen zbytek. Ve 4 bitech se 12 + 6 = 18 nevejde: ztratí se 16 a zůstane 2. V bajtu z 255 + 1 zůstane 0.',
+    formula: '1100₂ + 0110₂ = (1)0010₂   →   ve 4 bitech zbude 2',
     today:
       'Přetečení způsobilo i skutečné havárie. Proto si procesor ztracený přenos poznamená do příznaku přenosu (carry flag) a programy si ho mohou zkontrolovat.',
   },
   {
+    // Id zůstává kvůli uloženému postupu; „odliv“ ve hře znamená jen posun vpravo (Příliv a odliv).
     id: 'odliv',
     glyph: 0b10001,
-    ancientName: 'Odliv',
+    ancientName: 'Výpůjčka',
     modernName: 'Odčítání s výpůjčkou',
     ancient: 'Kde nemáš z čeho brát, půjč si od souseda vlevo.',
     modern:
@@ -252,7 +253,7 @@ export const KODEX: KodexEntry[] = [
     modernName: 'Zápis jako návod',
     ancient: 'Z jediného světla vystavíš každé číslo. Návod je v jeho zápisu.',
     modern:
-      'Čti dvojkový zápis zleva. Začni první jedničkou a za každou další číslici zdvoj; je-li to jednička, přidej ještě jedna. Je to Hornerovo schéma z Čtení nápisu, tentokrát jako stavební návod.',
+      'Čti dvojkový zápis zleva. Začni první jedničkou a za každou další číslici zdvoj; je-li to jednička, přidej ještě jedničku. Je to Hornerovo schéma ze Čtení nápisu, tentokrát jako stavební návod.',
     formula: '1011₂: 1 → ×2 → 10 → ×2 +1 → 101 → ×2 +1 → 1011 = 11',
     today:
       'Stejně počítače rychle umocňují: x¹³ nespočítají dvanácti násobeními, ale pár umocněními na druhou a násobeními podle zápisu 1101₂.',
@@ -272,10 +273,10 @@ export const KODEX: KodexEntry[] = [
     id: 'pocetari',
     glyph: 0b11001,
     ancientName: 'Zákony Síně',
-    modernName: 'Shrnutí Aktu II',
+    modernName: 'Shrnutí patra II',
     ancient: 'Kdo prošel bránou Síně Počtářů, umí světla sčítat, zdvojovat i půlit.',
     modern:
-      'Sčítání po sloupcích s přenosem (2 → 0 a přenos, 3 → 1 a přenos). Součet dvou n-bitových čísel má nejvýš n + 1 bitů; při pevné šířce to, co se nevejde, přeteče. Posun vlevo = ×2, posun vpravo = ÷2 (co vypadne, se ztratí).',
+      'Sčítání po sloupcích s přenosem (2 → 0 a přenos, 3 → 1 a přenos). Součet dvou n-bitových čísel má nejvýš n + 1 bitů; při pevné šířce to, co se nevejde, přeteče. Posun vlevo násobí dvěma, posun vpravo dělí dvěma (co vypadne, se ztratí).',
     formula: '0110₂ + 0111₂ = 1101₂   ·   0101₂ << 2 = 10100₂',
     today:
       'Tyhle operace umí aritmetická jednotka každého procesoru (ALU). Odčítání a násobení najdeš v Hlubších síních, a jak ALU poskládat z hradel, v dalších patrech observatoře.',
@@ -333,7 +334,7 @@ export const KODEX: KodexEntry[] = [
     ancient: 'Kde bylo světlo, je stín. Kde byl stín, je světlo.',
     modern:
       'Hradlo NOT má jeden vstup a výstup je vždy opačný: z 1 udělá 0 a z 0 udělá 1. Dvě hradla NOT za sebou se navzájem zruší.',
-    formula: '¬0 = 1 · ¬1 = 0 · ¬¬A = A',
+    formula: '¬0 = 1; ¬1 = 0; ¬¬A = A',
     today: 'V matematice je to negace výroku: „prší“ a „neprší“. V počítači stojí invertor skoro v každém obvodu.',
   },
   {
@@ -343,7 +344,7 @@ export const KODEX: KodexEntry[] = [
     modernName: 'AND (konjunkce)',
     ancient: 'Světlo projde, jen když přijde z obou stran.',
     modern: 'Hradlo AND dá na výstupu 1 jen tehdy, když jsou oba vstupy 1. Jinak dá 0.',
-    formula: 'A ∧ B: 00 → 0 · 01 → 0 · 10 → 0 · 11 → 1',
+    formula: 'A ∧ B: 00 → 0; 01 → 0; 10 → 0; 11 → 1',
     today: 'V matematice konjunkce: „prší a fouká“. Ve vyhledávači najdeš se slovem AND jen stránky, kde je obojí.',
   },
   {
@@ -353,7 +354,7 @@ export const KODEX: KodexEntry[] = [
     modernName: 'OR (disjunkce)',
     ancient: 'Stačí jedna cesta a světlo dorazí.',
     modern: 'Hradlo OR dá na výstupu 1, když je aspoň jeden vstup 1. Nulu dá jen tehdy, když jsou oba vstupy 0.',
-    formula: 'A ∨ B: 00 → 0 · 01 → 1 · 10 → 1 · 11 → 1',
+    formula: 'A ∨ B: 00 → 0; 01 → 1; 10 → 1; 11 → 1',
     today: 'V matematice disjunkce: „půjdu do kina, nebo do divadla“ platí i tehdy, když půjdeš na obojí.',
   },
   {
@@ -364,7 +365,7 @@ export const KODEX: KodexEntry[] = [
     ancient: 'Jen jedno světlo projde. Dvě se vyruší.',
     modern:
       'Hradlo XOR dá 1, když se vstupy liší (právě jeden je 1). Je to spodní číslice součtu dvou bitů: 1 + 1 = 10, dole zůstane 0.',
-    formula: 'A ⊻ B: 00 → 0 · 01 → 1 · 10 → 1 · 11 → 0',
+    formula: 'A ⊻ B: 00 → 0; 01 → 1; 10 → 1; 11 → 0',
     today: 'Česky „buď, anebo“. XOR se používá při sčítání, v šifrách a při kontrole chyb v přenesených datech.',
   },
   {
@@ -386,18 +387,18 @@ export const KODEX: KodexEntry[] = [
     ancient: 'Runa a za ní Obraceč dají runu novou.',
     modern:
       'NAND je AND s negací: dá 0 jen tehdy, když jsou oba vstupy 1. NOR je OR s negací: dá 1 jen tehdy, když jsou oba vstupy 0. Skládáním hradel vznikají nové funkce.',
-    formula: 'NAND = ¬(A ∧ B) · NOR = ¬(A ∨ B)',
+    formula: 'NAND = ¬(A ∧ B); NOR = ¬(A ∨ B)',
     today: 'Z hradel NAND se dá postavit úplně všechno, i celý procesor. Proto jsou čipy často vyrobené hlavně z nich.',
   },
   {
     id: 'zahrada',
     glyph: 0b100111,
     ancientName: 'Zákony Zahrady',
-    modernName: 'Shrnutí Aktu III',
+    modernName: 'Shrnutí patra III',
     ancient: 'Kdo prošel bránou Zahrady, zná runy a umí je skládat.',
     modern:
       'NOT obrací, AND chce oba vstupy, OR stačí jeden, XOR chce právě jeden. Každé hradlo popisuje pravdivostní tabulka a hradla se dají řadit za sebe (NAND, NOR) i větvit.',
-    formula: '¬ · ∧ · ∨ · ⊻',
+    formula: '¬, ∧, ∨, ⊻',
     today: 'Z těchto hradel jsou složené všechny počítače. V Hlubině Strojů z nich poskládáš sčítačku a paměť.',
   },
   {
@@ -408,7 +409,7 @@ export const KODEX: KodexEntry[] = [
     ancient: 'Obrácené Pouto je Rozcestí obrácených cest. A naopak.',
     modern:
       'Negace prohodí AND a OR, když obrátíš i oba vstupy: ¬(A ∧ B) = ¬A ∨ ¬B a ¬(A ∨ B) = ¬A ∧ ¬B. Dva obvody se stejnou pravdivostní tabulkou jsou zaměnitelné.',
-    formula: '¬(A ∧ B) = ¬A ∨ ¬B · ¬(A ∨ B) = ¬A ∧ ¬B',
+    formula: '¬(A ∧ B) = ¬A ∨ ¬B; ¬(A ∨ B) = ¬A ∧ ¬B',
     today: '„Není pravda, že prší nebo fouká“ znamená „neprší a nefouká“. Stejná pravidla platí ve výrokové logice i v programech.',
   },
   {
@@ -419,8 +420,8 @@ export const KODEX: KodexEntry[] = [
     ancient: 'Rovnost svítí, když se cesty shodnou. Důsledek zhasne, jen když slib neplatí.',
     modern:
       'Ekvivalence A ⇔ B (XNOR) platí, když mají oba vstupy stejnou hodnotu. Implikace A ⇒ B neplatí jen tehdy, když A platí a B ne; v ostatních případech platí.',
-    formula: 'A ⇔ B = ¬(A ⊻ B) · A ⇒ B = ¬A ∨ B',
-    today: '„Když prší, je mokro“ je implikace. Když neprší, nic neporušila, ať je mokro, nebo ne.',
+    formula: 'A ⇔ B = ¬(A ⊻ B); A ⇒ B = ¬A ∨ B',
+    today: '„Když prší, je mokro“ je implikace. Když neprší, implikace platí, ať je mokro, nebo ne.',
   },
   {
     id: 'vetsina',
@@ -495,8 +496,8 @@ export const KODEX: KodexEntry[] = [
     modernName: 'Poloviční sčítačka',
     ancient: 'Výluka dá spodní číslici, Pouto přenos. Dvě runy sečtou dvě světla.',
     modern:
-      'Poloviční sčítačka sečte dva bity. Součet S je A XOR B, přenos C je A AND B. Výsledek je dvoubitové číslo CS: 0 + 0 = 00, 0 + 1 = 01, 1 + 1 = 10.',
-    formula: 'S = A ⊻ B · C = A ∧ B',
+      'Poloviční sčítačka sečte dva bity. Součet S je A XOR B, přenos P je A AND B. Výsledek je dvoubitové číslo PS: 0 + 0 = 00, 0 + 1 = 01, 1 + 1 = 10.',
+    formula: 'S = A ⊻ B; P = A ∧ B',
     today: 'Je to nejmenší kousek každé kalkulačky. Z hradel se tu poprvé stává aritmetika.',
   },
   {
@@ -506,8 +507,8 @@ export const KODEX: KodexEntry[] = [
     modernName: 'Úplná sčítačka',
     ancient: 'Tři světla jednoho sloupce, dvě lampy výsledku.',
     modern:
-      'Úplná sčítačka sečte tři bity: A, B a přenos z nižšího řádu. Součet je XOR všech tří, přenos svítí, když jsou jedničky aspoň dvě (funkce většiny). Dá se složit ze dvou polovičních sčítaček a hradla OR.',
-    formula: 'S = A ⊻ B ⊻ P · přenos = AB ∨ P(A ⊻ B)',
+      'Úplná sčítačka sečte tři bity: A, B a přenos P z nižšího řádu (zprava). Součet je XOR všech tří, přenos do vyššího řádu (doleva) svítí, když jsou jedničky aspoň dvě (funkce většiny). Dá se složit ze dvou polovičních sčítaček a hradla OR.',
+    formula: 'S = A ⊻ B ⊻ P; P doleva = (A ∧ B) ∨ (P ∧ (A ⊻ B))',
     today: 'Přesně tohle dělá jeden sloupec písemného sčítání. Procesor má takových sloupců 64.',
   },
   {
@@ -517,7 +518,7 @@ export const KODEX: KodexEntry[] = [
     modernName: 'Součástka a abstrakce',
     ancient: 'Kdo zná, co kámen dělá, nemusí vědět, co je uvnitř.',
     modern:
-      'Hotový obvod jde zabalit do součástky se vstupy a výstupy. Řetěz n úplných sčítaček sečte dvě n-bitová čísla: přenos teče z každého řádu do vyššího (ripple-carry adder).',
+      'Hotový obvod jde zabalit do součástky se vstupy a výstupy. Řetěz n úplných sčítaček sečte dvě n-bitová čísla: přenos teče z každého řádu do vyššího. Je to sčítačka s postupným přenosem (anglicky ripple-carry adder).',
     formula: 'n sčítaček → n-bitová čísla, součet má n + 1 bitů',
     today: 'Abstrakce je hlavní nástroj inženýrů i programátorů: z hradel jsou součástky, ze součástek procesor, z procesoru počítač.',
   },
@@ -528,8 +529,8 @@ export const KODEX: KodexEntry[] = [
     modernName: 'Porovnávač (komparátor)',
     ancient: 'Rovnost v každém sloupci a Pouto nad nimi.',
     modern:
-      'Dvě čísla jsou stejná, když se shodují ve všech bitech. Porovnávač dá XNOR každé dvojice bitů a výsledky spojí hradlem AND. Různost najde XOR a OR.',
-    formula: 'A = B ⇔ (A₁ ⇔ B₁) ∧ (A₀ ⇔ B₀)',
+      'Dvě čísla jsou stejná, když se shodují ve všech bitech. Porovnávač dá XNOR každé dvojice bitů a výsledky spojí hradlem AND. Různost najde XOR a OR. Index je váha krystalu jako na desce: A₂ je krystal A s váhou 2.',
+    formula: 'A = B ⇔ (A₂ ⇔ B₂) ∧ (A₁ ⇔ B₁)',
     today: 'Porovnávání je v každém programu: podmínka „když se rovná“ je v procesoru právě takový obvod.',
   },
   {
@@ -550,18 +551,18 @@ export const KODEX: KodexEntry[] = [
     ancient: 'Dva krystaly ukážou na jedno ze čtyř míst.',
     modern:
       'Dekodér převede n-bitové číslo na 2ⁿ výstupů, ze kterých svítí právě jeden. Každý výstup je AND vstupů nebo jejich negací.',
-    formula: '2 bity → 4 výstupy · n bitů → 2ⁿ výstupů',
+    formula: '2 bity → 4 výstupy; n bitů → 2ⁿ výstupů',
     today: 'Paměť RAM jím najde buňku podle adresy a displej kalkulačky podle něj rozsvítí segmenty číslice.',
   },
   {
     id: 'hlubina',
     glyph: 0b110111,
     ancientName: 'Zákony Hlubiny',
-    modernName: 'Shrnutí Aktu IV',
+    modernName: 'Shrnutí patra IV',
     ancient: 'Kdo prošel bránou Hlubiny, umí z run skládat stroje.',
     modern:
       'Hradla se skládají do kombinačních obvodů: poloviční a úplná sčítačka, řetěz sčítaček, porovnávač, multiplexor a dekodér. Hotový obvod se dá zabalit do součástky.',
-    formula: 'sčítačka · porovnávač · multiplexor · dekodér',
+    formula: 'sčítačka, porovnávač, multiplexor, dekodér',
     today: 'Tyhle součástky najdeš v každém procesoru. V Hlubších síních k nim přibude paměť.',
   },
   {
@@ -572,7 +573,7 @@ export const KODEX: KodexEntry[] = [
     ancient: 'Dvě runy si vracejí světlo a kruh drží, co se v něm stalo.',
     modern:
       'Dvě hradla NOR zapojená do kruhu (zpětná vazba) si pamatují jeden bit. S (set) nastaví 1, R (reset) nastaví 0, a když oba mlčí, výstup drží poslední stav.',
-    formula: 'Q = ¬(R ∨ ¬Q) · ¬Q = ¬(S ∨ Q)',
+    formula: 'Q = ¬(R ∨ ¬Q); ¬Q = ¬(S ∨ Q)',
     today: 'Každý bit v registrech procesoru a ve vyrovnávací paměti je takový kruh z tranzistorů.',
   },
   {
@@ -582,8 +583,8 @@ export const KODEX: KodexEntry[] = [
     modernName: 'Hodiny a klopný obvod D',
     ancient: 'Ozvěna s tepem poslouchá jen v rytmu Srdce.',
     modern:
-      'Klopný obvod D si zapamatuje vstup D jen při hodinovém pulzu, mezi pulzy drží. Hodiny tak řídí, kdy se všechna paměť v počítači změní naráz.',
-    formula: 'při tepu: Q ← D · jinak Q drží',
+      'Brána tepu je klopný obvod D řízený úrovní: dokud svítí T, výstup sleduje D. Ozvěna s tepem je klopný obvod D řízený hranou: D převezme jen v okamžiku hodinového pulzu a mezi pulzy drží. Právě takové obvody jsou v registrech a čítačích, jinak by světlo proteklo několika patry naráz. Hodinový signál (hodiny, takt) tak řídí, kdy se všechna paměť v počítači změní naráz.',
+    formula: 'při tepu: Q ← D; jinak Q drží',
     today: 'Frekvence procesoru (třeba 3 GHz) říká, kolik miliard tepů za sekundu jeho hodiny udělají.',
   },
   {
@@ -627,7 +628,7 @@ export const KODEX: KodexEntry[] = [
     ancient: 'Kód vybere runu, která promluví.',
     modern:
       'ALU spočítá všechny své operace naráz a multiplexor podle kódu operace vybere výsledek, který se má použít. Kód operace je kus instrukce programu.',
-    formula: 'kód 00 → AND · 01 → OR · 10 → XOR · 11 → NAND',
+    formula: 'kód 00 → AND; 01 → OR; 10 → XOR; 11 → NAND',
     today: 'ALU je jádro každého procesoru. Instrukce programu jí říkají, kterou operaci má právě udělat.',
   },
   {
@@ -637,8 +638,8 @@ export const KODEX: KodexEntry[] = [
     modernName: 'Násobička',
     ancient: 'Pouta udělají kopie, sčítačky je sečtou.',
     modern:
-      'Násobení dvojkových čísel je sčítání posunutých kopií. Kopie (částečné součiny) jsou AND bitů obou činitelů a sečtou je sčítačky. Dvě n-bitová čísla potřebují n² hradel AND.',
-    formula: 'A × B = Σ (A ∧ Bᵢ) · 2ⁱ',
+      'Násobení dvojkových čísel je sčítání posunutých kopií. Kopie (částečné součiny) jsou AND bitů obou činitelů a sečtou je sčítačky. Index je váha krystalu jako na desce: B₂ je krystal B s váhou 2, a když svítí, přičte se A s váhou 2. Dvě n-bitová čísla potřebují n² hradel AND.',
+    formula: 'A × B = A·B₁ + 2·A·B₂ + 4·A·B₄ + …',
     today: 'Procesory mají násobičky z tisíců hradel, které vynásobí dvě 64bitová čísla za pár tepů.',
   },
   {

@@ -30,7 +30,7 @@ export interface CascadeConfig {
   farCarries?: boolean;
   /**
    * Ukázková úloha (pořadí): přenosy nebo výpůjčky v ní jsou předem na místě a hráč jen dopočítá
-   * výsledek. Echo je okomentuje (Odliv: kam se výpůjčka zapisuje).
+   * výsledek. Echo je okomentuje (Výpůjčka: kam se výpůjčka zapisuje).
    */
   demo?: number;
   /**

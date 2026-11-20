@@ -21,16 +21,21 @@ každý telefon v jeho kapse.
 
 ### 1.1 Vzdělávací cíle (co hráč po dohrání umí)
 
-| Oblast | Hráč dokáže… |
-|---|---|
-| Bit a stav | vysvětlit, co je bit, kolik stavů má *n* bitů (2ⁿ), co je bajt |
-| Soustavy | převádět mezi dvojkovou, desítkovou a šestnáctkovou soustavou |
-| Aritmetika | sčítat a odčítat ve dvojkové soustavě s přenosem a výpůjčkou, chápat přetečení, posun jako ×2 a ÷2 |
-| Logika | používat NOT, AND, OR, XOR, NAND, NOR, číst a sestavit pravdivostní tabulku, chápat De Morganovy zákony |
-| Obvody | postavit poloviční a úplnou sčítačku, porovnávač, multiplexor, dekodér |
-| Paměť | pochopit zpětnou vazbu, klopný obvod a čítač |
-| Kódování | dekódovat ASCII, chápat paritu a opravu chyb, obraz a zvuk jako řady čísel, záporná čísla ve dvojkovém doplňku |
-| Abstrakce | skládat složitější součástky z jednodušších a chápat, že i program je jen posloupnost bitů |
+Cíle pokrývají tři vrstvy hry (kap. 6). **Základní cesta** (komnaty 0–7 Aktů I až IV) je povinná
+a projde ji celá třída. **Hlubší síně** (komnaty 8–15) jsou nepovinné. **Akt V a Finále** mají
+zatím jen osnovu, ve hře nejsou. Učitel tak vidí, s čím může počítat u hráče, který prošel jen
+základní cestu.
+
+| Oblast | Hráč dokáže… | Základní cesta | Hlubší síně | Akt V a Finále (zatím ve hře nejsou) |
+|---|---|---|---|---|
+| Bit a stav | vysvětlit, co je bit, kolik stavů má *n* bitů (2ⁿ), co je bajt | bit a 2ⁿ kombinací (I-1 až I-3), bajt jen větou v Kodexu | oktáva a 2ⁿ − 1 (I-10, I-12) | oktáva jako dva glyfy (V-2) |
+| Soustavy | převádět mezi dvojkovou, desítkovou a šestnáctkovou soustavou | dvojková a desítková na čtyřech krystalech, oběma směry (I-4 až I-7) | šestnáctková (I-13, I-14), oktáva desítkově (I-12) | šestnáctková i pro hráče základní cesty (V-1) |
+| Aritmetika | sčítat a odčítat ve dvojkové soustavě s přenosem a výpůjčkou, chápat přetečení, posun jako ×2 a ÷2 | sčítání s přenosem, přetečení, posun ×2 a ÷2 (II-1 až II-7) | odčítání s výpůjčkou (II-8), násobení (II-10), dělení posunem (II-11) | – |
+| Logika | používat NOT, AND, OR, XOR, NAND, NOR, číst a sestavit pravdivostní tabulku, chápat De Morganovy zákony | všech šest run a desky zákona (III-1 až III-7) | De Morgan (III-8), ekvivalence a implikace (III-9), univerzalita NAND (III-11), masky (III-12) | – |
+| Obvody | postavit poloviční a úplnou sčítačku, porovnávač, multiplexor, dekodér | všechno (IV-1 až IV-7) | volič operace (IV-13), násobička (IV-14) | – |
+| Paměť | pochopit zpětnou vazbu, klopný obvod a čítač | nic: paměť je záměrně celá v Hlubších síních (Akt IV v kap. 6) | ozvěna, tep, registr, čítač (IV-8 až IV-11) | – |
+| Kódování | dekódovat ASCII, chápat paritu a opravu chyb, obraz a zvuk jako řady čísel, záporná čísla ve dvojkovém doplňku | nic | dvojkový doplněk (II-13, IV-12), ASCII v Tajné řeči (III-13) | ASCII, parita, oprava chyb, obraz a zvuk (V-2 až V-7) |
+| Abstrakce | skládat složitější součástky z jednodušších a chápat, že i program je jen posloupnost bitů | součástka jako jeden kámen (IV-3) | – | program jako posloupnost bitů (Finále) |
 
 ### 1.2 Pocit ze hry
 
@@ -212,7 +217,7 @@ Tón je vždy neutrální až povzbudivý, bez červených křížků a rušivý
 - **Losované úlohy:** komnaty na procvičování a zkoušky (I-5 až I-8, I-12 až I-15, II-2 až II-5
   a II-7 až II-15) vylosují příklady při každém vstupu i po „Znovu“, takže se nedají naučit
   nazpaměť ani napovědět sousedovi. Generátory drží stejné podmínky jako ručně vybrané úlohy
-  (třeba aspoň jedna výpůjčka v Odlivu, ve Vahách Osudu nikdy cesta přes přetočení) a ukázková
+  (třeba aspoň jedna výpůjčka v komnatě Výpůjčka, ve Vahách Osudu nikdy cesta přes přetočení) a ukázková
   úloha na začátku nebo závěrečná zkouška, kterou Echo komentuje, zůstává pevná. Objevné komnaty
   mají pevnou posloupnost, protože je součástí výkladu.
 - **Cvičná komnata:** procedurálně generované úlohy k jakémukoli odemčenému konceptu,
@@ -299,7 +304,8 @@ Každé patro má **16 míst pro komnaty**, přesně tolik, kolik rozliší čty
 (0000 až 1111). **Nultá komnata** (glyf bez jediné rozsvícené strany) ukáže základní nápad patra
 jednoduchou hrou: v Předsíni hráč rozsvítí krystal, v Síni Počtářů sečte jedna a jedna pod sebou,
 v Zahradě pustí světlo k lampě. Nemá kvíz ani záznam Kodexu. **Základní cesta** jsou komnaty 0–7:
-glyf jim svítí nejvýš na třech spodních stranách a komnata 7 je brána patra, která otevře schody dál. Základ stačí na celou hru a patro se v něm
+glyf jim svítí nejvýš na třech spodních stranách a komnata 7 je brána patra, která otevře schody dál.
+Otevírají se po jedné, brána až po komnatě 6: zkouší všechno, co základ patra učí. Základ stačí na celou hru a patro se v něm
 vejde zhruba do jedné vyučovací hodiny. **Hlubší síně** 8–15 mají rozsvícenou i horní stranu glyfu,
 jsou nepovinné a otevírají se po bráně patra, pak po jedné. Patří do nich látka, kterou sexta
 nutně nepotřebuje, ale je škoda o ni přijít (odčítání, násobení, dělení, šestnáctková soustava).
@@ -341,14 +347,14 @@ Komnata 15 (glyf 1111) je velká brána patra. Akty I až IV jsou rozdělené ta
 | II-6 | Příliv a odliv | Příliv | posun = ×2 / ÷2 | Páky jen se šipkami, živá váha. Hráč objeví ×2 a ÷2 i ztrátu světla vpravo (13 → 6). Kvíz: 52 >> 1, posun o dvě místa = ×4. |
 | II-7 | **Brána Síně** | smíšená (Kaskáda + Příliv) | syntéza | Tři pětibitové součty s přenosy (poslední přeteče do šestého krystalu), pak tři vyvážení jen posuny: zdvojit, rozpůlit a rozpůlit se ztrátou přes okraj. Kvíz: přetečení nádoby a posun o tři místa. Otevře Hlubší síně a „Zákony Síně“ (shrnutí aktu). |
 | | *Hlubší síně* | | | *Nepovinné, otevřou se po bráně patra.* |
-| II-8 | Odliv | Kaskáda | odčítání, výpůjčka | Odčítání s výpůjčkami: krystal výpůjčky se zapisuje pod spodní řadu, takže je vidět, že se ve sloupci odečítají dva krystaly od jednoho (8 − 1 projde třemi sloupci). Druhá úloha je ukázková: výpůjčky jsou předem na místě a Echo je okomentuje. |
+| II-8 | Výpůjčka | Kaskáda | odčítání, výpůjčka | Odčítání s výpůjčkami: krystal výpůjčky se zapisuje pod spodní řadu, takže je vidět, že se ve sloupci odečítají dva krystaly od jednoho (8 − 1 projde třemi sloupci). Druhá úloha je ukázková: výpůjčky jsou předem na místě a Echo je okomentuje. |
 | II-9 | Zdvojení | Příliv | stavba čísla | Z 1 dosáhni 6, 11, 21, 27 jen pákami ×2 a +1. Pointa: posloupnost tahů kopíruje dvojkový zápis cíle (Hornerovo schéma z I-6 jako stavební návod). |
 | II-10 | Násobení po lumenitsku | Kaskáda (výběr kopií) | posun + sčítání | Stěna nabídne kopii prvního činitele pro každé místo druhého (×1, ×2, ×4). Hráč rozsvítí ty, které patří k jedničkám druhého činitele, a sečte je s přenosy. Špatně zvolenou kopii kontrola najde jako první. |
 | II-11 | Dělení posunem | Příliv s miskou zbytku | ÷ 2ᵏ se zbytkem | Kolo ukáže „÷ 4“, „÷ 8“, „÷ 2“, „÷ 16“ a jediná páka půlí. Co spadne přes pravý okraj, chytí miska zbytku. Kvíz: zbytek 109 : 16, co jde dělit osmi beze zbytku. |
 | II-12 | Tři řady | Kaskáda s přenosem o dvě místa | přenos o dvě místa | Tři sčítance. Nad přenosy je druhá řada krystalů pro přenos o dvě místa (čtyři světla ve sloupci = 100). Na konci 15 + 15 + 15, kde se ve sloupci slije pět světel. |
 | II-13 | Doplněk | smíšená (Příliv + Kaskáda) | dvojkový doplněk | Objev před výkladem: kolik jedniček vyprázdní nádobu se třemi světly? Třináct, tedy 1101 = −3. Pak zkratka: páky „převrať“ a „+1“. Nakonec odčítání sčítáním doplňku, přetečení do přepadu. |
 | II-14 | **Váhy Osudu** | Příliv (přísný) | syntéza | Dvě misky vah, páky ×2, ÷2, +1, −1 a jen ideální počet tahů na zkoušku (7 → 30, 12 → 47 přestřelením a ubráním…). Po vyčerpání tahů se misky vrátí. Kvíz míchá odčítání a posun. |
-| II-15 | **Velká brána Síně** | smíšená | syntéza | Odliv na pěti krystalech, násobení s výběrem kopií a Váhy Osudu na tři a čtyři tahy. Odemyká „Hlubší zákony Síně“. |
+| II-15 | **Velká brána Síně** | smíšená | syntéza | Odčítání s výpůjčkami na pěti krystalech, násobení s výběrem kopií a Váhy Osudu na tři a čtyři tahy. Odemyká „Hlubší zákony Síně“. |
 
 ### Akt III — Zahrada Bran (logika)
 
@@ -997,7 +1003,7 @@ osnovy nejde naučit těmi stávajícími.
     IV-15 (ozvěna, tep, registr, čítač, odčítačka, volič operace, násobička), glyfy patra se
     čtverečkem uprostřed, 15 záznamů Kodexu, losované brány.
 16. **Backlog z playtestů a sazby ✓ (17. 11. 2026):** ukázka kroku s důvodem ve všech archetypech,
-    vysvětlení typických chyb v kvízu, schody mezi patry se Strážcem schodů, Zkusit bránu hned,
+    vysvětlení typických chyb v kvízu, schody mezi patry se Strážcem schodů,
     Do Hlubších síní po bráně, Desku znám, nečitelná slova, která přeloží Kodex, Sudé a liché v I-9,
     Počítadlo v II-1 a Soutok s Dvěma řadami v II-2 (převod postupu, rozvržení 4), pracovní list.
     Podrobně v `PLAYTEST.md` (kap. 10) a `TYPOGRAFIE.md`.
@@ -1015,6 +1021,12 @@ osnovy nejde naučit těmi stávajícími.
     přetečou jako jedno, výpůjčka dá vpravo dvě, dolů se vejde jen jedno), zatřese se a Echo řekne
     proč. Zhasnutý zdroj zhasne i krystaly, které z něj svítily. Platí ve všech Kaskádách kromě bran
     II-7 a II-15: tam hráč ukazuje, že počítá sám. Verze 0.4.2 alpha.
-18. **Akt V, Archiv Hlasů:** nová osnova v rozdělení 0–15 (kap. 6, 17. 11. 2026). Po stavbě
+18. **Recenze tří odborníků a opravy ✓ (20. 11. 2026):** virtuální didaktik, kurikulista a herní
+    kritik prošli všech 64 komnat (zpráva `RECENZE.md`, podrobnosti ve složce `recenze/`). Opravené
+    jsou všechny ověřené nálezy: zkratka do brány je zrušená, zápis v Nápisu sám pozná zrcadlo a
+    krystal vedle, ukázky kroku sedí s textem, generátory dodržují podmínky z textů (II-13 začíná −3,
+    Váhy Osudu bez shození vlevo, větvení s jedním Obracečem), Echo slyší čtečka obrazovky, patro I
+    zkouší čtení a zápis v kvízu a texty jsou rodově neutrální. Verze 0.4.3 alpha.
+19. **Akt V, Archiv Hlasů:** nová osnova v rozdělení 0–15 (kap. 6, 17. 11. 2026). Po stavbě
     playtest kompletního průchodu jen základní cestou Aktů I až V a Finále: ověří, že základní cesta
     Archivu nic z Hlubších síní nepotřebuje.

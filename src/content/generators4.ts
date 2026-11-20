@@ -25,12 +25,13 @@ import {
   subtractor,
 } from './machines';
 import { RUNE_NAME } from './runes';
-import { int, pick, shuffled, type Rng } from './random';
+import { int, pick, shuffled, until, type Rng } from './random';
 
 export function decoderTask(order: number[], open: number[] = [0, 1, 2, 3]): MachineTask {
   const machine = decoder(order, open);
   return {
     mode: 'build',
+    kind: 'decoder',
     machine,
     target: decoderTarget(machine, order),
     rule: 'Číslo A rozsvítí lampu se svým číslem.',
@@ -41,16 +42,32 @@ export function muxTask(swap = false): MachineTask {
   const machine = mux(['V', 'nv'], ['V', 'nv'], ['and', 'or']);
   return {
     mode: 'build',
+    kind: 'mux',
     machine,
     target: muxTarget(machine, swap),
     rule: swap ? 'Volič ve stínu pustí k lampě B, ve světle A.' : 'Volič ve stínu pustí k lampě A, ve světle B.',
   };
 }
 
+/** Druhá zkouška brány Hlubiny: rozdělovač a výhybka, každá úloha s vlastním zadáním. */
+export function routeTasks(order: number[], swap: boolean): MachineTask[] {
+  return [
+    {
+      ...decoderTask(order),
+      say: 'Druhá zkouška, rozdělovač: natoč točité kameny tak, aby číslo A rozsvítilo lampu se svým číslem.',
+    },
+    {
+      ...muxTask(swap),
+      say: 'Druhá zkouška, výhybka: natoč točité kameny a vlož runu, aby volič pouštěl k lampě A, nebo B, jak žádá brána.',
+    },
+  ];
+}
+
 export function compareTask(same: boolean): MachineTask {
   const machine = compare2(['xor', 'xnor'], ['and', 'or'], same ? 'stejné' : 'různé');
   return {
     mode: 'build',
+    kind: 'compare',
     machine,
     target: compareTarget(machine, 2, same),
     rule: same ? 'Lampa svítí, když A = B.' : 'Lampa svítí, když se A a B liší.',
@@ -78,6 +95,7 @@ export function shiftTask(dir: 'left' | 'right'): MachineTask {
         );
   return {
     mode: 'build',
+    kind: 'shift',
     machine,
     script: dir === 'left' ? shiftLeftScript : shiftRightScript,
     rule: dir === 'left' ? 'Každý tep posune světlo o patro výš.' : 'Každý tep posune světlo o patro níž.',
@@ -88,16 +106,18 @@ export function subtractTask(mode: 'invert' | 'switch'): MachineTask {
   const machine = mode === 'invert' ? subtractor('invert', [SHADOW, LIGHT]) : subtractor('switch', [SHADOW, LIGHT, 'M']);
   return {
     mode: 'build',
+    kind: 'subtract',
     machine,
     target: subtractTarget(machine, mode),
     say:
       mode === 'invert'
         ? 'Natoč točité kameny tak, aby stroj odčítal podle brány. Pak spusť Zkoušku.'
         : 'Natoč točité kameny a do prázdných kamenů vlož runy, ať stroj sčítá i odčítá podle brány. Pak spusť Zkoušku.',
+    // Pravidlo nestaví na nepovinném Doplňku (II-13): přetočení dokola řekne samo, i u sčítání.
     rule:
       mode === 'invert'
-        ? 'Lampy mají ukázat A − B. Záporný výsledek se přetočí jako v Doplňku (−1 je 7).'
-        : 'Když M mlčí, lampy ukazují A + B. Když svítí, ukazují A − B.',
+        ? 'Lampy mají ukázat A − B. Záporný výsledek se přetočí dokola: −1 je 7, −2 je 6.'
+        : 'Když M mlčí, lampy ukazují A + B. Když svítí, A − B. Přes 7 a pod 0 se výsledek přetočí: 7 + 1 je 0, 0 − 1 je 7.',
   };
 }
 
@@ -121,6 +141,7 @@ export function aluTask(ops: Rune[], open: 'runes' | 'selectors', wiring: keyof 
         ]);
   return {
     mode: 'build',
+    kind: 'alu',
     machine,
     target: aluTarget(machine, ops),
     rule: aluRule(ops),
@@ -133,8 +154,15 @@ export const genIV7Adder = (rng: Rng): MachineConfig => ({
   tasks: [chainTask(3, pick(rng, [0, 1]))],
 });
 
+/** Lampy rozdělovače nikdy popořadě: to by byla IV-6 znovu a nápověda „nejsou popořadě“ by lhala. */
 export const genIV7Route = (rng: Rng): MachineConfig => ({
-  tasks: [decoderTask(shuffled(rng, [0, 1, 2, 3])), muxTask(rng() < 0.5)],
+  tasks: routeTasks(
+    until(
+      () => shuffled(rng, [0, 1, 2, 3]),
+      (order) => order.some((v, k) => v !== k),
+    ),
+    rng() < 0.5,
+  ),
 });
 
 export const genIV7Compare = (rng: Rng): MachineConfig => ({
@@ -147,6 +175,7 @@ export const genIV7Compare = (rng: Rng): MachineConfig => ({
 export function runTask(a = 3, b = 2): MachineTask {
   return {
     mode: 'build',
+    kind: 'run',
     machine: runCounter(['and', 'or', 'xor'], [SHADOW, LIGHT, 'C']),
     script: runScript(a, b),
     rule: 'Dokud svítí chod C, každý tep přičte jedničku. Tep při zhasnutém C počítadlo vynuluje.',
@@ -201,10 +230,10 @@ export function qChainSum(rng: Rng): QuizQuestion {
   };
 }
 
-/** Počítadlo: kde bude po několika tepech. */
+/** Počítadlo: kde bude po několika tepech. Otázka je o přetečení, takže tepy vždy přejdou přes 7. */
 export function qCounter(rng: Rng): QuizQuestion {
   const start = int(rng, 4, 7);
-  const beats = int(rng, 2, 4);
+  const beats = int(rng, Math.max(2, 8 - start), 4);
   const end = (start + beats) % 8;
   const ws = wrongs(end, [start + beats, start - beats, (end + 1) % 8], 15);
   const reason = (v: number) =>
@@ -222,6 +251,6 @@ export function qCounter(rng: Rng): QuizQuestion {
     why: ['', ...ws.map(reason)],
     correct: 0,
     hint: 'Každý tep přičte jedna. Tři krystaly unesou nejvýš 7, pak počítadlo přeteče na 0.',
-    explain: `Po sedmičce přijde 0. ${start} + ${beats} = ${start + beats}, tři krystaly ale unesou nejvýš 7, takže po přetečení zbude ${end}.`,
+    explain: `${start} + ${beats} = ${start + beats}, ale tři krystaly unesou nejvýš 7. Po sedmičce přijde 0, takže po přetečení zbude ${end}.`,
   };
 }

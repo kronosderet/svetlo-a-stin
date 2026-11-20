@@ -1,15 +1,31 @@
 <script lang="ts">
+  import { tick } from 'svelte';
   import EchoText from './EchoText.svelte';
   import type { Echo } from '../game/echo.svelte.ts';
-  import { plainLength } from '../game/text';
+  import { plainLength, plainText } from '../game/text';
+  import { progress } from '../game/progress.svelte.ts';
   import { settings } from '../game/settings.svelte.ts';
 
+  /**
+   * Bublina Echa je pro oko a myš: klik dopíše repliku, nebo přejde na další. Čtečka obrazovky čte
+   * celý text ze skrytého řádku (nové repliky jí ohlásí komnata), klávesnice má tlačítko dál.
+   */
   let { echo }: { echo: Echo } = $props();
 
   let visible = $state(0);
   const line = $derived(echo.current);
   const total = $derived(line ? plainLength(line) : 0);
   const typing = $derived(visible < total);
+  const who = $derived(echo.tone === 'hint' ? 'Nápověda' : 'Echo');
+  /** Celá replika pro čtečku (ne postupně vypisovaná), přeložená slova čitelná. */
+  const spoken = $derived(line ? plainText(line, (key) => progress.kodex.includes(key)) : '');
+  let bubbleEl: HTMLElement | undefined = $state();
+  let moreBtn: HTMLButtonElement | undefined = $state();
+
+  // Poslední replika už tlačítko dál nemá: fokus z něj přejde na bublinu, ať Tab nezačíná od začátku stránky.
+  $effect.pre(() => {
+    if (!echo.hasMore && moreBtn && document.activeElement === moreBtn) tick().then(() => bubbleEl?.focus({ preventScroll: true }));
+  });
 
   // Postupné vypisování repliky; při omezených animacích hned celá.
   $effect(() => {
@@ -27,20 +43,34 @@
     return () => clearInterval(id);
   });
 
+  /** Klik na bublinu: rozepsanou repliku dopíše, dopsanou posune na další. */
   function advance() {
     if (typing) visible = total;
     else echo.next();
+  }
+
+  /** Tlačítko dál: vždy další replika (čtečka i klávesnice mají celý text hned, vypisování neřeší). */
+  function nextLine(e: MouseEvent) {
+    e.stopPropagation();
+    echo.next();
   }
 </script>
 
 {#if echo.open && line}
   <div class="echo" class:hint={echo.tone === 'hint'}>
     <span class="orb" aria-hidden="true"></span>
-    <button type="button" class="bubble stone" onclick={advance} aria-label={echo.hasMore ? 'Další replika' : undefined}>
-      <span class="who">{echo.tone === 'hint' ? 'Nápověda' : 'Echo'}</span>
-      <span class="text"><EchoText text={line} {visible} /></span>
-      {#if echo.hasMore && !typing}<span class="more" aria-hidden="true">dál <svg class="more-tri" viewBox="0 0 8 10"><path d="M1 1L7 5L1 9Z" /></svg></span>{/if}
-    </button>
+    <!-- Klávesnice a čtečka mají tlačítko dál; klik kamkoli do bubliny je jen pohodlí pro myš a prst. -->
+    <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
+    <div class="bubble stone" bind:this={bubbleEl} tabindex="-1" onclick={advance}>
+      <span class="who" aria-hidden="true">{who}</span>
+      <span class="text" aria-hidden="true"><EchoText text={line} {visible} /></span>
+      <span class="visually-hidden">{who}: {spoken}</span>
+      {#if echo.hasMore}
+        <button type="button" class="more" class:typing bind:this={moreBtn} onclick={nextLine} aria-label="Další replika">
+          dál <svg class="more-tri" viewBox="0 0 8 10" aria-hidden="true"><path d="M1 1L7 5L1 9Z" /></svg>
+        </button>
+      {/if}
+    </div>
     <button type="button" class="icon-btn hide" onclick={() => (echo.open = false)} aria-label="Skrýt Echo">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>
     </button>
@@ -128,9 +158,18 @@
   }
   .more {
     float: right;
-    margin-left: 12px;
+    margin: 0 -6px -4px 12px;
+    padding: 2px 6px;
+    border: 0;
+    border-radius: 4px;
+    background: none;
     font-size: var(--fs-sm);
     color: var(--lumen);
+    cursor: pointer;
+  }
+  /* Během vypisování je dál jen naznačené (klik do bubliny repliku nejdřív dopíše). */
+  .more.typing {
+    opacity: 0.45;
   }
   .more-tri {
     width: 0.55em;

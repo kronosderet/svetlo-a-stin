@@ -5,6 +5,7 @@
   import { RUNE_KODEX, RUNE_MODERN, RUNE_NAME } from '../../content/runes';
   import { progress } from '../../game/progress.svelte.ts';
   import { settings } from '../../game/settings.svelte.ts';
+  import { sourceWords } from '../../game/stepWords';
 
   interface Props {
     circuit: Circuit;
@@ -188,7 +189,7 @@
             class:set={!!src}
             class:hl={highlight && 'socket' in highlight && highlight.socket === key}
             disabled={!canPlace}
-            aria-label="Točitý kámen {j + 1}. vstupu runy {nodeNo(g.id)}: {src ? `bere světlo z ${sourceName(src)}` : 'nenastavený'}. Kliknutím pootočíš."
+            aria-label="Točitý kámen {j + 1}. vstupu runy {nodeNo(g.id)}: {src ? `bere světlo ${sourceWords(circuit, src)}` : 'zatím nenatočený'}. Kliknutím pootočíš."
             onclick={() => onSocket?.(key)}
           >{src ? sourceName(src) : '·'}</button>
         </div>

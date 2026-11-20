@@ -13,16 +13,19 @@ export const RUNE_NAME: Record<Rune, string> = {
   imp: 'Důsledek',
 };
 
-/** Zákon runy jednou větou (ukázka kroku řekne, proč do kamene patří právě ona). */
+/**
+ * Zákon runy jednou větou (ukázka kroku řekne, proč do kamene patří právě ona).
+ * U run se dvěma vstupy mluví o vstupech: „světlo“ znamená ve hře hodnotu 1, ne vstup.
+ */
 export const RUNE_RULE: Record<Rune, string> = {
   id: 'pustí světlo dál, jak přišlo',
   not: 'obrátí světlo ve stín a stín ve světlo',
-  and: 'svítí, jen když svítí obě světla',
-  or: 'svítí, když svítí aspoň jedno světlo',
-  xor: 'svítí, když svítí právě jedno světlo',
-  nand: 'mlčí, jen když svítí obě světla',
-  nor: 'svítí, jen když obě světla mlčí',
-  xnor: 'svítí, když jsou obě světla stejná',
+  and: 'svítí, jen když svítí oba vstupy',
+  or: 'svítí, když svítí aspoň jeden vstup',
+  xor: 'svítí, když svítí právě jeden vstup',
+  nand: 'mlčí, jen když svítí oba vstupy',
+  nor: 'svítí, jen když oba vstupy mlčí',
+  xnor: 'svítí, když jsou oba vstupy stejné',
   imp: 'mlčí, jen když A svítí a B ne',
 };
 

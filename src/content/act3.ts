@@ -1,7 +1,11 @@
 import { runeTable } from '../core/logic';
 import {
+  EXPLORE_HINTS,
+  SLOT_HINT,
   branch,
+  branchTask,
   chain,
+  exploreBranch,
   genIII12,
   genIII13,
   genIII14,
@@ -22,13 +26,6 @@ import {
 import { qAdd, qRead, qShiftLeft, qTableLit, qTableRows } from './quizzes';
 import type { ActDef, LevelDef } from './types';
 
-const SLOT_HINT = 'Zvýrazněný kámen potřebuje jinou runu. Klikni na něj.';
-const EXPLORE_HINTS: [string, string, string] = [
-  'Každým dotekem přepni jeden vstup a sleduj lampu.',
-  'Kombinace jsou čtyři: oba stín, jen A, jen B, oba světlo. Zkus je všechny.',
-  'Zvýrazněný vstup vede k nové kombinaci.',
-];
-
 const levels: LevelDef[] = [
   // Nultá komnata patra: světlovod bez runy, lampa ukazuje, co k ní doteče.
   {
@@ -44,14 +41,14 @@ const levels: LevelDef[] = [
       ledger: false,
     },
     hints: [
-      'Klikni na krystal vstupu A a sleduj lampu vpravo.',
+      'Dotkni se krystalu vstupu A a sleduj lampu vpravo.',
       'Kombinace jsou dvě: vstup svítí, nebo mlčí. Zkus obě.',
       'Zvýrazněný vstup vede k nové kombinaci.',
     ],
     echo: {
       intro: [
         'Zahrada Bran. Lumenité tu světlu stavěli cesty.',
-        'Nejjednodušší kámen v cestě jmenovali {{Obraceč|obracec}}.',
+        'První runě Zahrady říkali {{Obraceč|obracec}}.',
         'Světlovod vede od krystalu k lampě. Co lampa udělá?',
       ],
       solved: ['Lampa ukazuje, co k ní doteče: světlo, nebo stín.', 'Do cest se tu vkládají runy. Každá se světlem něco udělá.'],
@@ -97,14 +94,14 @@ const levels: LevelDef[] = [
       ],
     },
     presentation: {
-      task: 'Vlož do prázdného kamene runu tak, aby lampa svítila přesně tak, jak žádá brána vpravo. Pak spusť Zkoušku.',
+      task: 'Vlož runy do prázdných kamenů tak, aby lampa svítila přesně tak, jak žádá brána vpravo. Pak spusť Zkoušku.',
       showDigits: true,
       showSum: false,
       sizes: 'equal',
       ledger: false,
     },
     hints: [
-      'Klikni na prázdný kámen: runy se v něm střídají. Pak přepni vstup a sleduj lampu.',
+      'Dotkni se prázdného kamene: runy se v něm střídají. Pak přepni vstup a sleduj lampu.',
       'Průchod pustí světlo, jak přišlo. Obraceč ho obrátí: ze světla udělá stín a ze stínu světlo.',
       SLOT_HINT,
     ],
@@ -121,10 +118,10 @@ const levels: LevelDef[] = [
     },
     quiz: [
       {
-        question: 'Světlo projde dvěma Obraceči za sebou. Co dorazí k lampě?',
-        options: ['totéž, co vyšlo', 'vždy stín', 'vždy světlo', 'opak toho, co vyšlo'],
+        question: 'Vstup A projde dvěma Obraceči za sebou. Co ukáže lampa?',
+        options: ['totéž co vstup A', 'vždy stín', 'vždy světlo', 'opak vstupu A'],
         correct: 0,
-        hint: 'Každý Obraceč světlo obrátí. Co se stane, když ho obrátíš dvakrát?',
+        hint: 'Každý Obraceč obrátí světlo ve stín a stín ve světlo. Co udělají dva za sebou?',
         explain: 'Dvojí obrácení vrátí původní stav: ¬¬A = A. Česky: „není pravda, že neprší“ znamená „prší“.',
       },
     ],
@@ -250,7 +247,11 @@ const levels: LevelDef[] = [
     kind: 'mixed',
     echo: {
       intro: ['Jen jeden. Tahle runa je vybíravá.', 'Vzpomínáš na Síň Počtářů? Jedna a jedna tam dala dole stín.'],
-      solved: ['Výluka pustí světlo, když svítí právě jeden vstup.', 'Dvě světla se v ní vyruší jako při sčítání jedna a jedna: dole zůstane stín.'],
+      solved: [
+        'Výluka pustí světlo, když svítí právě jeden vstup.',
+        'Dvě světla se v ní vyruší jako při sčítání jedna a jedna: dole zůstane stín.',
+        'Výluku Lumenité tesali jako V s čárou: ⊻.',
+      ],
       skill: 'Bez jediného zbytečného kroku.',
     },
     parts: [
@@ -351,12 +352,8 @@ const levels: LevelDef[] = [
         { mode: 'slots', circuit: chain(), target: runeTable('nor') },
         { mode: 'slots', circuit: chain(), target: [1, 0, 0, 1] },
         // Než hráč větvení osadí, jednou hotové větvení prozkoumá: první obvod se dvěma cestami.
-        {
-                mode: 'explore',
-                circuit: branch({ a: 'not', b: 'id', join: 'and' }),
-                say: 'Tohle je větvení: jeden vstup se obrátí, než se cesty sejdou. Vyzkoušej všechny čtyři kombinace. Kdy lampa svítí?',
-              },
-        { mode: 'slots', circuit: branch(), target: [1, 0, 1, 1] },
+        exploreBranch,
+        branchTask({ a: 'id', b: 'not', join: 'or' }),
       ],
     },
     generate: genIII6,
@@ -369,7 +366,7 @@ const levels: LevelDef[] = [
     },
     hints: [
       'Začni od lampy: má svítit, nebo mlčet, když svítí oba vstupy?',
-      'Najdi runu, která dá desku přesně obráceně, a za ni postav Obraceč. Ve větvení můžeš Obracečem otočit jeden vstup.',
+      'Najdi runu, která dá desku přesně obráceně, a za ni postav Obraceč.',
       SLOT_HINT,
     ],
     echo: {
@@ -378,7 +375,7 @@ const levels: LevelDef[] = [
         0: 'Runa a za ní Obraceč: deska runy se obrátí.',
         1: 'Pouto s Obracečem je Zlomené pouto, Rozcestí s Obracečem Zavřené rozcestí.',
         2: 'Výluka a za ní Obraceč: lampa svítí, když jsou vstupy stejné. Lumenité tomu říkali Rovnost. Teď větvení.',
-        3: 'Lampa svítila jen v řádku 0 1: obrácené A a k tomu B. Teď větvení postav sám.',
+        3: 'Lampa svítila jen v řádku 0 1: obrácené A a k tomu B. Teď větvení postavíš ty.',
       },
       wrong: 'Brána se nepohnula. Ve kterých řádcích lampa nesedí? Přepni na ně vstupy.',
       complete: 'Řetězy drží.',
@@ -441,7 +438,7 @@ const levels: LevelDef[] = [
           'Zvýrazněná buňka nesedí.',
         ],
         echo: {
-          intro: ['První zkouška: deska zákona obvodu. Lampu jsem zahalil, dokud desku nepotvrdíš. Co z ní vyjde, slož z run.'],
+          intro: ['První zkouška: deska zákona obvodu. Lampu jsem zahalil, dokud desku nepotvrdíš. Co k lampě doteče, slož z run.'],
           wrong: 'Deska nesedí. Projdi ten řádek runou po runě.',
           solved: ['Deska sedí. Teď kameny.'],
         },
@@ -453,7 +450,7 @@ const levels: LevelDef[] = [
         config: {
           tasks: [
             { mode: 'slots', circuit: chain(), target: [0, 1, 1, 0] },
-            { mode: 'slots', circuit: branch(), target: [1, 1, 0, 1] },
+            branchTask({ a: 'not', b: 'id', join: 'or' }),
             { mode: 'slots', circuit: chain(), target: runeTable('nand') },
           ],
         },
@@ -582,10 +579,10 @@ const levels: LevelDef[] = [
   },
   {
     id: 'III-9',
-    title: 'Rovnost a důsledek',
+    title: 'Rovnost a Důsledek',
     kind: 'mixed',
     echo: {
-      intro: ['Rovnost a důsledek. Dvě runy, které znáš z matematiky, jen v kamenném šatu.'],
+      intro: ['Rovnost a Důsledek. Dvě runy, které znáš z matematiky, jen v kamenném šatu.'],
       solved: ['Rovnost svítí, když se vstupy shodují. Důsledek mlčí, jen když A platí a B ne.', 'Lumenité je tesali jako ⇔ a ⇒.'],
       skill: 'Bez jediného zbytečného kroku.',
     },
@@ -653,7 +650,7 @@ const levels: LevelDef[] = [
     kind: 'mixed',
     echo: {
       intro: ['Hlas většiny. Tři strážci hlasují a brána poslechne většinu.'],
-      solved: ['Hlas většiny svítí, když svítí aspoň dva ze tří vstupů.', 'Postavíš ho z Pout a Rozcestí, nebo z Rozcestí a Pout.'],
+      solved: ['Hlas většiny svítí, když svítí aspoň dva ze tří vstupů.', 'Hlas většiny jde složit z Pout a Rozcestí. Funguje to i naopak, z Rozcestí a Pout.'],
       skill: 'Bez jediného zbytečného kroku.',
     },
     parts: [
@@ -708,7 +705,7 @@ const levels: LevelDef[] = [
       ledger: false,
     },
     hints: [
-      'Točité kameny jsou malá kolečka u vstupů runy. Vybírají, odkud do ní teče světlo, a kliknutím je pootočíš.',
+      'Točité kameny jsou malá kolečka u vstupů runy. Vybírají, odkud do runy teče světlo, a každý dotek je pootočí.',
       'Zlomené pouto se stejným světlem na obou vstupech je Obraceč. A Obraceč za Zlomeným poutem dá Pouto.',
       'Zvýrazněný točitý kámen je potřeba pootočit.',
     ],
@@ -768,8 +765,9 @@ const levels: LevelDef[] = [
     ],
     echo: {
       intro: ['Masky. Lumenité nepřepínali krystaly po jednom, ale celou oktávu naráz.', 'Maska řekne runě, kde má zasáhnout.'],
-      step: { 1: 'Pouto vybírá: kde maska mlčí, světlo zhasne.', 3: 'Rozcestí rozsvěcí: kde maska svítí, je světlo.', 5: 'Výluka přepíná.' },
-      complete: 'Šest masek, tři runy.',
+      // Po poslední masce přijde step i complete naráz a complete repliku kroku přebije: patří do závěru.
+      step: { 1: 'Pouto vybírá: kde maska mlčí, světlo zhasne.', 3: 'Rozcestí rozsvěcí: kde maska svítí, je světlo.' },
+      complete: 'Výluka přepíná. Šest masek, tři runy.',
       solved: ['Pouto s maskou vybírá, Rozcestí rozsvěcí, Výluka přepíná.', 'Moderní stroje tak pracují s bajty: AND, OR a XOR s maskou.'],
       skill: 'Ani jeden zbytečný krystal masky.',
     },
@@ -851,7 +849,8 @@ const levels: LevelDef[] = [
     ],
     echo: {
       intro: ['Méně je víc. Staré obvody Lumenitů byly zbytečně dlouhé.', 'Kde stačí jedna runa, nestav čtyři.'],
-      step: { 0: 'Tři runy, a přitom stačila jediná.' },
+      // Starý obvod se losuje (dvě až čtyři runy), replika proto počet neříká.
+      step: { 0: 'Celý obvod, a přitom stačila jediná runa.' },
       wrong: 'Brána se nepohnula. Porovnej desku runy s deskou brány.',
       complete: 'Všechny obvody zkrácené.',
       solved: ['Dva obvody se stejnou deskou dělají totéž. Ten kratší je lepší.', 'Tak inženýři zjednodušují čipy.'],
@@ -905,7 +904,7 @@ const levels: LevelDef[] = [
         presentation: { task: 'Druhá zkouška: postav runu jen ze Zlomených pout.', showDigits: true, showSum: false, sizes: 'equal', ledger: false },
         hints: [
           'Točité kameny vybírají, odkud do runy teče světlo.',
-          'Zlomené pouto se dvěma stejnými světly je Obraceč. Pouto je Zlomené pouto a Obraceč, Rozcestí jsou Zlomené pouto obrácených vstupů.',
+          'Zlomené pouto se dvěma stejnými světly je Obraceč. Pouto je Zlomené pouto a Obraceč, Rozcestí je Zlomené pouto obrácených vstupů.',
           'Zvýrazněný točitý kámen je potřeba pootočit.',
         ],
         echo: { intro: ['Druhá zkouška: jen Zlomená pouta.'], wrong: 'Brána se nepohnula. Odkud teče světlo do každé runy?', solved: ['Prapečeť poslechla. Zbývá maska.'] },

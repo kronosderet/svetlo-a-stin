@@ -228,9 +228,17 @@ export function genII7Tide(rng: Rng): TideConfig {
   return { ...base, tasks: [up, down, lossy] };
 }
 
-/** II-8: po ukázce 7 − 2 bez výpůjčky tři rozdíly s výpůjčkami; prostřední má výpůjček víc. */
+/**
+ * II-8: po ukázce 7 − 2 bez výpůjčky tři rozdíly s výpůjčkami. Prostřední má řetěz výpůjček
+ * (sloupec si půjčí, aby mohl půjčit dál): Echo po něm říká „Výpůjčka prošla několika sloupci“.
+ */
 export function genII8(rng: Rng): CascadeConfig {
   const base: CascadeConfig = { width: 4, carries: 'manual', conserve: true, tasks: [] };
+  // Řetěz: výpůjčky ve dvou sousedních sloupcích.
+  const chained = (t: CascadeTask) => {
+    const c = answer(base, t).carries;
+    return (c & (c << 1)) !== 0;
+  };
   const rest = sequence(
     rng,
     3,
@@ -238,7 +246,7 @@ export function genII8(rng: Rng): CascadeConfig {
       const a = int(rng, 3, 15);
       return sub(a, int(rng, 1, a - 1));
     },
-    (t, k) => carryCount(base, t) >= (k === 1 ? 2 : 1),
+    (t, k) => (k === 1 ? chained(t) : carryCount(base, t) >= 1),
   );
   return { ...base, tasks: [sub(0b0111, 0b0010), ...rest], demo: 1 };
 }
@@ -268,15 +276,25 @@ export function genII10(rng: Rng): CascadeConfig {
 
 const FATE_OPS: TideOp[] = ['shl', 'shr', 'inc', 'dec'];
 
-/** Nejkratší cesta bez přetočení (+1 na samých světlech, −1 na nule). */
-function distanceNoWrap(bits: number, from: number, to: number): number {
+/**
+ * Trik, který Váhy Osudu nesmí vyžadovat: přetočení (+1 na samých světlech, −1 na nule)
+ * a ×2, které shodí světlo přes levý okraj (z 58 udělá 52). Půlení přes pravý okraj trik není,
+ * to je dělení se zbytkem z Přílivu.
+ */
+const isTrick = (op: TideOp, value: number, bits: number): boolean => {
+  const spill = applyOp(op, value, bits).spill;
+  return spill === 'wrap' || spill === 'left';
+};
+
+/** Nejkratší cesta bez triku (bez přetočení a bez shození světla přes levý okraj). */
+function distanceNoTrick(bits: number, from: number, to: number): number {
   const dist = new Map([[from, 0]]);
   const queue = [from];
   for (let q = 0; q < queue.length; q++) {
     const v = queue[q];
     for (const op of FATE_OPS) {
       const r = applyOp(op, v, bits);
-      if (r.spill === 'wrap' || dist.has(r.value)) continue;
+      if (isTrick(op, v, bits) || dist.has(r.value)) continue;
       dist.set(r.value, dist.get(v)! + 1);
       queue.push(r.value);
     }
@@ -284,29 +302,32 @@ function distanceNoWrap(bits: number, from: number, to: number): number {
   return dist.get(to) ?? Infinity;
 }
 
-/** Páky, které zvolí nápověda (nejkratší cesta), a jestli některá přetáčí. */
-function hintPath(cfg: TideConfig, task: TideTask): { ops: TideOp[]; wraps: boolean } {
+/** Páky, které zvolí nápověda (nejkratší cesta), a jestli některá z nich je trik. */
+function hintPath(cfg: TideConfig, task: TideTask): { ops: TideOp[]; tricky: boolean } {
   const one: TideConfig = { ...cfg, strict: false, tasks: [task] };
   let st = initTide(one);
   const ops: TideOp[] = [];
-  let wraps = false;
+  let tricky = false;
   while (!st.complete && ops.length < 12) {
     const op = bestOp(one, st)!;
-    if (applyOp(op, st.value, cfg.bits).spill === 'wrap') wraps = true;
+    if (isTrick(op, st.value, cfg.bits)) tricky = true;
     ops.push(op);
     st = pull(one, st, op).state;
   }
-  return { ops, wraps };
+  return { ops, tricky };
 }
 
-/** II-14: pět vyvážení na tři tahy (poslední na čtyři), bez triku s přetočením, s půlením i ubíráním. */
+/**
+ * II-14: pět vyvážení na tři tahy (poslední na čtyři), s půlením i ubíráním. Ideál jde bez triku
+ * (přetočení, ztráta světla přes levý okraj) a nápověda žádný trik neukáže.
+ */
 export function genII14(rng: Rng): TideConfig {
   const base: TideConfig = { bits: 6, ops: FATE_OPS, strict: true, tasks: [] };
   const fits = (t: TideTask, k: number) => {
     const start = t.start ?? 0;
     if (start === t.target) return false;
     const d = distance(base, start, t.target);
-    return d === (k === 4 ? 4 : 3) && d === distanceNoWrap(6, start, t.target) && !hintPath(base, t).wraps;
+    return d === (k === 4 ? 4 : 3) && d === distanceNoTrick(6, start, t.target) && !hintPath(base, t).tricky;
   };
   const tasks = until(
     () =>
@@ -322,7 +343,10 @@ export function genII14(rng: Rng): TideConfig {
   return { ...base, tasks };
 }
 
-/** II-11, Dělení posunem: dělí se 4, 8, 2 a 16; aspoň jednou beze zbytku, jinak zbytek padá do misky. */
+/**
+ * II-11, Dělení posunem: dělí se 4, 8, 2 a 16; jednou beze zbytku, jinak zbytek padá do misky.
+ * První a poslední dělení mají zbytek vždy: Echo po nich mluví o misce („Zbytek zůstal v misce.“).
+ */
 export function genII11(rng: Rng): TideConfig {
   const shifts = [2, 3, 1, 4];
   const tasks = until(
@@ -333,7 +357,7 @@ export function genII11(rng: Rng): TideConfig {
       }),
     (ts) => {
       const rems = ts.map((t, k) => t.start & ((1 << shifts[k]) - 1));
-      return rems[0] !== 0 && rems.filter((r) => r === 0).length === 1 && new Set(ts.map((t) => t.start)).size === ts.length;
+      return rems[0] !== 0 && rems[3] !== 0 && rems.filter((r) => r === 0).length === 1 && new Set(ts.map((t) => t.start)).size === ts.length;
     },
   );
   return { bits: 6, ops: ['shr'], tasks };
@@ -361,20 +385,28 @@ function add3(a: number, b: number, c: number): CascadeTask {
   return { op: 'add', operands: [a, b, c] };
 }
 
-/** II-13, Doplněk (záporná čísla): tři různá čísla do 7 převrátit a přidat jednu. */
+/**
+ * II-13, Doplněk (záporná čísla): tři různá čísla do 7 převrátit a přidat jednu. První je vždy −3:
+ * navazuje na třináct jedniček z první zkoušky a Echo ho komentuje („1101, stejně jako…“).
+ */
 export function genII13Negate(rng: Rng): TideConfig {
-  const values = sequence(rng, 3, () => int(rng, 1, 7));
+  const values = [3, ...sequence(rng, 2, () => int(rng, 1, 7), (v) => v !== 3)];
   return { bits: 4, ops: ['not', 'inc'], tasks: values.map((b) => ({ start: b, target: (16 - b) & 15, show: `−${b}` })) };
 }
 
-/** II-13, Doplněk (odčítání sčítáním): a + doplněk b v nádobě se čtyřmi krystaly, přetečení do přepadu. */
+/**
+ * II-13, Doplněk (odčítání sčítáním): a + doplněk b v nádobě se čtyřmi krystaly, přetečení do přepadu.
+ * Čísla zůstávají v rozsahu čtyřbitového doplňku: horní řada je kladná (do 7, nejvyšší bit 0),
+ * spodní řada je záporné −b (nejvyšší bit 1) a rozdíl vyjde kladný. Platí tak, co říká Kodex:
+ * nejvyšší bit nese znaménko. Každý takový součet má aspoň dva přenosy (jeden vždy do přepadu).
+ */
 export function genII13Add(rng: Rng): CascadeConfig {
   const base: CascadeConfig = { width: 4, carries: 'manual', conserve: true, overflow: true, tasks: [] };
   const tasks = sequence(
     rng,
     3,
     () => {
-      const a = int(rng, 3, 15);
+      const a = int(rng, 2, 7);
       const b = int(rng, 1, a - 1);
       return add(a, (16 - b) & 15);
     },
@@ -384,7 +416,7 @@ export function genII13Add(rng: Rng): CascadeConfig {
   return { ...base, tasks };
 }
 
-/** II-15, velká brána Síně (odliv): dva pětimístné rozdíly s několika výpůjčkami. */
+/** II-15, velká brána Síně (odčítání): dva pětimístné rozdíly s několika výpůjčkami. */
 export function genII15Sub(rng: Rng): CascadeConfig {
   const base: CascadeConfig = { width: 5, carries: 'manual', tasks: [] };
   const tasks = sequence(
@@ -411,7 +443,7 @@ export function genII15Mul(rng: Rng): CascadeConfig {
   return { ...base, tasks };
 }
 
-/** II-15, velká brána Síně (Váhy Osudu): vyvážení na tři a na čtyři tahy, bez přetočení. */
+/** II-15, velká brána Síně (Váhy Osudu): vyvážení na tři a na čtyři tahy, bez triku jako v II-14. */
 export function genII15Fate(rng: Rng): TideConfig {
   const base: TideConfig = { bits: 6, ops: FATE_OPS, strict: true, tasks: [] };
   const tasks = sequence(
@@ -421,7 +453,7 @@ export function genII15Fate(rng: Rng): TideConfig {
     (t, k) => {
       if (t.start === t.target) return false;
       const d = distance(base, t.start, t.target);
-      return d === 3 + k && d === distanceNoWrap(6, t.start, t.target) && !hintPath(base, t).wraps;
+      return d === 3 + k && d === distanceNoTrick(6, t.start, t.target) && !hintPath(base, t).tricky;
     },
     (t) => `${t.start}>${t.target}`,
   );

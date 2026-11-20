@@ -13,6 +13,7 @@ import type { AltarLevel } from '../content/types';
 import { flipBit, isBitSet } from '../core/bits';
 import { BaseGame, type GameEvent } from './baseGame.svelte.ts';
 import { valueStep } from './stepWords';
+import { allStep } from './altarWords';
 
 /** Reaktivní obal kolem čisté logiky oltáře (a počítadla, které na něm stojí). */
 export class AltarGame extends BaseGame<AltarLevel> {
@@ -48,10 +49,7 @@ export class AltarGame extends BaseGame<AltarLevel> {
     if (bit === null) return null;
     const cfg = this.level.config;
     const on = isBitSet(this.state.mask, bit);
-    if (cfg.goal.kind === 'all')
-      return cfg.strict
-        ? 'Zvýrazněný krystal vede na kombinaci, kterou deska ještě nezná, a odtud jde cesta dál bez opakování.'
-        : 'Zvýrazněný krystal vede na kombinaci, kterou deska ještě nezná.';
+    if (cfg.goal.kind === 'all') return allStep(cfg, this.state, bit);
     if (cfg.goal.kind === 'pattern') return on ? 'Ve stěně je tenhle krystal zhasnutý: zvýrazněný krystal zhasni.' : 'Ve stěně tenhle krystal svítí: zvýrazněný krystal rozsviť.';
     if (cfg.goal.kind === 'class') {
       const group = currentClass(cfg, this.state);
