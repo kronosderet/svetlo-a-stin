@@ -35,7 +35,6 @@ const levels: LevelDef[] = [
     hints: [
       'Krystal před tebou čeká na dotek.',
       'Dotkni se krystalu.',
-      'Krystal je zvýrazněný. Stačí se ho dotknout.',
     ],
     echo: {
       intro: ['…{{ticho}}… {{věky}} ticha…', 'Jsem {{Echo|sifra}}. Hlas, který tu zůstal.', 'Někdo přišel. Dotkni se krystalu.'],
@@ -51,7 +50,6 @@ const levels: LevelDef[] = [
     hints: [
       'Porovnej krystal s reliéfem ve stěně.',
       'Když krystal ve stěně svítí, rozsviť i svůj. Když mlčí, svůj zhasni.',
-      'Krystal je zvýrazněný. Stačí se ho dotknout.',
     ],
     echo: {
       intro: ['Krystal umí svítit. Umí ale i mlčet.', 'Stěna si pamatuje, jak kdysi zářil. Napodob ji.'],
@@ -79,7 +77,6 @@ const levels: LevelDef[] = [
     hints: [
       'Porovnej krystaly s reliéfem ve stěně.',
       'Rozsviť krystaly na místech, kde ve stěně září, a zhasni ty ostatní.',
-      'Zvýrazněný krystal je v jiném stavu než ve stěně.',
     ],
     echo: {
       intro: ['Dva krystaly. Stěna si pamatuje, jak kdysi svítily.', 'Lumenité každé takové kombinaci říkali {{podoba|podoby}}.', 'Napodob, co vidíš.'],
@@ -106,9 +103,8 @@ const levels: LevelDef[] = [
       splitBoard: true,
     },
     hints: [
-      'Zkus měnit vždy jen jeden krystal.',
-      'Postupuj systematicky: každým dotekem změň jediný krystal tak, aby vznikla kombinace, kterou deska ještě nezná.',
-      'Zvýrazněný krystal tě dovede ke kombinaci, kterou deska ještě nezná.',
+      'Nech levý krystal ve stínu. Kolik kombinací dají dva pravé krystaly?',
+      'Projdi čtyři kombinace dvou pravých krystalů. Pak rozsviť levý a projdi tytéž čtyři pozpátku.',
     ],
     echo: {
       intro: [
@@ -210,7 +206,7 @@ const levels: LevelDef[] = [
       tasks: [
         { dir: 'read', value: 0b0101 },
         { dir: 'read', value: 0b1100 },
-        { dir: 'read', value: 0b1001 },
+        { dir: 'read', value: 0b1010 },
         { dir: 'read', value: 0b1110 },
         { dir: 'read', value: 0b1011 },
       ],
@@ -228,7 +224,6 @@ const levels: LevelDef[] = [
     hints: [
       'Které krystaly svítí? A kolik který váží?',
       'Zprava váží 1, 2, 4, 8. Sečti váhy svítících krystalů, zhasnuté přeskoč.',
-      'Pod svítícími krystaly se ukázaly váhy. Stačí je sečíst.',
     ],
     echo: {
       intro: [
@@ -256,7 +251,7 @@ const levels: LevelDef[] = [
       bits: 4,
       tasks: [
         { dir: 'write', value: 11 },
-        { dir: 'read', value: 0b0110 },
+        { dir: 'read', value: 0b0111 },
         { dir: 'write', value: 13 },
         { dir: 'read', value: 0b1011 },
         { dir: 'write', value: 15 },
@@ -274,7 +269,6 @@ const levels: LevelDef[] = [
     hints: [
       'Čtyři krystaly váží zprava 1, 2, 4, 8.',
       'Číst: sečti váhy svítících krystalů. Psát: začni největší váhou, která se vejde, a se zbytkem pokračuj doprava.',
-      'Brána ukazuje krok: při psaní zvýrazní krystal, při čtení odhalí váhy.',
     ],
     echo: {
       intro: [
@@ -300,14 +294,15 @@ const levels: LevelDef[] = [
     presentation: {
       task: 'Váhy zmizely. Oltář přesto žádá přesnou váhu.',
       showDigits: true,
-      showSum: true,
+      showSum: false,
       sizes: 'equal',
       ledger: true,
+      // Součet ještě ve dvou prvních cílech, pak zmizí: pátý krystal se odvodí ze zákona, ne z čísla.
+      fade: { sum: 2 },
     },
     hints: [
       'Váhy zmizely, ale zákon zůstal. Kolik váží krystal úplně vpravo? A jeho soused?',
       'Zprava 1, 2, 4, 8, 16. Vezmi největší váhu, která se vejde, odečti ji a pokračuj se zbytkem.',
-      'Zvýrazněný krystal je potřeba přepnout.',
     ],
     echo: {
       intro: [
@@ -315,7 +310,11 @@ const levels: LevelDef[] = [
         'Tady kámen váhy zapomněl. A krystaly jsou si podobné jako vejce vejci.',
         'Pátý krystal je nový. Kolik asi váží? Zákon už znáš.',
       ],
-      step: { 0: 'Přijato. Váhy nosíš v hlavě.', 3: 'Šestnáct a víc. Bez pátého krystalu by to nešlo.' },
+      step: {
+        0: 'Přijato. Váhy nosíš v hlavě.',
+        1: 'Teď i součet zmizí. Zákon zůstal.',
+        3: 'Šestnáct a víc. Bez pátého krystalu by to nešlo.',
+      },
       solved: [
         'Váhy nejsou vyryté v kameni, ale v zákoně.',
         'Jedna, dvě, čtyři, osm, šestnáct. Tuhle řadu si zapamatuj.',
@@ -338,7 +337,12 @@ const levels: LevelDef[] = [
           group('Liché číslo', (v) => v % 2 === 1, 'Liché číslo má rozsvícený pravý krystal, ten s váhou 1. Všechny ostatní váhy jsou sudé.'),
           group('Sudé číslo větší než 8', (v) => v % 2 === 0 && v > 8, 'Sudé číslo má pravý krystal ve stínu. Větší než 8 potřebuje k osmičce ještě další světlo.'),
           group('Liché číslo menší než 6', (v) => v % 2 === 1 && v < 6, 'Lichou váhu má jen pravý krystal. Zbytek musí vážit nejvýš 4.'),
-          group('Číslo dělitelné čtyřmi (ne nula)', (v) => v % 4 === 0 && v > 0, 'Dělitelné čtyřmi má oba pravé krystaly ve stínu, jinak by zbyla jednička, dvojka nebo trojka.'),
+          // Bez osmičky: jinak by ji oltář přijal rovnou i pro poslední skupinu a ideál by ji přeskočil.
+          group(
+            'Číslo dělitelné čtyřmi, ale ne osmi',
+            (v) => v % 4 === 0 && v % 8 !== 0,
+            'Dělitelné čtyřmi má oba pravé krystaly ve stínu, jinak by zbyla jednička, dvojka nebo trojka. Aby nebylo dělitelné osmi, musí svítit krystal s váhou 4.',
+          ),
           group('Číslo dělitelné osmi (ne nula)', (v) => v % 8 === 0 && v > 0, 'Dělitelné osmi má tři pravé krystaly ve stínu. Ve čtyřech krystalech je to jen osmička.'),
         ],
       },
@@ -347,21 +351,21 @@ const levels: LevelDef[] = [
     presentation: {
       task: 'Oltář nežádá číslo, ale druh čísla. Rozsviť kterékoli, které se hodí.',
       showDigits: true,
-      showSum: true,
+      // Bez součtu: druh čísla se pozná z krystalů, ne z desítkového čísla (číslo ukáže zápisník po přijetí).
+      showSum: false,
       sizes: 'equal',
       ledger: true,
     },
     hints: [
       'Zkus pár lichých čísel za sebou: 1, 3, 5, 7. Co mají společného?',
       'Liché je číslo, které má rozsvícený pravý krystal. Dělitelné čtyřmi má vpravo dva stíny, osmi tři.',
-      'Zvýrazněný krystal je potřeba přepnout.',
     ],
     echo: {
       intro: ['Oltář se dělí na sudou a lichou stranu.', 'Nežádá číslo, jen jeho druh. Který krystal o tom rozhoduje?'],
       step: {
         0: 'Liché. Podívej se, který krystal svítí u každého lichého čísla.',
         1: 'Sudé: pravý krystal mlčí. Jen jednička je lichá váha.',
-        3: 'Dělitelné čtyřmi: dva pravé krystaly ve stínu.',
+        3: 'Dělitelné čtyřmi: dva pravé krystaly ve stínu. Třetí zprava svítí, a tak osmi dělitelné není.',
       },
       complete: 'Osmička: tři stíny vpravo.',
       solved: [
@@ -377,7 +381,8 @@ const levels: LevelDef[] = [
     id: 'I-10',
     title: 'Nejvyšší světlo',
     kind: 'altar',
-    config: { bits: 8, goal: { kind: 'value', targets: [31, 32, 63, 255] }, reveal: 'never' },
+    // Bez součtu nemá dotek odezvu: zbytečné doteky proto rozzáří Nápovědu (slips).
+    config: { bits: 8, goal: { kind: 'value', targets: [31, 32, 63, 255] }, reveal: 'never', slips: true },
     presentation: {
       task: 'Osm krystalů, celá oktáva. Oltář žádá světlo o přesné váze.',
       showDigits: true,
@@ -388,7 +393,6 @@ const levels: LevelDef[] = [
     hints: [
       'Kolik váží pět krystalů vpravo, když svítí všechny?',
       'Samá světla vpravo dají vždy o jedna méně než váha dalšího krystalu: 1 + 2 + 4 + 8 + 16 = 31 = 32 − 1.',
-      'Zvýrazněný krystal je potřeba přepnout.',
     ],
     echo: {
       intro: ['Osm krystalů v řadě. Lumenité jim říkali oktáva.', 'Bez vah a bez součtu. Zákony už znáš.'],
@@ -413,24 +417,25 @@ const levels: LevelDef[] = [
     kind: 'altar',
     config: { bits: 4, goal: { kind: 'all' }, reveal: 'never', strict: true },
     presentation: {
-      task: 'Projdi všech šestnáct kombinací. Každým dotekem jediná změna a žádná kombinace dvakrát.',
+      task: 'Projdi všech šestnáct kombinací tak, aby se žádná neopakovala.',
       showDigits: true,
       showSum: false,
       sizes: 'equal',
       ledger: false,
     },
     hints: [
-      'Vzpomeň si na Kolik kombinací: tři krystaly šly projít tak, že se pokaždé změnil jediný.',
+      'Vzpomeň si na Kolik kombinací: deska se rozdělila podle levého krystalu. Projdi nejdřív polovinu se stínem vlevo.',
       'Zrcadlo: projdi osm kombinací tří pravých krystalů, pak rozsviť levý a projdi těch osm pozpátku.',
-      'Zvýrazněný krystal vede cestou, která neskončí ve slepé uličce.',
     ],
     echo: {
       intro: [
         'Tichý krok. Tudy Lumenité chodili po špičkách: každým krokem jediná změna.',
         'Šestnáct kombinací a ani jedna dvakrát. Kdo se vrátí, začíná znovu.',
       ],
+      // „Zpět vrátí cestu před přerušením.“ přidá altarWords.resetLine, jen když cesta nebyla slepá ulička.
       reset: 'Tuhle kombinaci deska už znala. Tichý krok se přerušil, začni znovu.',
-      found: { 8: 'Polovina cesty. Teď přijde zrcadlo.', 15: 'Poslední krok.' },
+      // „Teď přijde zrcadlo.“ přidá altarWords.foundLine, jen když první polovina měla stín vlevo.
+      found: { 8: 'Polovina cesty.', 15: 'Poslední krok.' },
       complete: 'Šestnáct kombinací a každá právě jednou.',
       solved: ['Tichý krok má i moderní jméno: Grayův kód.', 'Polovina cesty, zrcadlo a druhá polovina pozpátku.'],
       skill: 'Celá cesta napoprvé.',
@@ -466,7 +471,6 @@ const levels: LevelDef[] = [
     hints: [
       'Oktáva váží zprava 1, 2, 4, 8, 16, 32, 64, 128.',
       'Čtení: sečti váhy svítících krystalů. Zápis: začni u 128 a ber každou váhu, která se ještě vejde.',
-      'Ukázka kroku: při psaní zvýrazní krystal, při čtení odhalí váhy.',
     ],
     echo: {
       intro: ['Velký nápis. Celá oktáva v jediném slově.', 'Tři kotouče, osm krystalů. Váhy už znáš až po sto dvacet osm.'],
@@ -504,7 +508,6 @@ const levels: LevelDef[] = [
     hints: [
       'Podívej se na glyf na kotouči: čtyři strany, čtyři krystaly.',
       'Glyf čti po směru hodinových ručiček od horní strany: horní váží 8, pravá 4, dolní 2, levá 1. Krystaly zleva taky 8, 4, 2, 1.',
-      'Ukázka kroku: při psaní zvýrazní krystal, při čtení odhalí váhy.',
     ],
     echo: {
       intro: [
@@ -552,7 +555,6 @@ const levels: LevelDef[] = [
     hints: [
       'Rozděl oktávu na dvě čtveřice. Každá je jeden glyf.',
       'Levá čtveřice patří na levý kotouč, pravá na pravý. Každou čti zvlášť: 8, 4, 2, 1.',
-      'Ukázka kroku: při psaní zvýrazní krystal, při čtení odhalí váhy.',
     ],
     echo: {
       intro: ['Dvojznak. Celá oktáva se dá napsat dvěma glyfy.', 'Levá čtveřice, pravá čtveřice. Dva znaky místo osmi světel.'],
@@ -592,16 +594,15 @@ const levels: LevelDef[] = [
         kind: 'altar',
         config: { bits: 3, goal: { kind: 'all' }, reveal: 'never', strict: true },
         presentation: {
-          task: 'První zkouška: projdi všech osm kombinací. Každým dotekem jediná změna a žádná dvakrát.',
+          task: 'První zkouška: projdi všech osm kombinací tak, aby se žádná neopakovala.',
           showDigits: true,
           showSum: false,
           sizes: 'equal',
           ledger: false,
         },
         hints: [
-          'Každým dotekem se smí změnit jediný krystal a deska nesmí nic dostat dvakrát.',
+          'Deska nesmí žádnou kombinaci dostat dvakrát. Projdi nejdřív všechny kombinace se stínem vlevo.',
           'Zrcadlo: projdi čtyři kombinace dvou pravých krystalů, rozsviť levý a projdi je pozpátku.',
-          'Zvýrazněný krystal vede cestou, která neskončí ve slepé uličce.',
         ],
         echo: {
           intro: ['První zkouška: tichý krok přes osm kombinací.'],
@@ -633,7 +634,6 @@ const levels: LevelDef[] = [
         hints: [
           'Oktáva váží zprava 1, 2, 4, 8, 16, 32, 64, 128.',
           'Čtení: sečti váhy svítících krystalů. Zápis: začni u 128 a ber každou váhu, která se ještě vejde.',
-          'Brána ukazuje krok: při psaní zvýrazní krystal, při čtení odhalí váhy.',
         ],
         echo: {
           intro: ['Druhá zkouška: oktáva, čísla až do 255.'],
@@ -666,7 +666,6 @@ const levels: LevelDef[] = [
         hints: [
           'Rozděl oktávu na dvě čtveřice. Každá je jeden glyf.',
           'Levá čtveřice patří na levý kotouč, pravá na pravý. Každou čti zvlášť: 8, 4, 2, 1.',
-          'Brána ukazuje krok: při psaní zvýrazní krystal, při čtení odhalí váhy.',
         ],
         echo: {
           intro: ['Třetí zkouška: oktáva dvěma glyfy.'],

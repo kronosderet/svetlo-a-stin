@@ -100,8 +100,9 @@ export class MaskGame extends BaseGame<MaskLevel> {
       return;
     }
     if (!this.playing) return;
+    const shown = this.hintTarget;
     const before = $state.snapshot(this.state) as MaskState;
-    this.#apply(before, before.mask ^ (1 << bit), toggleMask(this.level.config, before, bit));
+    this.#apply(before, before.mask ^ (1 << bit), toggleMask(this.level.config, before, bit), shown === bit);
   }
 
   /** Úloha s klíčem z minulé úlohy se vyřeší sama, až zmizí předchozí výsledek (písmeno po písmenu). */
@@ -111,12 +112,16 @@ export class MaskGame extends BaseGame<MaskLevel> {
     this.#apply(before, before.mask, arrive(this.level.config, before));
   }
 
-  #apply(before: MaskState, mask: number, r: { state: MaskState; events: MaskEvent[] }): void {
+  /** followed: dotek zvýrazněného krystalu masky, tedy krok, který ukázka kroku ukázala. */
+  #apply(before: MaskState, mask: number, r: { state: MaskState; events: MaskEvent[] }, followed = false): void {
     if (r.events.length === 0) return;
     if (r.events.some((e) => e.type === 'step')) {
       this.hintLevel = 0;
       this.held = { task: shownTask(this.level.config, before), mask, done: true };
       this.hold();
+    } else if (followed) {
+      // Jeden krok na stisk (R2): další krystal masky ukáže až další stisk.
+      this.hintLevel = 2;
     }
     this.state = r.state;
     for (const event of r.events) this.emit({ kind: 'mask', event, state: r.state });

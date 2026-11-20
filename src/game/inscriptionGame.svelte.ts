@@ -19,7 +19,7 @@ import {
 import type { InscriptionLevel } from '../content/types';
 import { flipBit, isBitSet, maxValue } from '../core/bits';
 import { BaseGame, type GameEvent } from './baseGame.svelte.ts';
-import { readStep, valueStep } from './stepWords';
+import { glyphStep, readStep, valueStep } from './stepWords';
 
 /**
  * Jak dlouho musí krystaly při zápisu ukazovat typickou chybu, než ji Echo pojmenuje. Cestou
@@ -87,14 +87,20 @@ export class InscriptionGame extends BaseGame<InscriptionLevel> {
     return this.reading && this.hintLevel >= 3;
   }
 
-  /** Ukázka kroku s důvodem: při čtení které váhy sečíst, při zápisu kolik zbývá a jestli se váha vejde. */
+  /**
+   * Ukázka kroku s důvodem: při čtení které váhy sečíst, při zápisu kolik zbývá a jestli se váha
+   * vejde. Glyfy po čtveřicích (strany glyfu, váhy 8, 4, 2, 1), ne desítkovou hodnotou oktávy.
+   */
   get stepHint(): string | null {
     const task = this.task;
     if (this.phase !== 'play' || this.hintLevel < 3 || !task) return null;
     const cfg = this.level.config;
-    if (task.dir === 'read') return readStep(task.value, cfg.bits, cfg.radix === 16);
+    const glyphs = cfg.radix === 16;
+    if (task.dir === 'read') return glyphs ? glyphStep(task.value, cfg.bits) : readStep(task.value, cfg.bits);
     const bit = this.hintTarget;
-    return bit === null ? null : valueStep(task.value, bit, !isBitSet(this.state.mask, bit));
+    if (bit === null) return null;
+    const needed = !isBitSet(this.state.mask, bit);
+    return glyphs ? glyphStep(task.value, cfg.bits, { bit, needed }) : valueStep(task.value, bit, needed);
   }
 
   get canUndo(): boolean {
@@ -104,8 +110,9 @@ export class InscriptionGame extends BaseGame<InscriptionLevel> {
   toggle(bit: number): void {
     if (this.free) return this.#freeSet(flipBit(this.mask, bit));
     if (!this.writing) return;
+    const shown = this.hintTarget;
     const before = $state.snapshot(this.state) as InscriptionState;
-    this.#apply(toggleCrystal(this.level.config, before, bit), before);
+    this.#apply(toggleCrystal(this.level.config, before, bit), before, shown === bit);
   }
 
   confirm(): void {
@@ -172,7 +179,8 @@ export class InscriptionGame extends BaseGame<InscriptionLevel> {
     this.state = setDial(this.level.config, this.state, value);
   }
 
-  #apply(r: { state: InscriptionState; events: InscriptionEvent[] }, before: InscriptionState): void {
+  /** followed: dotek zvýrazněného krystalu, tedy krok, který ukázka kroku ukázala. */
+  #apply(r: { state: InscriptionState; events: InscriptionEvent[] }, before: InscriptionState, followed = false): void {
     if (r.events.length === 0) return;
     const advanced = r.events.some((e) => e.type === 'step');
     this.history = advanced || this.task?.dir !== 'write' ? [] : [...this.history, before];
@@ -180,6 +188,13 @@ export class InscriptionGame extends BaseGame<InscriptionLevel> {
     this.state = r.state;
     for (const event of r.events) this.emit({ kind: 'inscription', event, state: r.state });
     if (r.state.complete) this.solve();
+    if (followed && !advanced) {
+      // Jeden krok na stisk (R2): další krok ukáže až další stisk. Po kroku podle ukázky hra mlčí,
+      // rozpracovaný zápis není chyba.
+      clearTimeout(this.#slipTimer);
+      this.hintLevel = 2;
+      return;
+    }
     this.#watchSlip();
   }
 

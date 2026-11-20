@@ -5,8 +5,9 @@
 Zpráva shrnuje, co tři recenzenti našli ve všech 64 komnatách Světla & Stínu, které chyby ověřovatel potvrdil v kódu a co opravit nejdřív. Podrobné recenze leží ve složce `recenze/` vedle tohoto souboru, v souborech `<recenzent>-<patro>.md` (např. `didaktik-II.md`, `kritik-IV.md`).
 
 > **Stav oprav (verze 0.4.3 alpha):** ověřené nálezy z kapitol 2 a 2.1 jsou opravené. Vědomě zůstaly
-> D-I-28 (mrtvé třetí nápovědy), část D-I-02 u oltáře I-10 a titulek IV-10 Registr (K-IV-19). Kapitoly 4 až 6
-> jsou podklad pro další etapu oprav (PLAN.md, kap. 17).
+> D-I-28 (mrtvé třetí nápovědy), část D-I-02 u oltáře I-10 a titulek IV-10 Registr (K-IV-19); první dva řeší
+> balíky A a B (verze 0.4.4). Kapitoly 4 až 6
+> jsou podklad pro další etapu oprav (`PLAN-OPRAV.md`).
 
 ## 0. Jak jsme hráli
 

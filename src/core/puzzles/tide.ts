@@ -117,6 +117,14 @@ export function taskLimit(cfg: TideConfig, st: TideState): number | null {
   return distance(cfg, taskStart(cfg, st.step), cfg.tasks[st.step].target);
 }
 
+/** Vejde se nejkratší cesta k cíli do tahů, které Osud ještě dovolí? Mimo Váhy Osudu vždy. */
+export function pathFits(cfg: TideConfig, st: TideState): boolean {
+  const limit = taskLimit(cfg, st);
+  const target = currentTarget(cfg, st);
+  if (limit === null || target === null) return true;
+  return distance(cfg, st.value, target) <= limit - st.taskMoves;
+}
+
 /** Páka, kterou doporučí nápověda 3. stupně: první, která vede nejkratší cestou. */
 export function bestOp(cfg: TideConfig, st: TideState): TideOp | null {
   const target = currentTarget(cfg, st);

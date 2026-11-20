@@ -46,13 +46,13 @@ describe('II-13 Doplněk: replika „1101…“ sedí na první úlohu (D-II-26)
       tasks.slice(1).forEach((t) => {
         expect(t.start).not.toBe(3);
         expect(t.start).toBeGreaterThanOrEqual(1);
-        expect(t.start).toBeLessThanOrEqual(7);
+        expect(t.start).toBeLessThanOrEqual(6);
         others.add(t.start!);
       });
       expect(new Set(tasks.map((t) => t.start)).size).toBe(3);
     });
-    // Losování zůstalo: další úlohy berou všechna čísla do 7 kromě trojky.
-    expect([...others].sort()).toEqual([1, 2, 4, 5, 6, 7]);
+    // Losování zůstalo: další úlohy berou všechna čísla do 6 kromě trojky (sedmička obchází zkratku, D-II-28).
+    expect([...others].sort()).toEqual([1, 2, 4, 5, 6]);
   });
 
   it('replika po první úloze jmenuje právě její zápis (i ve vylosované komnatě)', () => {

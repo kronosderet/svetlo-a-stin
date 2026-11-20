@@ -43,8 +43,8 @@ export interface GateTask {
   reference?: Circuit;
   /** Zadání úlohy, když se liší od zadání komnaty (třeba zkoumání před stavbou). */
   say?: string;
-  /** Nápovědy úlohy, když se liší od nápověd komnaty (zkoumání nebo větvení mezi řetězy). */
-  hints?: [string, string, string];
+  /** Nápovědy úlohy, když se liší od nápověd komnaty (zkoumání nebo větvení mezi řetězy). Třetí jen u zkoumání. */
+  hints?: [string, string, string?];
 }
 
 export interface GateConfig {
@@ -245,6 +245,34 @@ export function solutions(task: GateTask): GateSolution[] {
   return out;
 }
 
+/** Řešení, ke kterému má hráč nejblíž (nejméně kamenů jinak); při shodě první nalezené. */
+export function nearestSolution(task: GateTask, st: GateState): GateSolution | null {
+  const slots = slotNodes(task.circuit);
+  const socks = sockets(task.circuit);
+  let best: GateSolution | null = null;
+  let bestDiff = Infinity;
+  for (const sol of solutions(task)) {
+    const diff =
+      slots.filter((s) => st.runes[s.id] !== sol.runes[s.id]).length + socks.filter((s) => st.wires[s.key] !== sol.wires[s.key]).length;
+    if (diff < bestDiff) {
+      bestDiff = diff;
+      best = sol;
+    }
+  }
+  return best;
+}
+
+/**
+ * Udělal tah krok, který ukazovala ukázka kroku? Pak se stupeň nápovědy vrátí na 2 a další krok
+ * ukáže až další stisk (jeden krok na stisk, R2). Hotový obvod posune dál Zkouška sama.
+ */
+export function hintDone(h: GateHint | null, st: GateState, events: GateEvent[]): boolean {
+  if (!h) return false;
+  if ('input' in h) return events.some((e) => e.type === 'input' && e.index === h.input);
+  if ('node' in h) return st.runes[h.node] === h.rune;
+  return st.wires[h.socket] === h.source;
+}
+
 /**
  * Nápověda 3. stupně: při zkoumání vstup, který vede k nevyzkoušené kombinaci;
  * při vkládání run kámen, který se liší od nejbližšího řešení (a runa, která do něj patří).
@@ -265,16 +293,7 @@ export function hint(cfg: GateConfig, st: GateState): GateHint | null {
   }
   const slots = slotNodes(task.circuit);
   const socks = sockets(task.circuit);
-  let best: GateSolution | null = null;
-  let bestDiff = Infinity;
-  for (const sol of solutions(task)) {
-    const diff =
-      slots.filter((s) => st.runes[s.id] !== sol.runes[s.id]).length + socks.filter((s) => st.wires[s.key] !== sol.wires[s.key]).length;
-    if (diff < bestDiff) {
-      bestDiff = diff;
-      best = sol;
-    }
-  }
+  const best = nearestSolution(task, st);
   if (!best) return null;
   const off = slots.find((s) => st.runes[s.id] !== best!.runes[s.id]);
   if (off) return { node: off.id, rune: best.runes[off.id] };

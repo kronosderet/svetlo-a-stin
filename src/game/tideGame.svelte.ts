@@ -4,6 +4,7 @@ import {
   currentTarget,
   initTide,
   par as computePar,
+  pathFits,
   pull as pullLever,
   taskLimit,
   taskStart,
@@ -85,14 +86,18 @@ export class TideGame extends BaseGame<TideLevel> {
     return taskLimit(this.level.config, this.state);
   }
 
-  /** Páka zvýrazněná nápovědou 3. stupně. */
+  /**
+   * Páka zvýrazněná nápovědou 3. stupně. Ve Vahách Osudu žádná, když se nejkratší cesta do zbylých
+   * tahů nevejde: misky se stejně vrátí a ukázka kroku řekne cestu od začátku zkoušky.
+   */
   get hintOp(): TideOp | null {
-    return this.playing && this.hintLevel >= 3 ? bestOp(this.level.config, this.state) : null;
+    if (!this.playing || this.hintLevel < 3 || !pathFits(this.level.config, this.state)) return null;
+    return bestOp(this.level.config, this.state);
   }
 
   /** Ukázka kroku s důvodem: nejkratší cesta k cíli a její první páka. */
   get stepHint(): string | null {
-    return this.hintOp ? tideStep(this.level.config, this.state) : null;
+    return this.playing && this.hintLevel >= 3 ? tideStep(this.level.config, this.state) : null;
   }
 
   /** Ve Vahách Osudu se tahy nevracejí. */
@@ -112,11 +117,14 @@ export class TideGame extends BaseGame<TideLevel> {
       return;
     }
     if (!this.playing) return;
+    const shown = this.hintOp;
     const before = $state.snapshot(this.state) as TideState;
     const { state, events } = pullLever(this.level.config, before, op);
     if (events.length === 0) return;
     const fresh = events.some((e) => e.type === 'step' || e.type === 'reset');
     this.history = fresh ? [] : [...this.history, before];
+    // Jeden krok na stisk (R2): po zvýrazněné páce ukáže další páku až další stisk (splněná zkouška nuluje níž).
+    if (shown === op) this.hintLevel = 2;
     const pulled = events[0].type === 'pull' ? events[0] : null;
     if (pulled) this.lastPull = { op, spill: pulled.spill, n: (this.lastPull?.n ?? 0) + 1 };
     for (const e of events) {
@@ -154,6 +162,8 @@ export class TideGame extends BaseGame<TideLevel> {
 
   undo(): void {
     if (!this.canUndo) return;
+    // Ukázka kroku bez páky poslala ke Zpět (k cíli cesta nevedla): jeden krok na stisk i tady (R2).
+    if (this.hintLevel >= 3 && !this.hintOp) this.hintLevel = 2;
     // Světlo se vrátí, ale tah pákou se do počtu tahů počítá dál.
     this.state = { ...this.history[this.history.length - 1], moves: this.state.moves };
     this.history = this.history.slice(0, -1);

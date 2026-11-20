@@ -59,6 +59,9 @@
     });
   });
 
+  /** Glyfy se čtou po čtveřicích: pod krystaly každé čtveřice váhy 8, 4, 2, 1, stejně jako v ukázce kroku. */
+  const weightOf = (i: number): number => (hex ? 2 ** (i % 4) : 2 ** i);
+
   function weightState(i: number): WeightState {
     if (settings.alwaysWeights || fadeWeights) return 'known';
     return game.hintWeights && isBitSet(game.mask, i) ? 'known' : 'hidden';
@@ -69,7 +72,7 @@
   }
 
   function crystalLabel(i: number, k: number): string {
-    const weight = weightState(i) === 'known' ? `, váha ${2 ** i}` : '';
+    const weight = weightState(i) === 'known' ? `, váha ${weightOf(i)}` : '';
     if (reading) return `Nápis, krystal ${k + 1} zleva: ${isBitSet(game.mask, i) ? 'světlo' : 'stín'}${weight}`;
     return `Krystal ${k + 1} zleva${weight}`;
   }
@@ -103,6 +106,7 @@
         {bits}
         mask={game.mask}
         {weightState}
+        {weightOf}
         {sizes}
         {digits}
         highlight={game.hintTarget}

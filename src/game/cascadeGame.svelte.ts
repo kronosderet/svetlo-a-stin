@@ -96,11 +96,14 @@ export class CascadeGame extends BaseGame<CascadeLevel> {
       return;
     }
     if (!this.playing) return;
+    const shown = this.hintCell;
     const before = $state.snapshot(this.state) as CascadeState;
     const r = toggleCell(this.level.config, before, cell);
     if (r.events.length === 0) return;
     if (r.events.some((e) => e.type === 'refuse')) return this.#refuse(cell, this.state);
     this.history = [...this.history, before];
+    // Jeden krok na stisk (R2): po doteku zvýrazněného krystalu ukáže další krok až další stisk.
+    if (shown && shown.row === cell.row && shown.column === cell.column) this.hintLevel = 2;
     this.#apply(r.state, r.events);
   }
 

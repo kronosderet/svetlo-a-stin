@@ -62,6 +62,8 @@ export interface CascadeState {
   mistakes: number;
   /** Buňka, kterou označilo poslední chybné potvrzení. Smaže ji další dotek. */
   wrong: CascadeCell | null;
+  /** Buňky („řádek:sloupec“), u kterých potvrzení v této úloze už jednou neprošlo. */
+  missed: string[];
   complete: boolean;
 }
 
@@ -70,8 +72,11 @@ export type CascadeEvent =
   | { type: 'toggle'; cell: CascadeCell; on: boolean; dropped?: CascadeCell[] }
   /** Zachování světla: krystal se nerozsvítil, protože do něj nemá odkud přitéct světlo. */
   | { type: 'refuse'; cell: CascadeCell }
-  /** inflow = kolik světla se ve sloupci slévá (u přenosu: ve sloupci vpravo, odkud přenos teče). */
-  | { type: 'wrong'; cell: CascadeCell; expected: boolean; inflow: number }
+  /**
+   * inflow = kolik světla se ve sloupci slévá (u přenosu: ve sloupci vpravo, odkud přenos teče).
+   * again = tatáž buňka neprošla už podruhé: hláška pak řekne konkrétní krystal, poprvé se jen ptá.
+   */
+  | { type: 'wrong'; cell: CascadeCell; expected: boolean; inflow: number; again?: boolean }
   | { type: 'step'; index: number; task: CascadeTask; result: number }
   | { type: 'complete' };
 
@@ -195,7 +200,7 @@ export function farColumns(cfg: CascadeConfig): number[] {
 }
 
 export function initCascade(cfg?: CascadeConfig): CascadeState {
-  return { step: 0, result: 0, ...preset(cfg, 0), far: 0, copies: 0, moves: 0, mistakes: 0, wrong: null, complete: false };
+  return { step: 0, result: 0, ...preset(cfg, 0), far: 0, copies: 0, moves: 0, mistakes: 0, wrong: null, missed: [], complete: false };
 }
 
 /** Přenosy na začátku úlohy: u ukázkové úlohy hotové, jinak žádné. */
@@ -364,9 +369,12 @@ export function confirm(cfg: CascadeConfig, st: CascadeState): Result {
     // U přenosu se počítá světlo ve sloupci, odkud přenos teče.
     const source = { result: 0, carry: 1, far: 2, copy: 0 }[wrong.row];
     const inflow = wrong.row === 'copy' ? 0 : ans.inflow[wrong.column - source];
+    // Chyby se počítají na buňku: poprvé hláška jen ptá, podruhé ve stejné buňce řekne krystal.
+    const key = cellKey(wrong);
+    const again = st.missed.includes(key);
     return {
-      state: { ...st, moves, mistakes: st.mistakes + 1, wrong },
-      events: [{ type: 'wrong', cell: wrong, expected, inflow }],
+      state: { ...st, moves, mistakes: st.mistakes + 1, wrong, missed: again ? st.missed : [...st.missed, key] },
+      events: [again ? { type: 'wrong', cell: wrong, expected, inflow, again } : { type: 'wrong', cell: wrong, expected, inflow }],
     };
   }
 
@@ -376,9 +384,9 @@ export function confirm(cfg: CascadeConfig, st: CascadeState): Result {
   if (complete) {
     events.push({ type: 'complete' });
     // Poslední výsledek zůstává rozsvícený (kvíz, závěrečná obrazovka).
-    return { state: { ...st, step, moves, wrong: null, complete }, events };
+    return { state: { ...st, step, moves, wrong: null, missed: [], complete }, events };
   }
-  return { state: { ...st, step, moves, result: 0, ...preset(cfg, step), far: 0, copies: 0, wrong: null, complete }, events };
+  return { state: { ...st, step, moves, result: 0, ...preset(cfg, step), far: 0, copies: 0, wrong: null, missed: [], complete }, events };
 }
 
 /** Ideál: každý výsledek napoprvé. */

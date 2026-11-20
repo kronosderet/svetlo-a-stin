@@ -102,7 +102,8 @@ export class TableGame extends BaseGame<TableLevel> {
       return;
     }
     if (!this.playing) return;
-    this.#apply(flipCell(this.level.config, $state.snapshot(this.state) as TableState, row));
+    const shown = this.hintTarget;
+    this.#apply(flipCell(this.level.config, $state.snapshot(this.state) as TableState, row), !!shown && 'row' in shown && shown.row === row);
   }
 
   confirm(): void {
@@ -115,13 +116,17 @@ export class TableGame extends BaseGame<TableLevel> {
     this.#apply(pickRune(this.level.config, $state.snapshot(this.state) as TableState, rune));
   }
 
-  #apply(r: { state: TableState; events: TableEvent[] }): void {
+  /** followed: dotek zvýrazněného řádku, tedy krok, který ukázka kroku ukázala. */
+  #apply(r: { state: TableState; events: TableEvent[] }, followed = false): void {
     if (r.events.length === 0) return;
     if (r.events.some((e) => e.type === 'step')) {
       this.hintLevel = 0;
       const before = this.state;
       this.held = { task: shownTask(this.level.config, before), cells: before.cells, wrongRow: null, wrongPicks: before.wrongPicks, revealed: true };
       this.hold();
+    } else if (followed) {
+      // Jeden krok na stisk (R2): další nesedící řádek ukáže až další stisk.
+      this.hintLevel = 2;
     }
     this.state = r.state;
     for (const event of r.events) this.emit({ kind: 'table', event, state: r.state });

@@ -1,6 +1,9 @@
 import type { TideEvent, TideOp, TideState } from '../../../core/puzzles/tide';
 import * as sound from '../../../audio/sound';
-import { sayComplete, type LevelCtx } from './context';
+import { sayComplete, type LevelCtx, type SaidFlags } from './context';
+
+/** Části, ve kterých Echo už řeklo repliku o +1 z jedničky (ctx.said se s každou částí založí znovu). */
+const toldIncFromOne = new WeakSet<SaidFlags>();
 
 const LEVER_NAME: Record<TideOp, string> = {
   shl: 'Posun vlevo',
@@ -31,6 +34,11 @@ export function onTide(ctx: LevelCtx, ev: TideEvent, state: TideState): void {
       if (lost && !ctx.said.spill && level.echo.spill) {
         ctx.echo.say([level.echo.spill]);
         ctx.said.spill = true;
+      }
+      // Zdvojení: z jedničky dá +1 totéž co ×2 a zápisník by pak nekopíroval zápis cíle.
+      if (ev.op === 'inc' && ev.from === 1 && !state.complete && level.echo.incFromOne && !toldIncFromOne.has(ctx.said)) {
+        ctx.echo.say([level.echo.incFromOne]);
+        toldIncFromOne.add(ctx.said);
       }
       ctx.announce(`${LEVER_NAME[ev.op]}. Světlo váží ${ev.to}.${lost ? ' Jedno světlo spadlo přes okraj.' : ''}`);
       break;

@@ -63,6 +63,23 @@ export function routeTasks(order: number[], swap: boolean): MachineTask[] {
   ];
 }
 
+/**
+ * Nápovědy porovnávače podle jména lampy. Platí v IV-4 i v bráně IV-7, kde se „stejné“ a „různé“
+ * losuje. Kdo postaví přesně to, co říká nápověda 2, projde Zkouškou. Třetí text nemají: krok
+ * s větou dá ukázka kroku.
+ */
+export function compareHints(same: boolean): [string, string] {
+  return same
+    ? [
+        'Lampa se jmenuje „stejné“. Porovnávej po sloupcích: jsou krystaly A a B v jednom sloupci stejné?',
+        'Rovnost svítí, když jsou oba krystaly stejné. Čísla jsou stejná, když se shodne každý sloupec, a to pohlídá Pouto.',
+      ]
+    : [
+        'Lampa se jmenuje „různé“. Kdy se liší dvě čísla? Musí se lišit každý sloupec, nebo stačí jeden?',
+        'Výluka svítí ve sloupci, kde se krystaly liší. Lampa má svítit, když se liší aspoň jeden sloupec, a to pohlídá Rozcestí.',
+      ];
+}
+
 export function compareTask(same: boolean): MachineTask {
   const machine = compare2(['xor', 'xnor'], ['and', 'or'], same ? 'stejné' : 'různé');
   return {
@@ -71,6 +88,7 @@ export function compareTask(same: boolean): MachineTask {
     machine,
     target: compareTarget(machine, 2, same),
     rule: same ? 'Lampa svítí, když A = B.' : 'Lampa svítí, když se A a B liší.',
+    hints: compareHints(same),
   };
 }
 
@@ -102,6 +120,22 @@ export function shiftTask(dir: 'left' | 'right'): MachineTask {
   };
 }
 
+/**
+ * Nápovědy odčítačky podle úlohy. Doplněk zavádí nepovinná II-13, nápověda 1 ho proto odvodí
+ * sama. Nápověda 2 dá princip a otázku, ve druhé úloze ale tak, aby stavba podle ní prošla.
+ */
+export function subtractHints(mode: 'invert' | 'switch'): [string, string] {
+  return mode === 'invert'
+    ? [
+        'Odečíst B je totéž jako přičíst převrácené B a jedničku. Třeba 3 − 2: převrácené 010 je 101, tedy 5. 3 + 5 + 1 = 9, osmička přeteče a lampy ukážou 1.',
+        'Kde na desce teče převrácené B? A jednička navíc má váhu 1: kterým vstupem nejlehčí sčítačky může přitéct?',
+      ]
+    : [
+        'Teď rozhoduje M: když mlčí, stroj sčítá, když svítí, odčítá. Prázdný kámen nad každou sčítačkou bere B i M.',
+        'Co dá Výluka s M, když M mlčí, a co, když svítí? A jednička navíc má do nejlehčího sloupce přitéct jen při odčítání.',
+      ];
+}
+
 export function subtractTask(mode: 'invert' | 'switch'): MachineTask {
   const machine = mode === 'invert' ? subtractor('invert', [SHADOW, LIGHT]) : subtractor('switch', [SHADOW, LIGHT, 'M']);
   return {
@@ -118,6 +152,7 @@ export function subtractTask(mode: 'invert' | 'switch'): MachineTask {
       mode === 'invert'
         ? 'Lampy mají ukázat A − B. Záporný výsledek se přetočí dokola: −1 je 7, −2 je 6.'
         : 'Když M mlčí, lampy ukazují A + B. Když svítí, A − B. Přes 7 a pod 0 se výsledek přetočí: 7 + 1 je 0, 0 − 1 je 7.',
+    hints: subtractHints(mode),
   };
 }
 

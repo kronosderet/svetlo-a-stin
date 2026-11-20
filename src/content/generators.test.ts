@@ -40,10 +40,12 @@ describe('losované úlohy sedí na repliky Echa', () => {
     });
   });
 
-  it('I-8: čtvrtý cíl potřebuje pátý krystal', () => {
+  it('I-8: pátý krystal potřebuje až čtvrtý cíl, po zmizení součtu (nález kontroly 0.4.4)', () => {
     forSeeds((s) => {
       const goal = genI8(seeded(s)).goal;
-      expect(goal.kind === 'value' && goal.targets[3]).toBeGreaterThanOrEqual(16);
+      if (goal.kind !== 'value') throw new Error('I-8');
+      expect(goal.targets[3]).toBeGreaterThanOrEqual(16);
+      expect(goal.targets.slice(0, 3).every((v) => v < 16), goal.targets.join(', ')).toBe(true);
     });
   });
 

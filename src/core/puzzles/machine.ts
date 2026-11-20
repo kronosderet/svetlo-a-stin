@@ -122,6 +122,8 @@ export interface MachineTask {
   rule?: string;
   /** Zadání úlohy, když se liší od zadání komnaty. */
   say?: string;
+  /** Nápovědy úlohy, když se liší od nápověd komnaty (druhá úloha chce jinou stavbu než první). Třetí jen u zkoumání a cílů. */
+  hints?: [string, string, string?];
   /** Druh stroje (rozdělovač, výhybka…): zkouška navíc v bráně přidá úlohu stejného druhu. */
   kind?: string;
 }
@@ -173,6 +175,8 @@ export type MachineEvent =
   | { type: 'rune'; node: string; rune: Rune }
   | { type: 'wire'; key: string; source: string }
   | { type: 'wrong'; failure: Failure }
+  /** Od tmy: vstupy zhasly a paměť začíná jako při Zkoušce. */
+  | { type: 'dark' }
   | { type: 'step'; index: number }
   | { type: 'complete' };
 
@@ -526,7 +530,7 @@ export function examine(task: MachineTask, runes: Record<string, Rune>, wires: R
     first ??= { at, count: 0, lamps, empty, shown };
   };
   if (task.script) {
-    let memory: Record<string, number> = memoryOf(m, settle(m, runes, wires, 0, {}));
+    let memory: Record<string, number> = memoryOf(m, fromDarkness(m, runes, wires));
     task.script.forEach((step, k) => {
       if (quick && first) return;
       const row = rowOf(m, step.set);
@@ -547,6 +551,25 @@ export function examine(task: MachineTask, runes: Record<string, Rune>, wires: R
     }
   }
   return first ? { ...(first as Failure), count } : null;
+}
+
+/** Stroj ustálený z úplné tmy se všemi vstupy ve stínu: tak začíná zkouška paměti. */
+function fromDarkness(m: Machine, runes: Record<string, Rune>, wires: Record<string, string>): Settled {
+  return settle(m, runes, wires, 0, {});
+}
+
+/**
+ * Od tmy: vstupy zhasnou a paměť začne stejně jako při Zkoušce, takže hráč může projít kroky
+ * zkoušky paměti sám. Jen u úloh se zkušební posloupností. Není to tah a kameny zůstanou.
+ */
+export function fromDark(cfg: MachineConfig, st: MachineState): Result {
+  const task = currentTask(cfg, st);
+  if (task?.mode !== 'build' || !task.script) return { state: st, events: [] };
+  const s = fromDarkness(task.machine, st.runes, st.wires);
+  return {
+    state: { ...st, inputs: 0, memory: memoryOf(task.machine, s), restless: !s.stable },
+    events: [{ type: 'dark' }],
+  };
 }
 
 /** Zkouška: stroj projde všechny kombinace (nebo zkušební posloupnost). Každá Zkouška je jeden tah. */
@@ -706,6 +729,20 @@ export function hint(cfg: MachineConfig, st: MachineState): MachineHint | null {
     const path = goal ? pathToGoal(task, goal, st) : null;
     return path?.[0] ?? null;
   }
+  const best = nearestSolution(task, st);
+  if (!best) return null;
+  const off = slotNodes(task.machine).find((s) => st.runes[s.id] !== best.runes[s.id]);
+  if (off) return { node: off.id, rune: best.runes[off.id] };
+  const sock = sockets(task.machine).find((s) => st.wires[s.key] !== best.wires[s.key]);
+  return sock ? { socket: sock.key, source: best.wires[sock.key] } : null;
+}
+
+/**
+ * Řešení stavby, které se od desky liší nejméně kameny. K němu míří ukázka kroku, a podle něj
+ * se popisuje i důvod: co teče do kamene, odkud má světlo téct (ne podle desky, kde může být
+ * jiný točitý kámen ještě natočený špatně).
+ */
+export function nearestSolution(task: MachineTask, st: Pick<MachineState, 'runes' | 'wires'>): MachineSolution | null {
   const slots = slotNodes(task.machine);
   const socks = sockets(task.machine);
   let best: MachineSolution | null = null;
@@ -718,11 +755,21 @@ export function hint(cfg: MachineConfig, st: MachineState): MachineHint | null {
       best = sol;
     }
   }
-  if (!best) return null;
-  const off = slots.find((s) => st.runes[s.id] !== best!.runes[s.id]);
-  if (off) return { node: off.id, rune: best.runes[off.id] };
-  const sock = socks.find((s) => st.wires[s.key] !== best!.wires[s.key]);
-  return sock ? { socket: sock.key, source: best.wires[sock.key] } : null;
+  return best;
+}
+
+/**
+ * Provedl tah krok, který ukázka kroku ukázala? Pak se nápověda vrátí na 2. stupeň a další krok
+ * ukáže až další stisk (jeden krok na stisk). Mezikroky, třeba runy cestou k té ukázané, se nepočítají.
+ */
+export function hintFollowed(h: MachineHint | null, events: MachineEvent[]): boolean {
+  if (!h) return false;
+  return events.some((e) => {
+    if ('input' in h) return e.type === 'input' && e.index === h.input;
+    if ('pulse' in h) return e.type === 'pulse';
+    if ('node' in h) return e.type === 'rune' && e.node === h.node && e.rune === h.rune;
+    return e.type === 'wire' && e.key === h.socket && e.source === h.source;
+  });
 }
 
 /* ───────────── pomůcky pro obsah ───────────── */

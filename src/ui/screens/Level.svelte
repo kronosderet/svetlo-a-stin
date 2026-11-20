@@ -302,8 +302,8 @@
   }
 
   /**
-   * „Desku znám“ (III-2 až III-4): kdo zákon runy zná, smí zkoumání přeskočit. Desku pak vyplní
-   * zpaměti, s lampou pod závojem, takže ji nemůže opsat z obvodu.
+   * „Desku znám“ (příznak knownBoard, jen III-2 až III-4): kdo zákon runy zná, smí zkoumání přeskočit.
+   * Desku pak vyplní zpaměti, s lampou pod závojem, takže ji nemůže opsat z obvodu.
    */
   let knownBoard = false;
   const canKnow = $derived(
@@ -311,6 +311,8 @@
       game.phase === 'play' &&
       game.kind === 'gate' &&
       level.kind === 'gate' &&
+      !!level.presentation.knownBoard &&
+      (level.presentation.knownBoard === true || progress.kodex.includes(level.presentation.knownBoard.kodex)) &&
       level.config.tasks.every((t) => t.mode === 'explore') &&
       parts[partIndex + 1]?.kind === 'table',
   );
@@ -464,9 +466,14 @@
         const step = e.level >= 3 ? stepText : null;
         if (step) saidStep = step;
         // Úloha Brány může mít vlastní nápovědy (zkoumání nebo větvení uprostřed komnaty s řetězy).
-        const hints = ('taskHints' in game && game.taskHints) || level.hints;
-        const text = (step ?? hints[e.level - 1]) + (e.extra ? ' Na konec pak přibude ještě jedna podobná zkouška, tu zkus bez ukázky.' : '');
+        const hints: readonly (string | undefined)[] = ('taskHints' in game && game.taskHints) || level.hints;
+        // Třetí text mají jen komnaty, kde ukázka kroku nemusí mít vlastní větu. Kde chybí, ukázka
+        // kroku jen zvýrazní a větu řekne, jakmile ji má (třeba po pauze se splněnou úlohou).
+        const said = step ?? hints[e.level - 1];
+        const extra = e.extra ? 'Na konec pak přibude ještě jedna podobná zkouška, tu zkus bez ukázky.' : '';
         recordHint(room.id, e.level >= 3);
+        if (!said && !extra) break;
+        const text = said && extra ? `${said} ${extra}` : said || extra;
         echo.say([text], 'hint');
         announce(`Nápověda ${e.level}: ${plainText(text, known)}`);
         break;
@@ -701,12 +708,15 @@
         Pokračovat <Icon name="check" />
       </button>
     {:else}
+      <!-- Na 3/3 jen aria-disabled (useHint stupeň 3 sám ignoruje): fokus zůstane na tlačítku, i když
+           se po kroku podle ukázky stupeň vrátí na 2 a další krok chce další stisk (R2). -->
       <button
         type="button"
         class="btn btn-ghost hint-btn"
         class:nudge={nudgeHint && game.hintLevel === 0 && game.phase === 'play'}
         onclick={() => game.useHint()}
-        disabled={game.phase !== 'play' || game.hintLevel >= 3}
+        disabled={game.phase !== 'play'}
+        aria-disabled={game.hintLevel >= 3 ? 'true' : undefined}
         title="Nápověda (H)"
       >
         <Icon name="hint" /> Nápověda <span class="count">{game.hintLevel}/3</span>

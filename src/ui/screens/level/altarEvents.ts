@@ -1,5 +1,6 @@
 import type { AltarEvent, AltarState } from '../../../core/puzzles/altar';
 import type { Echo } from '../../../game/echo.svelte.ts';
+import { foundLine, resetLine, sumShown } from '../../../game/altarWords';
 import * as sound from '../../../audio/sound';
 import { sayComplete, type LevelCtx } from './context';
 
@@ -21,7 +22,8 @@ export function onAltar(ctx: LevelCtx, ev: AltarEvent, state: AltarState): void 
       deducedBy = null;
       sound.playBit(ev.bit, ev.on);
       let msg = `Krystal ${bits - ev.bit} zleva ${ev.on ? 'rozsvícen' : 'zhasnut'}.`;
-      if (level.presentation.showSum) msg += ` Světlo váží ${state.mask}.`;
+      // Součet jen tam, kde je i na obrazovce (ve Skrytých váhách po dvou cílech zmizí).
+      if (sumShown(level.presentation, state.step)) msg += ` Světlo váží ${state.mask}.`;
       ctx.announce(msg);
       break;
     }
@@ -43,11 +45,14 @@ export function onAltar(ctx: LevelCtx, ev: AltarEvent, state: AltarState): void 
     case 'found': {
       sound.playChord(ev.pattern, bits, 0.08);
       ctx.stepFx('.niche.current', '.row');
-      const line = level.echo.found?.[ev.count];
+      const line = foundLine(cfg, state.found, level.echo.found?.[ev.count]);
       if (line) ctx.echo.say([line]);
       ctx.announce(`Nová kombinace. Nalezeno ${ev.count} z ${2 ** bits}.`);
       break;
     }
+    case 'slip':
+      // Zbytečné doteky jen rozzáří Nápovědu (počítá je obrazovka komnaty).
+      break;
     case 'repeat':
       if (cfg.strict) return;
       sound.playSoft();
@@ -57,12 +62,14 @@ export function onAltar(ctx: LevelCtx, ev: AltarEvent, state: AltarState): void 
         ctx.said.repeat = true;
       }
       break;
-    case 'reset':
+    case 'reset': {
       // Tichý krok se přerušil: deska se vymaže a krystaly zhasnou.
       ctx.failFx('.registry', '.row');
-      if (level.echo.reset) ctx.echo.say([level.echo.reset]);
+      const line = resetLine(level.echo.reset, ev.deadEnd);
+      if (line) ctx.echo.say([line]);
       ctx.announce('Tahle kombinace už na desce byla. Tichý krok se přerušil, deska je prázdná a krystaly jsou zpátky na začátku.');
       break;
+    }
     case 'step': {
       sound.playChord(ev.target, bits, 0.1);
       if (counter) sound.playCarve();

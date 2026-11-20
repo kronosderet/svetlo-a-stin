@@ -1,9 +1,12 @@
 import type { Rune } from '../core/logic';
 import {
   currentTask,
+  fromDark,
   hasPulse,
   hint,
+  hintFollowed,
   initMachine,
+  nearestSolution,
   nextRune,
   nextSource,
   par as computePar,
@@ -23,9 +26,8 @@ import {
   type MachineTask,
 } from '../core/puzzles/machine';
 import type { MachineLevel } from '../content/types';
-import { RUNE_NAME, RUNE_RULE } from '../content/runes';
 import { BaseGame, type GameEvent } from './baseGame.svelte.ts';
-import { fromWords } from './machineWords';
+import { buildStepWords } from './machineWords';
 
 export interface MachineView {
   task: MachineTask;
@@ -87,23 +89,27 @@ export class MachineGame extends BaseGame<MachineLevel> {
     return hasPulse(this.view.task.machine);
   }
 
+  /** Nápovědy aktuální úlohy, když má vlastní (druhá úloha chce jinou stavbu); jinak null. Třetí jen u zkoumání a cílů. */
+  get taskHints(): readonly (string | undefined)[] | null {
+    return currentTask(this.level.config, this.state)?.hints ?? null;
+  }
+
   get hintTarget(): ReturnType<typeof hint> {
     return this.playing && this.hintLevel >= 3 ? hint(this.level.config, this.state) : null;
   }
 
   /**
    * Ukázka kroku slovy při stavbě: jaká runa patří do zvýrazněného kamene a proč, kam natočit
-   * točitý kámen, nebo že je stroj hotový a zbývá Zkouška. Jinde platí nápověda komnaty.
+   * točitý kámen a co z toho místa teče, nebo že je stroj hotový a zbývá Zkouška. Jinde platí
+   * nápověda komnaty. Co teče do kamene, odkud má světlo téct, se popisuje podle řešení, ke kterému
+   * ukázka míří: jiný točitý kámen může být na desce ještě natočený špatně.
    */
   get stepHint(): string | null {
     if (!this.playing || this.hintLevel < 3) return null;
     const task = currentTask(this.level.config, this.state);
     if (task?.mode !== 'build') return null;
-    const h = hint(this.level.config, this.state);
-    if (!h) return 'Stroj je hotový. Spusť Zkoušku.';
-    if ('node' in h) return `Do zvýrazněného kamene patří ${RUNE_NAME[h.rune]}: ${RUNE_RULE[h.rune]}.`;
-    if ('socket' in h) return `Zvýrazněný točitý kámen natoč tak, aby světlo teklo ${fromWords(task.machine, h.source)}.`;
-    return null;
+    const sol = nearestSolution(task, this.state);
+    return buildStepWords(task.machine, hint(this.level.config, this.state), sol?.runes ?? this.state.runes, sol?.wires ?? this.state.wires);
   }
 
   /** Stavba je hotová a ukázka kroku ukazuje na Zkoušku. */
@@ -216,6 +222,20 @@ export class MachineGame extends BaseGame<MachineLevel> {
     this.#apply(beatOnce(this.level.config, $state.snapshot(this.state) as MachineState));
   }
 
+  /** Od tmy: vstupy zhasnou a paměť začne jako při Zkoušce. Není to tah, kameny ani chyba se nesmažou. */
+  resetMemory(): void {
+    if (this.free) {
+      const r = fromDark({ tasks: [this.#liveTask] }, { ...($state.snapshot(this.state) as MachineState), step: 0, complete: false });
+      if (!r.events.length) return;
+      const { inputs, memory, restless } = r.state;
+      this.state = { ...this.state, inputs, memory, restless };
+      for (const event of r.events) this.emit({ kind: 'machine', event, state: this.state });
+      return;
+    }
+    if (!this.playing) return;
+    this.#apply(fromDark(this.level.config, $state.snapshot(this.state) as MachineState));
+  }
+
   cycleRune(node: string): void {
     if (this.free) {
       const rune = nextRune(this.#liveTask, this.state, node);
@@ -267,6 +287,8 @@ export class MachineGame extends BaseGame<MachineLevel> {
 
   #apply(r: { state: MachineState; events: MachineEvent[] }): void {
     if (r.events.length === 0) return;
+    // Jeden krok na stisk: po kroku, který ukázka ukázala, další krok ukáže až další stisk nápovědy.
+    if (this.hintLevel >= 3 && hintFollowed(this.hintTarget, r.events)) this.hintLevel = 2;
     if (r.events.some((e) => e.type === 'goal')) this.hintLevel = 0;
     if (r.events.some((e) => e.type === 'step')) {
       this.hintLevel = 0;

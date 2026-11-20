@@ -137,9 +137,10 @@ export function par(cfg: InscriptionConfig): number {
  *  - nibbles: dvojznak, v němž je zrcadlově každá čtveřice zvlášť (glyfy na svém místě),
  *  - mirror:  nápis čtený zrcadlově (nejlehčí krystal vlevo),
  *  - count:   hráč spočítal svítící krystaly místo jejich vah (jen čtení),
+ *  - decimal: na glyfových kotoučích je desítkový zápis hodnoty (3C = 60 → kotouče 6 a 0, jen čtení),
  *  - one:     liší se jediný krystal (weight = jeho váha).
  */
-export type ReadSlip = { kind: 'swap' | 'nibbles' | 'mirror' | 'count' } | { kind: 'one'; weight: number };
+export type ReadSlip = { kind: 'swap' | 'nibbles' | 'mirror' | 'count' | 'decimal' } | { kind: 'one'; weight: number };
 
 /** Zrcadlový obraz nápisu: krystal i se přesune na místo bits − 1 − i. */
 export function mirrored(value: number, bits: number): number {
@@ -163,12 +164,27 @@ function directionSlip(cfg: InscriptionConfig, guess: number, value: number): Re
   return null;
 }
 
+/**
+ * Glyfové kotouče ukazují desítkový zápis hodnoty: 3C = 60 → kotouče 6 a 0. Co se na kotouče
+ * nevejde (A5 = 165, u jednoho glyfu B = 11), z toho zbudou poslední číslice, jak je nechá
+ * psaní na klávesnici (65, 1). Kotouče na nule jsou jako nenastavené, ty se za zápis nepočítají.
+ * U C a D (12 → 2, 13 → 3) se poslední číslice rovná i počtu světel: readSlip pak vrátí count
+ * a věta (readSlipLine) pokryje obojí.
+ */
+export function decimalOnDials(cfg: InscriptionConfig, guess: number, value: number): boolean {
+  if (cfg.radix !== 16 || value < 10 || guess === 0) return false;
+  const wheels = dialWheels(cfg.bits, 16);
+  const shown = guess.toString(16).padStart(wheels, '0');
+  return /^\d+$/.test(shown) && shown === String(value).padStart(wheels, '0').slice(-wheels);
+}
+
 /** Pozná typickou chybu čtení, nebo vrátí null (chyba bez jména, nebo žádná). */
 export function readSlip(cfg: InscriptionConfig, guess: number, value: number): ReadSlip | null {
   if (guess === value || guess < 0 || guess > maxValue(cfg.bits)) return null;
   const dir = directionSlip(cfg, guess, value);
   if (dir) return dir;
   if (guess === popcount(value)) return { kind: 'count' };
+  if (decimalOnDials(cfg, guess, value)) return { kind: 'decimal' };
   const diff = guess ^ value;
   if (popcount(diff) === 1) return { kind: 'one', weight: diff };
   return null;

@@ -104,8 +104,9 @@
    * Světla se přesouvají podle toho, co hráč rozsvítil (lightFlow): do krystalu výsledku sjede
    * nejspodnější světlo sloupce, do krystalu přenosu odletí dvě světla shora, u odčítání se menšitel
    * vyruší a soused půjčuje. Světlo, které odešlo, ve sloupci pohasne a jeho kopie dolétne do cíle.
+   * Brána (bez zachování světla) ukáže tok až po přijatém výsledku: let by jinak prozradil, co sedí.
    */
-  const flow = $derived(lightFlow(cfg, task, view));
+  const flow = $derived(cfg.conserve || game.holding || game.phase !== 'play' ? lightFlow(cfg, task, view) : []);
   const srcKey = (f: FlowSource): string =>
     f.kind === 'line' ? `line:${f.row}:${f.column}` : f.kind === 'loan' ? `loan:${f.column}:${f.k}` : `${f.kind}:${f.column}`;
   const sinkKey = (t: FlowSink): string => `${t.kind}:${t.column}`;

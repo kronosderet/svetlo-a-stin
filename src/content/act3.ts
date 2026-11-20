@@ -1,7 +1,6 @@
 import { runeTable } from '../core/logic';
 import {
   EXPLORE_HINTS,
-  SLOT_HINT,
   branch,
   branchTask,
   chain,
@@ -103,7 +102,6 @@ const levels: LevelDef[] = [
     hints: [
       'Dotkni se prázdného kamene: runy se v něm střídají. Pak přepni vstup a sleduj lampu.',
       'Průchod pustí světlo, jak přišlo. Obraceč ho obrátí: ze světla udělá stín a ze stínu světlo.',
-      SLOT_HINT,
     ],
     echo: {
       intro: [
@@ -142,7 +140,7 @@ const levels: LevelDef[] = [
         title: 'Zkoumání',
         kind: 'gate',
         config: { tasks: [{ mode: 'explore', circuit: single('and') }] },
-        presentation: { task: 'Přepínej vstupy A a B a vyzkoušej všechny čtyři kombinace. Kdy lampa svítí?', showDigits: true, showSum: false, sizes: 'equal', ledger: false },
+        presentation: { task: 'Přepínej vstupy A a B a vyzkoušej všechny čtyři kombinace. Kdy lampa svítí?', showDigits: true, showSum: false, sizes: 'equal', ledger: false, knownBoard: true },
         hints: EXPLORE_HINTS,
         echo: {
           intro: ['Přepínej A a B a sleduj, kdy světlo dorazí k lampě.'],
@@ -159,7 +157,6 @@ const levels: LevelDef[] = [
         hints: [
           'Každý řádek desky je jedna kombinace vstupů. Ve kterém svítila lampa?',
           'Pouto pustilo světlo jen jednou: když svítily oba vstupy, tedy v řádku 1 1.',
-          'Zvýrazněná buňka nesedí.',
         ],
         echo: {
           intro: ['Deska zákona: pro každou kombinaci vstupů jeden řádek.'],
@@ -196,7 +193,7 @@ const levels: LevelDef[] = [
         title: 'Zkoumání',
         kind: 'gate',
         config: { tasks: [{ mode: 'explore', circuit: single('or') }] },
-        presentation: { task: 'Přepínej vstupy A a B a vyzkoušej všechny čtyři kombinace. Kdy lampa svítí?', showDigits: true, showSum: false, sizes: 'equal', ledger: false },
+        presentation: { task: 'Přepínej vstupy A a B a vyzkoušej všechny čtyři kombinace. Kdy lampa svítí?', showDigits: true, showSum: false, sizes: 'equal', ledger: false, knownBoard: true },
         hints: EXPLORE_HINTS,
         echo: {
           intro: ['Zkus všechny kombinace. Kdy zůstane lampa tmavá?'],
@@ -213,7 +210,6 @@ const levels: LevelDef[] = [
         hints: [
           'Ve kterých řádcích lampa svítila?',
           'Rozcestí mlčelo jen tehdy, když mlčely oba vstupy, tedy v řádku 0 0.',
-          'Zvýrazněná buňka nesedí.',
         ],
         echo: {
           intro: ['A teď deska zákona Rozcestí.'],
@@ -260,7 +256,7 @@ const levels: LevelDef[] = [
         title: 'Zkoumání',
         kind: 'gate',
         config: { tasks: [{ mode: 'explore', circuit: single('xor') }] },
-        presentation: { task: 'Přepínej vstupy A a B a vyzkoušej všechny čtyři kombinace. Kdy lampa svítí?', showDigits: true, showSum: false, sizes: 'equal', ledger: false },
+        presentation: { task: 'Přepínej vstupy A a B a vyzkoušej všechny čtyři kombinace. Kdy lampa svítí?', showDigits: true, showSum: false, sizes: 'equal', ledger: false, knownBoard: true },
         hints: EXPLORE_HINTS,
         echo: {
           intro: ['Zkus všechny kombinace. Co udělá runa se dvěma světly?'],
@@ -277,7 +273,6 @@ const levels: LevelDef[] = [
         hints: [
           'Ve kterých řádcích lampa svítila?',
           'Výluka svítí, když svítí právě jeden vstup: v řádcích 0 1 a 1 0.',
-          'Zvýrazněná buňka nesedí.',
         ],
         echo: {
           intro: ['Deska zákona Výluky.'],
@@ -311,25 +306,27 @@ const levels: LevelDef[] = [
     kind: 'table',
     config: {
       tasks: [
+        // Poznávané runy se losují nezávisle (poslední se neuhodne vylučováním), vyplňují se dvě různé.
         { mode: 'identify', circuit: single('or'), choices: ['and', 'or', 'xor'], answer: 'or' },
         { mode: 'fill', circuit: single('and') },
         { mode: 'identify', circuit: single('xor'), choices: ['and', 'or', 'xor'], answer: 'xor' },
-        { mode: 'fill', circuit: single('xor') },
-        { mode: 'identify', circuit: single('and'), choices: ['and', 'or', 'xor'], answer: 'and' },
+        { mode: 'fill', circuit: single('or') },
+        { mode: 'identify', circuit: single('xor'), choices: ['and', 'or', 'xor'], answer: 'xor' },
       ],
     },
     generate: genIII5,
     presentation: {
-      task: 'Deska zákona prozradí runu pod závojem. A podle runy jde desku zase vyplnit.',
+      // Lampa pod závojem: desku jde napsat jen podle zákona runy, ne opsat z lampy (D-III-06).
+      task: 'Poznej podle desky runu pod závojem. Kde runu vidíš, vyplň desku podle runy. Lampa je tam pod závojem.',
       showDigits: true,
       showSum: false,
       sizes: 'equal',
       ledger: false,
+      veilLamp: true,
     },
     hints: [
-      'Projdi desku řádek po řádku. Kdy lampa svítí?',
+      'Projdi desku řádek po řádku. Kdy runa pustí světlo k lampě?',
       'Pouto svítí jen v řádku 1 1, Rozcestí ve všech kromě 0 0, Výluka v řádcích 0 1 a 1 0.',
-      'Zvýrazněná je správná runa, nebo buňka, která nesedí.',
     ],
     echo: {
       intro: ['Které pravidlo? Lumenité si runy zakrývali závojem.', 'Deska zákona ale prozradí, co se pod ním skrývá.'],
@@ -365,9 +362,8 @@ const levels: LevelDef[] = [
       ledger: false,
     },
     hints: [
-      'Začni od lampy: má svítit, nebo mlčet, když svítí oba vstupy?',
+      'Začni od brány: ve kterých řádcích má lampa mlčet? Která známá runa mlčí přesně ve zbylých řádcích?',
       'Najdi runu, která dá desku přesně obráceně, a za ni postav Obraceč.',
-      SLOT_HINT,
     ],
     echo: {
       intro: ['Řetězy. Světlo projde jednou runou a hned další.', 'Ze známých run tu vznikají nové.'],
@@ -435,7 +431,6 @@ const levels: LevelDef[] = [
         hints: [
           'Pro každý řádek pusť v duchu světlo obvodem zleva doprava.',
           'Nejdřív urči, co vyjde z první runy, a teprve pak, co s tím udělá další.',
-          'Zvýrazněná buňka nesedí.',
         ],
         echo: {
           intro: ['První zkouška: deska zákona obvodu. Lampu jsem zahalil, dokud desku nepotvrdíš. Co k lampě doteče, slož z run.'],
@@ -459,7 +454,6 @@ const levels: LevelDef[] = [
         hints: [
           'Začni od lampy: kdy má svítit?',
           'Najdi runu s touhle deskou, nebo s deskou obrácenou, a za ni dej Obraceč.',
-          SLOT_HINT,
         ],
         echo: {
           intro: ['Druhá zkouška: prázdné kameny.'],
@@ -482,7 +476,6 @@ const levels: LevelDef[] = [
         hints: [
           'Kdy lampa svítí? Najdi runu se stejnou deskou.',
           'Zlomené pouto a Zavřené rozcestí jsou obrácené Pouto a Rozcestí.',
-          'Zvýrazněná je správná runa.',
         ],
         echo: {
           intro: ['Třetí zkouška: závoj.'],
@@ -521,7 +514,6 @@ const levels: LevelDef[] = [
         hints: [
           'Pro každý řádek: co vyjde z Pouta a co z toho udělá Obraceč?',
           'Pouto svítí jen v řádku 1 1. Obraceč to obrátí.',
-          'Zvýrazněná buňka nesedí.',
         ],
         echo: { intro: ['První obvod: Zlomené pouto.'], wrong: 'Deska nesedí. Pusť světlo nejdřív Poutem, pak Obracečem.', solved: ['Tuhle desku si zapamatuj.'] },
       },
@@ -541,7 +533,6 @@ const levels: LevelDef[] = [
         hints: [
           'Nejdřív obrať A i B, pak je pusť Rozcestím.',
           'Rozcestí svítí, když svítí aspoň jeden z obrácených vstupů, tedy když aspoň jeden původní mlčí.',
-          'Zvýrazněná buňka nesedí.',
         ],
         echo: { intro: ['Druhý obvod vypadá úplně jinak.'], wrong: 'Deska nesedí. Obrať každý vstup a pak Rozcestí.', solved: ['Stejná deska jako u prvního obvodu. Zrcadlo!'] },
       },
@@ -554,7 +545,6 @@ const levels: LevelDef[] = [
         hints: [
           'Zrcadlo platí i obráceně. Co když obrátíš oba vstupy?',
           'Lampa má svítit, jen když oba vstupy mlčí, tedy když oba obrácené vstupy svítí. Která runa chce oba?',
-          SLOT_HINT,
         ],
         echo: { intro: ['Druhé zrcadlo postavíš ty.'], wrong: 'Brána se nepohnula. Kdy mají svítit oba obrácené vstupy?', solved: [] },
         quiz: [
@@ -611,19 +601,26 @@ const levels: LevelDef[] = [
         kind: 'table',
         config: {
           tasks: [
+            // Desky se píšou zpaměti (lampa pod závojem) a runa se pozná až po desce té druhé (D-III-06).
             { mode: 'fill', circuit: single('xnor') },
             { mode: 'fill', circuit: single('imp') },
-            { mode: 'identify', circuit: single('imp'), choices: ['xnor', 'imp', 'or', 'nand'], answer: 'imp' },
             { mode: 'identify', circuit: single('xnor'), choices: ['xnor', 'imp', 'xor', 'and'], answer: 'xnor' },
+            { mode: 'identify', circuit: single('imp'), choices: ['xnor', 'imp', 'or', 'nand'], answer: 'imp' },
           ],
         },
-        presentation: { task: 'Vyplň desky obou run a pak je poznej pod závojem.', showDigits: true, showSum: false, sizes: 'equal', ledger: false },
+        presentation: {
+          task: 'Vyplň zpaměti desky obou run, lampa je pod závojem. Pak runy poznej podle desky.',
+          showDigits: true,
+          showSum: false,
+          sizes: 'equal',
+          ledger: false,
+          veilLamp: true,
+        },
         hints: [
-          'Rovnost svítí, když se vstupy shodují. Důsledek mlčí jen v řádku 1 0.',
-          '„Když prší, je mokro“ neplatí jen tehdy, když prší a mokro není.',
-          'Zvýrazněná je správná runa, nebo buňka, která nesedí.',
+          'Kdy by neplatil slib „Když prší, je mokro“? A kdy svítila Rovnost?',
+          'Rovnost svítí, když se vstupy shodují. Důsledek mlčí jen v řádku 1 0: prší a mokro není.',
         ],
-        echo: { intro: ['Desky zákona Rovnosti a Důsledku.'], wrong: 'Deska nesedí. Kdy runa svítí?', solved: [] },
+        echo: { intro: ['Desky zákona Rovnosti a Důsledku. Lampa je pod závojem: piš, co víš ze zkoumání.'], wrong: 'Deska nesedí. Kdy runa svítí?', solved: [] },
         quiz: [
           {
             question: 'Kdy neplatí důsledek „Když prší, je mokro“?',
@@ -650,7 +647,10 @@ const levels: LevelDef[] = [
     kind: 'mixed',
     echo: {
       intro: ['Hlas většiny. Tři strážci hlasují a brána poslechne většinu.'],
-      solved: ['Hlas většiny svítí, když svítí aspoň dva ze tří vstupů.', 'Hlas většiny jde složit z Pout a Rozcestí. Funguje to i naopak, z Rozcestí a Pout.'],
+      solved: [
+        'Hlas většiny svítí, když svítí aspoň dva ze tří vstupů.',
+        'Hlas většiny jde složit z Pout u dvojic vstupů a Rozcestí za nimi. Funguje to i obráceně: Rozcestí u dvojic a za nimi Pouta.',
+      ],
       skill: 'Bez jediného zbytečného kroku.',
     },
     parts: [
@@ -661,8 +661,8 @@ const levels: LevelDef[] = [
         config: { tasks: [{ mode: 'explore', circuit: majority() }] },
         presentation: { task: 'Tři vstupy, osm kombinací. Vyzkoušej je všechny.', showDigits: true, showSum: false, sizes: 'equal', ledger: false },
         hints: [
-          'Každým dotekem přepni jeden vstup.',
-          'Kombinací je osm. Měň pokaždé jediný vstup, jako při hledání kombinací v Předsíni.',
+          'Kombinací je osm. Zkus všechny a sleduj, kdy lampa svítí.',
+          'Nevracej se ke kombinaci, kterou už máš. Projdi čtyři kombinace A a B, přepni C a projdi je pozpátku.',
           'Zvýrazněný vstup vede k nové kombinaci.',
         ],
         echo: { intro: ['Tři strážci: A, B a C.'], found: { 4: 'Polovina kombinací.', 7: 'Ještě jedna.' }, solved: ['Lampa svítila, kdykoli svítily aspoň dva. Teď ten obvod sestavíš z run.'] },
@@ -676,7 +676,6 @@ const levels: LevelDef[] = [
         hints: [
           'Většina znamená: svítí A a B, nebo A a C, nebo B a C.',
           'Levé kameny hlídají dvojice vstupů, pravé je slévají dohromady.',
-          SLOT_HINT,
         ],
         echo: { intro: ['Pět kamenů, dvě runy. Hlas většiny je na tobě.'], wrong: 'Brána se nepohnula. Které dvojice musí svítit obě?', solved: [] },
         quiz: [
@@ -705,12 +704,14 @@ const levels: LevelDef[] = [
       ledger: false,
     },
     hints: [
-      'Točité kameny jsou malá kolečka u vstupů runy. Vybírají, odkud do runy teče světlo, a každý dotek je pootočí.',
-      'Zlomené pouto se stejným světlem na obou vstupech je Obraceč. A Obraceč za Zlomeným poutem dá Pouto.',
-      'Zvýrazněný točitý kámen je potřeba pootočit.',
+      'Točité kameny vybírají, odkud do runy teče světlo. Co udělá Zlomené pouto, když dostane na oba vstupy totéž světlo?',
+      'Zlomené pouto se stejným světlem na obou vstupech je Obraceč. Obraceč za Zlomeným poutem dá Pouto. Rozcestí je Zlomené pouto obrácených vstupů.',
     ],
     echo: {
-      intro: ['Prapečeť. Lumenité tvrdili, že z jediné runy postaví všechny ostatní.', 'Tady máš jen Zlomená pouta. Zkus to.'],
+      intro: [
+        'Prapečeť. Lumenité tvrdili, že z jediné runy postaví všechny ostatní.',
+        'Tady máš jen Zlomená pouta. Kolečka u jejich vstupů jsou točité kameny: vybírají, odkud do runy teče světlo, a dotek kámen pootočí.',
+      ],
       step: { 0: 'Zlomené pouto se dvěma stejnými světly je Obraceč.', 1: 'Obraceč za Zlomeným poutem: zase Pouto.' },
       wrong: 'Brána se nepohnula. Odkud teče světlo do každé runy?',
       complete: 'Obraceč, Pouto i Rozcestí z jediné runy.',
@@ -761,7 +762,6 @@ const levels: LevelDef[] = [
     hints: [
       'Porovnej výsledek s cílem krystal po krystalu. Co udělá runa, když maska svítí, a co, když mlčí?',
       'Pouto: kde maska mlčí, výsledek zhasne. Rozcestí: kde maska svítí, výsledek se rozsvítí. Výluka: kde maska svítí, krystal se přepne.',
-      'Zvýrazněný krystal masky je potřeba přepnout.',
     ],
     echo: {
       intro: ['Masky. Lumenité nepřepínali krystaly po jednom, ale celou oktávu naráz.', 'Maska řekne runě, kde má zasáhnout.'],
@@ -805,7 +805,6 @@ const levels: LevelDef[] = [
     hints: [
       'Klíč je napsaný vpravo. Rozsviť masku přesně podle něj. U neznámého klíče porovnej šifru s písmenem E krystal po krystalu.',
       'Výluka s klíčem písmeno zašifruje a stejný klíč ho vrátí. Neznámý klíč svítí právě tam, kde se šifra a písmeno E liší.',
-      'Zvýrazněný krystal masky je potřeba přepnout.',
     ],
     echo: {
       intro: ['Tajná řeč. Tady si Lumenité posílali zprávy, které nikdo jiný nepřečetl.', 'Nejdřív jedno písmeno zašifruj.'],
@@ -845,7 +844,6 @@ const levels: LevelDef[] = [
     hints: [
       'Deska brány vpravo je deska starého obvodu. Kdy lampa svítí?',
       'Najdi runu se stejnou deskou. Pomůžou zrcadla: obrácené vstupy a obrácený výstup prohodí Pouto s Rozcestím.',
-      SLOT_HINT,
     ],
     echo: {
       intro: ['Méně je víc. Staré obvody Lumenitů byly zbytečně dlouhé.', 'Kde stačí jedna runa, nestav čtyři.'],
@@ -892,7 +890,11 @@ const levels: LevelDef[] = [
         },
         generate: genIII15Identify,
         presentation: { task: 'První zkouška: poznej runu pod závojem.', showDigits: true, showSum: false, sizes: 'equal', ledger: false },
-        hints: ['Kdy lampa svítí? Najdi runu se stejnou deskou.', 'Důsledek mlčí jen v řádku 1 0, Rovnost svítí, když se vstupy shodují.', 'Zvýrazněná je správná runa.'],
+        hints: [
+          'Kdy lampa svítí? Najdi runu se stejnou deskou.',
+          // Druhá runa se losuje i z Výluky a obrácených run: nápověda pokryje všechny (D-III-08).
+          'Důsledek mlčí jen v řádku 1 0. Zlomené pouto, Zavřené rozcestí a Rovnost mají obrácené desky Pouta, Rozcestí a Výluky.',
+        ],
         echo: { intro: ['První zkouška: závoj.'], solved: ['Runy poznáváš. Teď Prapečeť.'] },
       },
       {
@@ -905,7 +907,6 @@ const levels: LevelDef[] = [
         hints: [
           'Točité kameny vybírají, odkud do runy teče světlo.',
           'Zlomené pouto se dvěma stejnými světly je Obraceč. Pouto je Zlomené pouto a Obraceč, Rozcestí je Zlomené pouto obrácených vstupů.',
-          'Zvýrazněný točitý kámen je potřeba pootočit.',
         ],
         echo: { intro: ['Druhá zkouška: jen Zlomená pouta.'], wrong: 'Brána se nepohnula. Odkud teče světlo do každé runy?', solved: ['Prapečeť poslechla. Zbývá maska.'] },
       },
@@ -925,7 +926,6 @@ const levels: LevelDef[] = [
         hints: [
           'Porovnej výsledek s cílem krystal po krystalu.',
           'Pouto vybírá, Rozcestí rozsvěcí, Výluka přepíná.',
-          'Zvýrazněný krystal masky je potřeba přepnout.',
         ],
         echo: { intro: ['Třetí zkouška: maska.'], solved: [] },
       },

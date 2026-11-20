@@ -2,6 +2,7 @@ import type { Rune } from '../core/logic';
 import { LIGHT, SHADOW } from '../core/puzzles/machine';
 import {
   aluTask,
+  compareHints,
   compareTask,
   decoderTask,
   genIV15Alu,
@@ -15,6 +16,7 @@ import {
   routeTasks,
   runTask,
   shiftTask,
+  subtractHints,
   subtractTask,
 } from './generators4';
 import {
@@ -40,9 +42,6 @@ import { qRead, qRuneByRule, qTableRows } from './quizzes';
 import type { ActDef, LevelDef, Presentation } from './types';
 
 const TWO: Rune[] = ['and', 'or', 'xor'];
-const SLOT_HINT = 'Zvýrazněný kámen potřebuje jinou runu. Dotkni se ho.';
-const SOCKET_HINT = 'Zvýrazněný točitý kámen potřebuje jiný zdroj světla. Dotkni se ho.';
-const PIECE_HINT = 'Zvýrazněný kámen potřebuje jinou runu nebo jiný zdroj světla. Dotkni se ho.';
 const STEP_HINT = 'Zvýrazněný je další krok: krystal, nebo tep.';
 /** Počítadlo hvězd nemá krystaly, jediný krok je tep. */
 const BEAT_HINT = 'Zvýrazněný je další krok: tlačítko Tep.';
@@ -132,7 +131,6 @@ const levels: LevelDef[] = [
     hints: [
       'Dotýkej se prázdného kamene: runy se v něm střídají. Přepínej A a B a sleduj lampy.',
       'Lampa 1 je spodní číslice součtu: svítí, když svítí právě jeden krystal. Lampa 2 je přenos: svítí jen u 1 + 1.',
-      SLOT_HINT,
     ],
     echo: {
       intro: ['Teď stroj sestavíš z run.', 'Která runa dá spodní číslici součtu? Vzpomeň na Zahradu.'],
@@ -215,7 +213,6 @@ const levels: LevelDef[] = [
         hints: [
           'Začni lampou 1: spodní číslicí tří světel.',
           'Spodní číslice je Výluka ze všech tří světel. Přenos svítí, když svítí aspoň dvě: buď A a B, nebo jedno z nich a P.',
-          SLOT_HINT,
         ],
         echo: {
           intro: ['Teď stroj na tři světla sestav z run.'],
@@ -248,7 +245,6 @@ const levels: LevelDef[] = [
     hints: [
       'Dotkni se točitého kamene u vstupu P: střídá stín, světlo a přenos z jiné sčítačky.',
       'Přenos teče jako v Kaskádě, z každého sloupce do sousedního vlevo. Do nejlehčího sloupce přitéká stín, pokud brána nežádá o jedničku víc.',
-      SOCKET_HINT,
     ],
     echo: {
       intro: [
@@ -317,11 +313,8 @@ const levels: LevelDef[] = [
         kind: 'machine',
         config: { tasks: [compareTask(true), compareTask(false)] },
         presentation: bench('Vlož runy tak, aby lampa svítila přesně podle svého jména. Pak spusť Zkoušku.'),
-        hints: [
-          'Porovnávej po sloupcích: jsou krystaly A a B v jednom sloupci stejné?',
-          'Rovnost svítí, když jsou oba krystaly stejné. Čísla jsou stejná, když se shodne každý sloupec, a to pohlídá Pouto.',
-          SLOT_HINT,
-        ],
+        // Každá úloha má vlastní nápovědy podle jména lampy (taskHints), tyhle jsou nápovědy první.
+        hints: compareHints(true),
         echo: {
           intro: ['Teď dvoubitová čísla. Shodne se každý sloupec?'],
           step: {
@@ -418,8 +411,7 @@ const levels: LevelDef[] = [
         presentation: bench('Natoč točité kameny a vlož runu, aby volič ve stínu pustil k lampě A a ve světle B. Pak spusť Zkoušku.'),
         hints: [
           'Horní Pouto má pustit A, když volič mlčí. Co z voliče k němu má téct?',
-          'Horní Pouto potřebuje obrácený volič (z Obraceče), dolní volič přímo. Obě cesty pak spojí Rozcestí.',
-          PIECE_HINT,
+          'Pouto pustí světlo, jen když svítí oba jeho vstupy. Horní Pouto tedy potřebuje světlo právě tehdy, když volič mlčí. Kde na desce takové světlo teče? A která runa spojí obě cesty?',
         ],
         echo: {
           intro: ['Teď výhybku sestav z run.'],
@@ -451,7 +443,6 @@ const levels: LevelDef[] = [
     hints: [
       'Každé Pouto rozsvítí jednu lampu. Kdy má svítit lampa 0 a kdy lampa 3?',
       'Lampa 3 chce oba krystaly ve světle, lampa 0 oba ve stínu. Stín obrátí Obraceč: Pouto pak bere světlo z něj.',
-      SOCKET_HINT,
     ],
     echo: {
       intro: ['Rozdělovač. Dva krystaly, čtyři lampy.', 'Každé číslo od 0 do 3 má rozsvítit jinou lampu.'],
@@ -495,7 +486,6 @@ const levels: LevelDef[] = [
         hints: [
           'Přenos teče z každého sloupce do sousedního vlevo.',
           'Do nejlehčího sloupce přitéká stín, nebo světlo, když brána žádá o jedničku víc.',
-          SOCKET_HINT,
         ],
         echo: {
           intro: ['První zkouška: řetěz sčítaček.'],
@@ -513,7 +503,6 @@ const levels: LevelDef[] = [
         hints: [
           'U rozdělovače si přečti čísla lamp: nejsou popořadě. U výhybky sleduj, co pouští volič.',
           'Lampa s číslem 3 chce dvakrát světlo, s číslem 0 dvakrát stín. Pouto výhybky, které má pustit cestu při stínu voliče, bere volič z Obraceče.',
-          PIECE_HINT,
         ],
         echo: {
           intro: ['Druhá zkouška: rozdělovač a výhybka.'],
@@ -527,11 +516,8 @@ const levels: LevelDef[] = [
         config: { tasks: [compareTask(false)] },
         generate: genIV7Compare,
         presentation: bench('Třetí zkouška: vlož runy tak, aby lampa svítila podle svého jména.'),
-        hints: [
-          'Přečti jméno lampy: stejné, nebo různé?',
-          'Stejná čísla hlídá Rovnost v každém sloupci a Pouto. Různá čísla najde Výluka a Rozcestí.',
-          SLOT_HINT,
-        ],
+        // Úloha má vlastní nápovědy podle vylosovaného jména lampy (taskHints).
+        hints: compareHints(false),
         echo: { intro: ['Třetí zkouška: porovnávač.'], solved: [] },
         quiz: [qChainSum],
       },
@@ -608,12 +594,13 @@ const levels: LevelDef[] = [
         presentation: bench('Natoč točité kameny tak, aby ozvěna prošla zkouškou paměti. Pak spusť Zkoušku.'),
         hints: [
           'Zkouška chce, aby lampa svítila dál i po zhasnutí S. Kudy se může světlo vracet?',
-          'Každé Zavřené rozcestí má brát druhé světlo z výstupu té druhé runy. Tak vznikne kruh.',
-          SOCKET_HINT,
+          'Runa, která bere druhé světlo ze vstupu, zapomene, jakmile vstup zhasne. Co jiného na desce drží světlo dál, jako v Kruhu?',
         ],
         echo: {
-          intro: ['Teď kruh uzavři.'],
-          wrong: 'Ozvěna zapomíná. Projdi kroky zkoušky vstupy a sleduj kruh.',
+          // Zkouška paměti je tu poprvé: řádky jsou kroky v čase, ne řádky desky zákona.
+          intro: ['Teď kruh uzavři.', 'Zkouška paměti jde krok za krokem. Stejné vstupy mohou chtít různou lampu, podle toho, co bylo předtím.'],
+          // Zkouška jde od zhasnuté paměti (failureWords): už první replika po chybě o tom ví.
+          wrong: 'Ozvěna zapomíná. Tlačítkem Od tmy zhasni paměť a projdi kroky zkoušky vstupy. Sleduj kruh.',
           complete: 'Kruh je uzavřený.',
           solved: [],
         },
@@ -656,13 +643,13 @@ const levels: LevelDef[] = [
         presentation: bench('Natoč točité kameny tak, aby si ozvěna zapamatovala D jen ve chvíli, kdy svítí T. Pak spusť Zkoušku.'),
         hints: [
           'Horní Pouto vede do S (rozsvítit), dolní do R (zhasnout). Obě pustí světlo jen se světlem T.',
-          'Do S má téct D, do R obrácené D. Když T mlčí, Pouta zavřou a ozvěna drží.',
-          SOCKET_HINT,
+          'Když D svítí, má se ozvěna při světle T rozsvítit, když D mlčí, zhasnout. Co tedy má téct do S a co do R?',
         ],
         echo: {
           intro: ['Ozvěna z minulé komnaty je teď jeden kámen.', 'Krystal T je tep. Ozvěna má poslouchat D, jen když tep svítí.'],
           // Bez světla T Pouta nic nepustí: každé chybné natočení padne ve 2. kroku, kde ozvěna D nepřevezme.
-          wrong: 'Ozvěna nepřevzala D, ačkoli T svítilo. Projdi 2. krok zkoušky a sleduj, co teče do S a co do R.',
+          // Z živé paměti může 2. krok vyjít dobře, proto od tmy a oba kroky.
+          wrong: 'Ozvěna nepřevzala D, ačkoli T svítilo. Tlačítkem Od tmy zhasni paměť a projdi kroky 1 a 2 zkoušky. Sleduj, co teče do S a co do R.',
           solved: ['Ozvěna poslouchá D jen při tepu.'],
         },
       },
@@ -781,12 +768,11 @@ const levels: LevelDef[] = [
         presentation: bench('Natoč točité kameny tak, aby každý tep posunul světlo o patro výš. Pak spusť Zkoušku.'),
         hints: [
           'Při každém tepu má každá ozvěna převzít světlo od sousední ozvěny pod sebou.',
-          'Nejlehčí ozvěna bere ze vstupu X, prostřední z nejlehčí, nejtěžší z prostřední.',
-          SOCKET_HINT,
+          'Všechny ozvěny převezmou světlo naráz, při jednom tepu. Pod nejlehčí ozvěnou už žádná není: odkud do ní má přitéct nové světlo?',
         ],
         echo: {
           intro: ['Teď ať se číslo při tepu posouvá.'],
-          wrong: 'Světlo neputuje, jak má. Projdi kroky zkoušky tepem.',
+          wrong: 'Světlo neputuje, jak má. Tlačítkem Od tmy zhasni paměť a projdi kroky zkoušky tepem.',
           complete: 'Světlo stoupá o patro s každým tepem.',
           solved: [],
         },
@@ -861,12 +847,11 @@ const levels: LevelDef[] = [
         presentation: bench('Natoč točité kameny tak, aby každý tep přičetl jedničku. Pak spusť Zkoušku.'),
         hints: [
           'Každá ozvěna má dostat součet ze sčítačky pod sebou.',
-          'Do nejlehčí sčítačky má přitékat stálé světlo: to je ta jednička, kterou tep přičte.',
-          SOCKET_HINT,
+          'Sčítačky jen sečtou, co do nich teče. Číslo dodá paměť. Odkud se ale vezme jednička, kterou tep přičte?',
         ],
         echo: {
           intro: ['Teď počítadlo sestav.'],
-          wrong: 'Počítadlo nepočítá po jedné. Udeř tepem a sleduj, kam teče součet.',
+          wrong: 'Počítadlo nepočítá po jedné. Tlačítkem Od tmy zhasni paměť, udeř tepem a sleduj, kam teče součet.',
           complete: 'Počítadlo počítá.',
           solved: [],
         },
@@ -882,11 +867,8 @@ const levels: LevelDef[] = [
     config: { tasks: [subtractTask('invert'), subtractTask('switch')] },
     presentation: bench('Natoč točité kameny tak, aby stroj počítal podle brány. Pak spusť Zkoušku.'),
     // Doplněk zavádí nepovinná II-13: úvod a nápověda 1 ho odvodí samy, bez odkazu na ni.
-    hints: [
-      'Odečíst B je totéž jako přičíst převrácené B a jedničku. Třeba 3 − 2: převrácené 010 je 101, tedy 5. 3 + 5 + 1 = 9, osmička přeteče a lampy ukážou 1.',
-      'Do každé sčítačky má téct převrácené B. Jednička navíc přiteče přenosem do nejlehčího sloupce.',
-      PIECE_HINT,
-    ],
+    // Každá úloha má vlastní nápovědy (taskHints, generators4.ts), tyhle jsou nápovědy první.
+    hints: subtractHints('invert'),
     echo: {
       intro: [
         'Odčítačka. Sčítačky umí jen přičítat, a přesto z nich jde odčítat.',
@@ -924,17 +906,23 @@ const levels: LevelDef[] = [
     id: 'IV-13',
     title: 'Volič operace',
     kind: 'machine',
-    // V první úloze jsou voliče výhybek přehozené: runy nejdou shora dolů v pořadí kódů, cesty se musí přečíst.
-    // Každá úloha má vlastní zadání: v první se jen osazují kameny, ve druhé jen točí voliče.
+    // Nejdřív snazší úloha: runy stojí, hráč točí voliče a pozná, jak kód vede výhybky. Ve druhé jsou
+    // voliče výhybek přehozené: runy nejdou shora dolů v pořadí kódů, cesty se musí přečíst.
+    // Každá úloha má vlastní zadání: v první se jen točí voliče, ve druhé jen osazují kameny.
     config: {
       tasks: [
         {
-          ...aluTask(OPS, 'runes', 'crossed'),
-          say: 'Stroj má počítat s A a B podle kódu operace O. Osaď kameny runami tak, aby každý kód vybral svou runu. Pak spusť Zkoušku.',
+          ...aluTask(OPS, 'selectors'),
+          say: 'Stroj má počítat s A a B podle kódu operace O. Runy stojí pevně: natoč voliče výhybek tak, aby každý kód vybral svou runu. Pak spusť Zkoušku.',
+          // Výhybka s nenastaveným voličem nic nepustí: nápovědy komnaty (sleduj cestu, runa na konci) patří až druhé úloze.
+          hints: [
+            'Pouto a Rozcestí mají kódy 0 a 1. Liší se jen krystalem O s váhou 1. Který krystal O má tedy přepínat výhybku mezi nimi?',
+            'Výhybka pustí horní cestu, když její volič mlčí, a dolní, když svítí. Poslední výhybka vybírá mezi kódy 0 a 1 nahoře a kódy 2 a 3 dole. Který krystal O je od sebe odliší?',
+          ],
         },
         {
-          ...aluTask(OPS, 'selectors'),
-          say: 'Runy teď stojí pevně. Natoč voliče výhybek tak, aby každý kód vybral svou runu. Pak spusť Zkoušku.',
+          ...aluTask(OPS, 'runes', 'crossed'),
+          say: 'Teď jsou kameny prázdné a kódy už nejdou shora dolů po pořádku. Osaď kameny runami tak, aby každý kód vybral svou runu. Pak spusť Zkoušku.',
         },
       ],
     },
@@ -942,13 +930,15 @@ const levels: LevelDef[] = [
     hints: [
       'Kód operace je číslo O s vahami 2 a 1. Nastav kód a sleduj, kterou cestou světlo teče.',
       'Výhybka pustí horní cestu, když její volič mlčí, a dolní, když svítí. Nastav kód a jdi od lampy zpátky po cestě, kterou výhybky pustí: runa na jejím konci patří k tomu kódu.',
-      PIECE_HINT,
     ],
     echo: {
-      intro: ['Volič operace. Čtyři runy, tři výhybky a kód, který vybere, co se spočítá.'],
+      intro: [
+        'Volič operace. Čtyři runy, tři výhybky a kód, který vybere, co se spočítá.',
+        'Výhybka je tu zabalená do jednoho kamene, stejně jako sčítačka v Řetězu sčítaček.',
+      ],
       step: {
-        0: 'Každý kód má svou runu.',
-        1: 'Výhybky ve dvou patrech vyberou jednu ze čtyř cest.',
+        0: 'Výhybky ve dvou patrech vyberou jednu ze čtyř cest.',
+        1: 'Každý kód má svou runu.',
       },
       wrong: 'Některý kód vybere jinou operaci. Nastav ten kód krystaly O a sleduj výhybky.',
       complete: 'Stroj umí čtyři operace.',
@@ -984,7 +974,6 @@ const levels: LevelDef[] = [
     hints: [
       'Každé Pouto je kopie: jeden krystal A krát jeden krystal B. Váha kopie je součin vah, třeba A₂ × B₁ má váhu 2.',
       'Lampa s váhou 2 dostane součet dvou prostředních Pout ze sčítačky 5. Přenos sčítačky 5 a horní Pouto sečte sčítačka 6: dají lampy 4 a 8.',
-      SOCKET_HINT,
     ],
     echo: {
       intro: ['Násobicí stroj. Násobí se kopiemi a sčítáním: kopie udělají Pouta, sečtou je sčítačky.'],
@@ -1027,8 +1016,7 @@ const levels: LevelDef[] = [
         ),
         hints: [
           'Když C zhasne, nesmí do sčítaček téct nic z paměti, ani jednička navíc.',
-          'Pouto pustí světlo z paměti jen tehdy, když svítí C. A jednička do nejlehčí sčítačky? I ta má přitékat jen s chodem.',
-          PIECE_HINT,
+          'Která runa pustí světlo z paměti dál, jen když svítí C? A jednička do nejlehčí sčítačky má přitékat jen s chodem: odkud ji vzít?',
         ],
         echo: {
           intro: [
@@ -1036,7 +1024,7 @@ const levels: LevelDef[] = [
             'Dokud C svítí, počítadlo počítá. Když C zhasne, tep vrátí počítadlo na nulu.',
           ],
           // Skoro každé chybné osazení padne hned v 1. kroku, kdy C svítí: hláška míří na obě kontroly.
-          wrong: 'Počítadlo nejde podle zkoušky. Projdi kroky tepem: počítá, dokud C svítí? Vynuluje se, když C zhasne?',
+          wrong: 'Počítadlo nejde podle zkoušky. Tlačítkem Od tmy zhasni paměť a projdi kroky tepem. Počítá, dokud C svítí? Vynuluje se, když C zhasne?',
           solved: ['Počítadlo se vrátí na nulu, kdykoli chod zhasne. Tak se nulují i stopky.'],
         },
       },
@@ -1050,7 +1038,6 @@ const levels: LevelDef[] = [
         hints: [
           'Přečti pravidlo: který kód patří které runě?',
           'Nastav kód krystaly O a jdi od lampy zpátky po cestě, kterou výhybky pustí. Výhybka pustí horní cestu, když její volič mlčí.',
-          SLOT_HINT,
         ],
         echo: { intro: ['Druhá zkouška: volič operace. Sleduj, který krystal O vede ke které výhybce.'], solved: [] },
         quiz: [

@@ -230,7 +230,7 @@ export const KODEX: KodexEntry[] = [
     modernName: 'Odčítání s výpůjčkou',
     ancient: 'Kde nemáš z čeho brát, půjč si od souseda vlevo.',
     modern:
-      'Odčítá se po sloupcích zprava. Když je ve sloupci 0 − 1, půjčíš si od sloupce vlevo: půjčená jednička má ve sloupci vpravo váhu 2, takže 10 − 1 = 1. Ve sloupci vlevo pak výpůjčku odečteš.',
+      'Odčítá se po sloupcích zprava. Když je ve sloupci 0 − 1, půjčíš si od sloupce vlevo: půjčená jednička má ve sloupci vpravo váhu 2, takže 10 − 1 = 1. Ve sloupci vlevo pak výpůjčku odečteš. Má-li i sloupec vlevo nulu, půjčí si nejdřív od svého souseda. Výpůjčka tak projde přes všechny nuly: 1000 − 0001 = 0111.',
     formula: '1000₂ − 0001₂ = 0111₂   (8 − 1 = 7)',
     today:
       'Procesory většinou odčítají jinak: přičtou takzvaný doplněk menšitele. Díky tomu jim stačí jedna sčítačka pro sčítání i odčítání.',

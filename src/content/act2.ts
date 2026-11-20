@@ -42,8 +42,6 @@ import {
 } from './quizzes';
 import type { ActDef, LevelDef } from './types';
 
-const CELL_HINT = 'Zvýrazněný krystal je potřeba přepnout.';
-
 const levels: LevelDef[] = [
   // Nultá komnata patra: hračka se sčítáním dvou krystalů (dřív komnata Soutok).
   // 1 + 0, 0 + 1 a 1 + 1; světla se při každém doteku sama přesunou.
@@ -75,7 +73,6 @@ const levels: LevelDef[] = [
     hints: [
       'Kolik světel je ve sloupci? A kolik váží krystaly dole?',
       'Jedno světlo váží 1, dvě váží 2. Do krystalu s váhou 1 se dvě světla nevejdou, na to je krystal s váhou 2.',
-      CELL_HINT,
     ],
     echo: {
       intro: [
@@ -114,9 +111,8 @@ const levels: LevelDef[] = [
       counter: true,
     },
     hints: [
-      'Přičíst jedničku znamená změnit co nejméně krystalů. Začni vpravo.',
+      'Začni vpravo. Co se stane s krystalem, který už svítí, když do něj přidáš další světlo?',
       'Zprava zhasínej svítící krystaly, dokud nenarazíš na zhasnutý. Ten rozsviť.',
-      'Zvýrazněný krystal je potřeba přepnout.',
     ],
     echo: {
       intro: [
@@ -172,7 +168,6 @@ const levels: LevelDef[] = [
     hints: [
       'Najdi sloupec se dvěma světly. Kolik váží dohromady a který krystal výsledku váží stejně?',
       'Dvě světla s váhou 2 váží 4, dvě světla s váhou 8 váží 16. Krystal pod dvojicí nech zhasnutý a rozsviť krystal o sloupec vlevo. Krystal pod samotným světlem rozsviť, světlo do něj sjede.',
-      CELL_HINT,
     ],
     echo: {
       intro: [
@@ -224,7 +219,6 @@ const levels: LevelDef[] = [
     hints: [
       'Začni vpravo. Když se ve sloupci slijí dvě světla, kam se jedno z nich podělo?',
       'Dvě světla: dole stín a krystal přenosu nad sousedním sloupcem vlevo. Tři světla: dole světlo a krystal přenosu.',
-      CELL_HINT,
     ],
     echo: {
       intro: [
@@ -282,7 +276,6 @@ const levels: LevelDef[] = [
     hints: [
       'Postupuj zprava, sloupec po sloupci. Přenos z jednoho sloupce mění ten další.',
       'V každém sloupci spočítej světla i s krystalem přenosu: dvě dají dole stín a přenos, tři dají dole světlo a přenos.',
-      CELL_HINT,
     ],
     echo: {
       intro: ['Velká kaskáda. Světlo tu padá přes šest stupňů.', 'Počty pod sloupci vydrží jen první součet.'],
@@ -330,7 +323,6 @@ const levels: LevelDef[] = [
     hints: [
       'Kolik nejvíc unesou čtyři krystaly? Vejde se součet?',
       'Sčítej jako obvykle. Přenos z nejlevějšího sloupce nemá kam jít: pošli ho do přepadu vlevo.',
-      CELL_HINT,
     ],
     echo: {
       intro: [
@@ -387,7 +379,6 @@ const levels: LevelDef[] = [
     hints: [
       'Zatáhni za páku a sleduj, co se stane s váhou světla.',
       'Posun vlevo váhu zdvojí, posun vpravo ji rozpůlí. Kolikrát musíš zdvojit nebo rozpůlit?',
-      'Zvýrazněná páka vede nejkratší cestou.',
     ],
     echo: {
       intro: [
@@ -442,7 +433,7 @@ const levels: LevelDef[] = [
         },
         generate: genII7Cascade,
         presentation: {
-          task: 'První zkouška: sečti řady. Přenosy zapiš nad sloupce.',
+          task: 'První zkouška: sečti řady. Přenosy zapiš nad sloupce. Brána krystaly nehlídá: co kam teče, spočítej v hlavě.',
           showDigits: true,
           showSum: false,
           sizes: 'equal',
@@ -451,12 +442,11 @@ const levels: LevelDef[] = [
         hints: [
           'Postupuj zprava, sloupec po sloupci. Přenos z jednoho sloupce mění ten další.',
           'V každém sloupci spočítej světla i s krystalem přenosu: dvě dají dole stín a přenos, tři dají dole světlo a přenos.',
-          CELL_HINT,
         ],
         echo: {
           intro: [
             'První zkouška: sčítání, pět krystalů v řadě.',
-            'Brána krystaly nehlídá: rozsvítí se, i když do nich žádné světlo nepřiteče. Co kam teče, musíš spočítat ty.',
+            'Krystaly se tu rozsvítí, i když do nich žádné světlo nepřiteče. Kudy světla tečou, ukáže brána až po přijatém součtu.',
           ],
           // Repliky bez počtu: po ukázce kroku přidá brána na konec zkoušku navíc.
           step: { 0: 'Sečteno. Brána se pohnula.', 1: 'I tenhle součet sedí.' },
@@ -484,7 +474,6 @@ const levels: LevelDef[] = [
         hints: [
           'Kolikrát musíš světlo zdvojit, nebo rozpůlit?',
           'Posun vlevo váhu zdvojí, posun vpravo ji rozpůlí. Co spadne přes pravý okraj, je pryč.',
-          'Zvýrazněná páka vede nejkratší cestou.',
         ],
         echo: {
           intro: ['Druhá zkouška: páky. Kolikrát zdvojit, kolikrát rozpůlit?'],
@@ -530,8 +519,7 @@ const levels: LevelDef[] = [
     },
     hints: [
       'Začni vpravo. Jde v tomhle sloupci odečítat? Když ne, kdo ti může půjčit?',
-      'Půjčené světlo má ve sloupci váhu dvou: 0 − 1 s výpůjčkou je 10 − 1 = 1. Výpůjčku zapiš krystalem pod spodní řadu ve sloupci vlevo. Tam se odečte spolu se spodní řadou. Nad sloupcem vpravo se objeví dva krystaly.',
-      CELL_HINT,
+      'Půjčené světlo váží ve sloupci dvě: 10 − 1 = 1. Když nemá co půjčit ani soused, jdi vlevo k prvnímu volnému světlu a půjčuj od něj sloupec po sloupci doprava.',
     ],
     echo: {
       intro: [
@@ -539,7 +527,7 @@ const levels: LevelDef[] = [
         'Výpůjčka. Světla tu ubývají. Kde nemáš z čeho brát, půjč si od souseda vlevo.',
       ],
       step: {
-        0: 'Sedm bez dvou je pět. Zatím bez půjčování. V další úloze jsem výpůjčky zapsal za tebe: krystal pod spodní řadou ve sloupci, od kterého se půjčuje, a nad sloupcem vpravo dva krystaly. Dopočítej výsledek.',
+        0: 'Sedm bez dvou je pět, zatím bez půjčování. V další úloze jsem výpůjčky zapsal za tebe: prohlédni si je a dopočítej výsledek.',
         1: 'Půjčené světlo se ve sloupci rozpadlo na dvě. Jedno se odečetlo, jedno zůstalo. Teď výpůjčky zapisuješ ty.',
         2: 'Výpůjčka prošla několika sloupci. Přenos pozpátku.',
       },
@@ -573,11 +561,11 @@ const levels: LevelDef[] = [
     },
     hints: [
       'Zkus to od konce: je cíl sudý, nebo lichý? Liché číslo vzniklo přidáním jedné, sudé zdvojením.',
-      'Podívej se na dvojkový zápis cíle. Za každou další číslici zdvoj, a když je to jednička, přidej jednu.',
-      'Zvýrazněná páka vede nejkratší cestou.',
+      'Jdi od cíle zpátky: od lichého čísla odečti jednu, sudé rozpul, dokud nedojdeš k jedničce. Páky pak použij v opačném pořadí.',
     ],
     echo: {
       intro: ['Zdvojení. Z jediného světla tu Lumenité vystavěli každé číslo.', 'Máš jen dvě páky: zdvoj a přidej jednu.'],
+      incFromOne: 'Z jedničky dá +1 totéž co ×2. Lumenité ale vždy začínali zdvojením.',
       step: {
         0: 'Šest. Podívej se na krystaly: 110.',
         1: 'Podívej se na krystaly a do zápisníku. V jakém pořadí šly páky?',
@@ -623,7 +611,6 @@ const levels: LevelDef[] = [
     hints: [
       'Podívej se na druhý činitel. Které jeho krystaly svítí? A co znamená kopie posunutá o jedno místo?',
       'Posun vlevo zdvojuje: kopie ×1 není posunutá, ×2 o jedno místo, ×4 o dvě. Rozsviť kopie, které patří k jedničkám druhého činitele, a sečti je jako obvykle.',
-      CELL_HINT,
     ],
     echo: {
       intro: [
@@ -673,7 +660,6 @@ const levels: LevelDef[] = [
     hints: [
       'Kolikrát musíš rozpůlit, abys dělil čtyřmi? A kolikrát pro osm?',
       'Dělit 2ᵏ znamená posunout k-krát vpravo. Co spadne přes okraj, je zbytek: přesně těch k krystalů vpravo.',
-      'Zvýrazněná páka vede nejkratší cestou.',
     ],
     echo: {
       intro: ['Dělení posunem. Tady Lumenité dělili, a zbytek jim padal do misky.', 'Jediná páka: rozpůlit. Kolikrát za ni zatáhneš?'],
@@ -719,7 +705,6 @@ const levels: LevelDef[] = [
     hints: [
       'Spočítej ve sloupci všechna světla, i ta, která do něj přitekla shora.',
       'Dvě světla = 10, tři = 11, čtyři = 100, pět = 101. Číslice čti zprava: první zůstane dole, druhá jde do sousedního sloupce, třetí o dvě místa do horní řady.',
-      CELL_HINT,
     ],
     echo: {
       intro: ['Tři řady. Sem Lumenité nosili velké sbírky světla.', 'Ve sloupci se teď může slít víc světel než kdy dřív.'],
@@ -772,7 +757,6 @@ const levels: LevelDef[] = [
         hints: [
           'Nádoba unese nejvýš 15. Co se stane s další jedničkou?',
           'Ze 3 do 15 je to 12 jedniček, třináctá nádobu přeleje a zůstane nula.',
-          'Zvýrazněná páka vede nejkratší cestou.',
         ],
         echo: {
           intro: ['První zkouška: v nádobě jsou tři světla. Přidávej, dokud nezůstane prázdná.'],
@@ -807,7 +791,6 @@ const levels: LevelDef[] = [
         hints: [
           'Záporné číslo se v nádobě se čtyřmi krystaly píše jako doplněk. Zkus páku převrať.',
           'Doplněk: převrať všechna světla a přidej jednu. Třeba 3 = 0011, převrácené 1100, plus jedna 1101 = −3.',
-          'Zvýrazněná páka vede nejkratší cestou.',
         ],
         echo: {
           intro: [
@@ -845,7 +828,6 @@ const levels: LevelDef[] = [
         hints: [
           'Sečti obě řady jako obvykle, zprava a s přenosy.',
           'Přenos z nejlevějšího sloupce patří do přepadu. To, co v nádobě zbude, je rozdíl.',
-          CELL_HINT,
         ],
         echo: {
           intro: ['Třetí zkouška: horní řada je kladné číslo, spodní doplněk toho, co se odečítá.'],
@@ -888,9 +870,8 @@ const levels: LevelDef[] = [
       scale: true,
     },
     hints: [
-      'Porovnej obě váhy ve dvojkovém zápisu. Které krystaly se liší?',
+      'Zkus to od cíle: ze kterých vah se na něj dostaneš jedním tahem? Liché číslo nevznikne zdvojením.',
       'Zdvojení posune světla vlevo, půlení vpravo, páky ±1 doladí konec. Někdy je kratší přestřelit a pak ubrat.',
-      'Zvýrazněná páka vede nejkratší cestou.',
     ],
     echo: {
       intro: [
@@ -939,7 +920,7 @@ const levels: LevelDef[] = [
         },
         generate: genII15Sub,
         presentation: {
-          task: 'První zkouška: odečti spodní řadu od horní. Kde nemáš z čeho brát, půjč si.',
+          task: 'První zkouška: odečti spodní řadu od horní. Kde nemáš z čeho brát, půjč si. Brána krystaly nehlídá: co kam teče, spočítej v hlavě.',
           showDigits: true,
           showSum: false,
           sizes: 'equal',
@@ -948,10 +929,9 @@ const levels: LevelDef[] = [
         hints: [
           'Začni vpravo. Jde v tomhle sloupci odečítat? Když ne, kdo ti může půjčit?',
           'Půjčené světlo má ve sloupci váhu dvou: 0 − 1 s výpůjčkou je 10 − 1 = 1. Výpůjčku zapiš krystalem pod spodní řadu ve sloupci vlevo.',
-          CELL_HINT,
         ],
         echo: {
-          intro: ['První zkouška: odčítání, pět krystalů v řadě.', 'Ani tahle brána krystaly nehlídá. Co kam teče, musíš spočítat ty.'],
+          intro: ['První zkouška: odčítání, pět krystalů v řadě.', 'Kudy světla tečou, ukáže brána až po přijatém rozdílu.'],
           solved: ['Rozdíly sedí. Teď násobení.'],
         },
       },
@@ -980,7 +960,6 @@ const levels: LevelDef[] = [
         hints: [
           'Které krystaly druhého činitele svítí?',
           'Za každou jedničku druhého činitele rozsviť kopii prvního posunutou na její místo, pak kopie sečti s přenosy.',
-          CELL_HINT,
         ],
         echo: {
           intro: ['Druhá zkouška: násobení. Kopie si vybíráš ty.'],
@@ -1011,9 +990,8 @@ const levels: LevelDef[] = [
           scale: true,
         },
         hints: [
-          'Porovnej obě váhy ve dvojkovém zápisu. Které krystaly se liší?',
+          'Zkus to od cíle: ze kterých vah se na něj dostaneš jedním tahem? Liché číslo nevznikne zdvojením.',
           'Zdvojení posune světla vlevo, půlení vpravo, páky ±1 doladí konec. Někdy je kratší přestřelit a pak ubrat.',
-          'Zvýrazněná páka vede nejkratší cestou.',
         ],
         echo: {
           intro: ['Třetí zkouška: Váhy Osudu. Kdo přečerpá tahy, začíná znovu.'],

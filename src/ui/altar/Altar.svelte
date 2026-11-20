@@ -10,6 +10,7 @@
   import { combinations, isBitSet, patternWords, toBinaryString } from '../../core/bits';
   import { currentClass, currentTarget, goalCount } from '../../core/puzzles/altar';
   import { settings } from '../../game/settings.svelte.ts';
+  import { sumShown } from '../../game/altarWords';
   import type { AltarGame } from '../../game/altarGame.svelte.ts';
 
   let { game, pulse }: { game: AltarGame; pulse: number } = $props();
@@ -35,6 +36,8 @@
   const unknownWeights = $derived(cfg.reveal === 'solo' && slots.length - 1 !== st.revealed);
   /** Počítadlo: kolik poutníků už je vyrytých. */
   const counted = $derived(st.step > 0 ? steps[st.step - 1] : (cfg.initial ?? 0));
+  /** Živý součet: natrvalo, nebo jen v prvních cílech (Skryté váhy: po dvou cílech zmizí). */
+  const showSum = $derived(sumShown(level.presentation, st.step));
   const m = $derived(settings.reducedMotion ? 0 : 1);
 
   function weightState(i: number): WeightState {
@@ -143,7 +146,7 @@
       {#key game.quizIndex}
         <Quiz {game} />
       {/key}
-    {:else if level.presentation.showSum}
+    {:else if showSum}
       <div class="sum stone-inset">
         <span>Tvé světlo váží</span>
         <strong class="sum-value">{st.mask}</strong>

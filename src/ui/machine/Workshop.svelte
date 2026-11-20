@@ -55,6 +55,8 @@
     })),
   );
   const bigTable = $derived(!task.script && rows.length > 8);
+  /** Zkouška paměti: popisek pod chybným krokem zabere sloupce pořadí, vstupů a tepu. */
+  const shownSpan = $derived(1 + n + (game.canBeat ? 1 : 0));
   /** Legenda zkratek součástek, které na desce opravdu jsou. */
   const legend = $derived(
     [...new Set(machine.nodes.flatMap((g) => (g.part ? [g.part] : [])))].map((p) => [PART_ABBR[p], PART_FULL[p]] as const),
@@ -211,6 +213,7 @@
         {#if task.script}
           <!-- Zkušební posloupnost: kroky, které Zkouška projde od zhasnuté paměti -->
           <p class="side-title carved">Zkouška paměti</p>
+          <p class="note small carved">Kroky jdou po sobě, od zhasnuté paměti.</p>
           <div class="tests stone" role="table" aria-label="Zkušební posloupnost">
             <div class="trow head" role="row">
               <span role="columnheader">#</span>
@@ -230,6 +233,17 @@
                   <span role="cell"><span class="dot" class:on={stepItem.expect[l.id] === 1} aria-label={stepItem.expect[l.id] ? 'svítí' : 'mlčí'}></span></span>
                 {/each}
               </div>
+              {#if view.failed?.at === k && !view.failed.empty}
+                <!-- Pod chybným krokem: co lampy při Zkoušce opravdu ukázaly. -->
+                {@const shown = view.failed.shown}
+                <div class="trow shown" role="row">
+                  <!-- aria-colspan: čtečka jinak přiřadí tečky lamp ke sloupcům vstupů (CSS span nezná). -->
+                  <span class="shown-label" role="cell" style:grid-column="span {shownSpan}" aria-colspan={shownSpan} aria-label="Stroj ukázal">stroj:</span>
+                  {#each machine.lamps as l (l.id)}
+                    <span role="cell"><span class="dot" class:on={shown[l.id] === 1} class:wrong={l.id in stepItem.expect && (shown[l.id] ?? 0) !== stepItem.expect[l.id]} aria-label={shown[l.id] ? 'svítí' : 'mlčí'}></span></span>
+                  {/each}
+                </div>
+              {/if}
             {/each}
           </div>
         {:else if bigTable}
@@ -264,6 +278,12 @@
           </div>
         {/if}
         {#if task.rule && !bigTable}<p class="rule-line carved">{task.rule}</p>{/if}
+        {#if task.script && (game.phase === 'play' || game.free)}
+          <!-- Od tmy: paměť začne jako při Zkoušce, kroky zkoušky jde projít ručně. Není to tah. -->
+          <button type="button" class="btn btn-ghost" onclick={() => game.resetMemory()} disabled={!touch} title="Zhasne vstupy i paměť, jako na začátku Zkoušky">
+            Od tmy
+          </button>
+        {/if}
         {#if game.phase === 'play'}
           <button type="button" class="btn btn-primary btn-lg" class:hl={game.hintTest} onclick={() => game.test()} disabled={!game.playing}>Zkouška</button>
         {/if}
@@ -548,6 +568,24 @@
   .trow.failed {
     background: rgba(240, 149, 122, 0.22);
     box-shadow: inset 0 0 0 1px var(--warn);
+  }
+  /* Pod chybným krokem: co lampy opravdu ukázaly. Nesedící lampa má výstražný kroužek. */
+  .trow.shown {
+    min-height: 24px;
+  }
+  .shown-label {
+    justify-self: end;
+    padding-right: 6px;
+    font-size: var(--fs-xs);
+    font-style: italic;
+    color: var(--warn);
+  }
+  .dot.wrong {
+    box-shadow: 0 0 0 2px var(--warn);
+  }
+  .note {
+    margin: -6px 0 0;
+    text-align: center;
   }
   .idx {
     font-family: var(--font-mono);

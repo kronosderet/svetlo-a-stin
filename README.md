@@ -3,7 +3,7 @@
 Didaktická hra o binární matematice, logice a výpočtech v atmosféře zapomenuté civilizace.
 Cílová skupina: sexta gymnázia. Herní design a plán vývoje jsou v [PLAN.md](PLAN.md).
 
-**Stav:** verze 0.4.3 alpha, Akty I až IV, 64 komnat. Každé patro začíná nultou komnatou, která ukáže
+**Stav:** verze 0.4.4 alpha, Akty I až IV, 64 komnat. Každé patro začíná nultou komnatou, která ukáže
 základní nápad patra jednoduchou hrou, pokračuje základní cestou 1–7 (komnata 7 je brána)
 a má nepovinné Hlubší síně 8–15 (komnata 15 je velká brána).
 Akt I, Předsíň Prvního Světla: základ (bit, kombinace 2ⁿ, poziční hodnota, převody oběma
@@ -93,6 +93,8 @@ se otevírá špatně, tam patří webová verze. Po každé úpravě hry soubor
   (kotyza.jakub@centrum.cz). Otevře všechna patra a komnaty
   (ukázky na projektoru) a zpřístupní **Přehled třídy**: přetáhněte do něj soubory s postupem od
   studentů a uvidíte, kdo je kde a ve kterých komnatách se třída zasekává. Nic se neodesílá.
+  Od verze 0.4.4 dá ukázka kroku po každém stisku Nápovědy jen jeden krok a počítá se každý stisk.
+  Průměr ukázek kroku proto vyjde vyšší než se soubory ze starších verzí.
 - **Shrnutí patra** (tlačítko na mapě) vytiskne přeložené zákony patra na jednu stránku.
 - **Úsporná grafika** (Nastavení) vypne rozostření a částice. Když se hra trhá, zapne se sama.
 

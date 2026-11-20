@@ -110,7 +110,8 @@ describe('H-IV-13, D-IV-25, H-IV-16: druhá zkouška brány Hlubiny', () => {
     expect(slotNodes(first.machine)).toHaveLength(1);
     expect(slotNodes(second.machine)).toHaveLength(2);
     expect(second.say).toContain('oba kameny');
-    const [runes, selectors] = machineParts('IV-13')[0].config.tasks;
+    // D-IV-13 (0.4.4): nejdřív snazší úloha s voliči, pak runy s přehozenými voliči.
+    const [selectors, runes] = machineParts('IV-13')[0].config.tasks;
     expect(slotNodes(runes.machine).length).toBeGreaterThan(0);
     expect(sockets(runes.machine)).toHaveLength(0);
     expect(runes.say).toContain('Osaď kameny');
@@ -190,7 +191,8 @@ describe('H-IV-17: Počítadlo hvězd nemá krystaly', () => {
     expect(wrong.length).toBeGreaterThan(0);
     for (const f of wrong) {
       const text = failureWords(task, f!);
-      expect(text).toContain('Projdi ten krok tepem');
+      // D-IV-06 (0.4.4): hláška posílá projít kroky od zhasnuté paměti, ne jen jeden krok.
+      expect(text).toMatch(/projdi (kroky 1 až \d|1\. krok) tepem/);
       expect(text).not.toContain('vstupy');
     }
   });
@@ -217,7 +219,9 @@ describe('K-IV-02: hláška po chybě v bráně tepu', () => {
     }
     const text = part('IV-9', 'Brána tepu').echo.wrong!;
     expect(text).toContain('nepřevzala D');
-    expect(text).toContain('2. krok');
+    // Z živé paměti může 2. krok vyjít dobře: replika pošle od tmy přes kroky 1 a 2 (kontrola 0.4.4).
+    expect(text).toContain('Od tmy');
+    expect(text).toContain('kroky 1 a 2');
   });
 });
 

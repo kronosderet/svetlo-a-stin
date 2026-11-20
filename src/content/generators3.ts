@@ -44,25 +44,25 @@ export function branch(fixed?: { a: Rune; b: Rune; join: Rune }): Circuit {
 
 const tableFrom = (c: Circuit): number[] => lampTable(c).map((v) => v ?? 0);
 
-/** Nápověda 3. stupně u kamenů (zazní, jen když ukázka kroku nemá vlastní větu). */
-export const SLOT_HINT = 'Zvýrazněný kámen potřebuje jinou runu. Dotkni se kamene.';
-
-/** Nápovědy ke zkoumání hotové runy se dvěma vstupy. */
+/**
+ * Nápovědy ke zkoumání hotové runy se dvěma vstupy. Pořadí v nápovědě 2 jde po jediné změně
+ * (jako ukázka kroku), takže stačí ideální tři doteky (H-III-16). Třetí text zůstává: ukázka
+ * kroku při zkoumání jen zvýrazní vstup a vlastní větu nemá.
+ */
 export const EXPLORE_HINTS: [string, string, string] = [
   'Každým dotekem přepni jeden vstup a sleduj lampu.',
-  'Kombinace jsou čtyři: oba stín, jen A, jen B, oba světlo. Zkus je všechny.',
+  'Kombinace jsou čtyři: oba stín, jen A, oba světlo, jen B. V tomhle pořadí stačí tři doteky.',
   'Zvýrazněný vstup vede k nové kombinaci.',
 ];
 
 /**
  * Nápovědy ke stavbě větvení s jedním Obracečem: lampa je v jednom řádku jiná než ve zbylých třech.
  * Má svítit jen tam, je to Pouto a obrací se vstup, který tam mlčí; má mlčet jen tam, je to
- * Rozcestí a obrací se vstup, který tam svítí.
+ * Rozcestí a obrací se vstup, který tam svítí. Třetí text nemá: krok s větou dá ukázka kroku.
  */
-export const BRANCH_HINTS: [string, string, string] = [
+export const BRANCH_HINTS: [string, string] = [
   'Začni od brány: ve kterém řádku má lampa jiný stav než ve zbylých třech?',
   'Má lampa svítit jen v jednom řádku? Spoj cesty Poutem a obrať vstup, který v tom řádku mlčí. Má mlčet jen v jednom řádku? Spoj cesty Rozcestím a obrať vstup, který v tom řádku svítí.',
-  SLOT_HINT,
 ];
 
 /** Úloha s prázdnými kameny, jejíž cíl je deska daného pevného obvodu. */
@@ -87,10 +87,20 @@ function randomBranch(rng: Rng): { a: Rune; b: Rune; join: Rune } {
   return { a, b, join: pick(rng, ['and', 'or'] as Rune[]) };
 }
 
-/** III-5: tři desky k poznání (každá runa jednou) a dvě k vyplnění. */
+/**
+ * III-5: tři desky k poznání a dvě k vyplnění (lampa pod závojem, deska se píše podle runy).
+ * Poznávané runy se losují nezávisle, ať poslední nejde uhodnout vylučováním, ale aspoň dvě různé.
+ * Vyplňují se dvě různé runy a runa, kterou poznávání vynechalo, mezi nimi je: závěr „Pět desek,
+ * tři runy.“ pak platí vždy.
+ */
 export function genIII5(rng: Rng): TableConfig {
-  const veiled = shuffled(rng, TWO);
-  const fills = [pick(rng, TWO), pick(rng, TWO)];
+  let veiled: Rune[];
+  do veiled = [pick(rng, TWO), pick(rng, TWO), pick(rng, TWO)];
+  while (new Set(veiled).size < 2);
+  // Runu, kterou poznávání vynechalo, hráč aspoň vyplní; druhá vyplňovaná je některá ze zbylých.
+  const missing = TWO.filter((r) => !veiled.includes(r));
+  const others = shuffled(rng, TWO.filter((r) => !missing.includes(r)));
+  const fills = shuffled(rng, [...missing, ...others].slice(0, 2));
   const identify = (rune: Rune): TableTask => ({ mode: 'identify', circuit: single(rune), choices: TWO, answer: rune });
   const fill = (rune: Rune): TableTask => ({ mode: 'fill', circuit: single(rune) });
   return { tasks: [identify(veiled[0]), fill(fills[0]), identify(veiled[1]), fill(fills[1]), identify(veiled[2])] };
@@ -358,9 +368,16 @@ export function genIII15Identify(rng: Rng): TableConfig {
   return { tasks: [task(first), task(second)] };
 }
 
-/** III-15 (Prapečeť): Pouto, nebo Rozcestí jen z NAND. */
+/**
+ * III-15 (Prapečeť): vždy Rozcestí jen z NAND, nejtěžší úloha z III-11 (H-III-15). Je to zrcadlo
+ * (Zlomené pouto obrácených vstupů), takže závěr brány „umíš je zrcadlit“ platí. Losuje se jen
+ * pořadí zdrojů na točitých kamenech: zkouška navíc po ukázce kroku pak není stejné klikání.
+ */
 export function genIII15Nand(rng: Rng): GateConfig {
-  return { tasks: [nandOnly(pick(rng, ['and', 'or'] as const))] };
+  const task = nandOnly('or');
+  if (pick(rng, [false, true])) return { tasks: [task] };
+  const nodes = task.circuit.nodes.map((g) => (g.free ? { ...g, free: [...g.free].reverse() } : g));
+  return { tasks: [{ ...task, circuit: { ...task.circuit, nodes } }] };
 }
 
 /** III-15 (maska): jedno vybrání nebo rozsvícení a jedno přepnutí. */

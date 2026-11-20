@@ -39,17 +39,21 @@ type Wrong = Extract<CascadeEvent, { type: 'wrong' }>;
 /**
  * Proč Kaskáda výsledek nepřijala: vysvětlí první buňku zprava, která nesedí.
  * explicit: ukázka kroku řekne i výsledek sloupce, ne jen otázku („co zůstane dole?“).
+ * Chybějící přenos, výpůjčku nebo krystal bez přenosů jmenuje až druhé chybné potvrzení téže
+ * buňky (ev.again) a ukázka kroku. Poprvé hláška jen ptá, ať potvrzování naslepo nenahradí ukázku.
  */
 export function cascadeWhy(cfg: CascadeConfig, state: CascadeState, ev: Wrong, explicit = false): string {
   const task = cfg.tasks[Math.min(state.step, cfg.tasks.length - 1)];
   const sub = task.op === 'sub';
   const c = ev.cell.column;
+  const concrete = explicit || !!ev.again;
   if (ev.cell.row === 'copy') {
     return ev.expected
       ? `Druhý činitel má na místě s váhou ${2 ** c} jedničku. ${copyName(c)} do součtu patří.`
       : `Druhý činitel má na místě s váhou ${2 ** c} nulu. ${copyName(c)} se nesčítá.`;
   }
   if (ev.cell.row === 'far') {
+    if (ev.expected && !concrete) return `O dvě místa vpravo se ${poured(ev.inflow)}, to je ${ev.inflow.toString(2)}. Do jednoho krystalu se nevejdou: kam putuje čtveřice?`;
     return ev.expected
       ? `O dvě místa vpravo se ${poured(ev.inflow)}, to je ${ev.inflow.toString(2)}. Jedno světlo putuje o dvě místa: rozsviť horní krystal nad ${INS[c]} sloupcem zprava.`
       : `Do ${GEN[c]} sloupce zprava nic o dvě místa nepřiteklo. Sloupec o dvě místa vpravo neměl čtyři světla.`;
@@ -62,10 +66,12 @@ export function cascadeWhy(cfg: CascadeConfig, state: CascadeState, ev: Wrong, e
       return ev.expected ? 'Nejlevější sloupec přetekl. To světlo patří do přepadu.' : 'Nic nepřeteklo. Přepad má zůstat suchý.';
     }
     if (sub) {
+      if (ev.expected && !concrete) return 'Sloupec vpravo neměl z čeho brát. Od koho si může půjčit?';
       return ev.expected
         ? `Ve sloupci vpravo nebylo z čeho brát. Výpůjčku zapiš krystalem pod spodní řadu ${LOC[c]} sloupci zprava.`
         : `Sloupec vpravo si nepůjčoval. ${LOC_UP[c]} sloupci zprava výpůjčka být nemá.`;
     }
+    if (ev.expected && !concrete) return `Ve sloupci vpravo se ${poured(ev.inflow)}. Do jednoho krystalu se nevejdou: kam přeteče dvojice?`;
     return ev.expected
       ? `Ve sloupci vpravo se ${poured(ev.inflow)} a jedno přeteklo. Nad ${INS[c]} sloupcem zprava chybí krystal přenosu.`
       : `Nad ${INS[c]} sloupcem zprava svítí krystal přenosu, ale sloupec vpravo nepřetekl.`;
@@ -79,6 +85,7 @@ export function cascadeWhy(cfg: CascadeConfig, state: CascadeState, ev: Wrong, e
   // Bez krystalů přenosu: světlo, které do sloupce přiteklo zprava, ve stěně nesvítí (own = vlastní světla sloupce).
   const own = rows(task).filter((r) => isBitSet(r, c)).length;
   if (cfg.carries === 'none' && ev.expected && ev.inflow > own) {
+    if (!concrete) return 'Ve sloupci vpravo se slila dvě světla. Kolik dohromady váží a který krystal váží stejně?';
     return `Ve sloupci vpravo se slila dvě světla. Dohromady váží ${2 ** c}, tolik jako krystal ${LOC[c]} sloupci zprava. Rozsviť tento krystal.`;
   }
   if (ev.inflow >= 2) {
@@ -119,10 +126,10 @@ export function cascadeRefusal(cfg: CascadeConfig, task: CascadeTask, marks: Flo
       if (left === 0) return `${where(c)} spodní řada odečte jediné světlo. Na výsledek nezbylo nic.`;
       return `Jediné volné světlo ${GEN[c]} sloupce zprava už je půjčené sousedovi vpravo.`;
     }
-    if (pool === 0) {
-      return `${where(c)} není co půjčit.${carryColumns(cfg).includes(c + 1) ? ' Sloupec si nejdřív musí sám půjčit od souseda vlevo.' : ''}`;
-    }
-    if (left === 0) return `${where(c)} spodní řada odečte jediné světlo. Půjčit už není co.`;
+    // Řetěz výpůjček: sloupec, který sám nemá co půjčit, si podle výsledku nejdřív půjčí od souseda vlevo.
+    const chain = isBitSet(answer(cfg, task).carries, c + 1) ? ' Sloupec si nejdřív musí půjčit od souseda vlevo.' : '';
+    if (pool === 0) return `${where(c)} není co půjčit.${chain}`;
+    if (left === 0) return `${where(c)} spodní řada odečte jediné světlo. Půjčit už není co.${chain}`;
     return `Jediné volné světlo ${GEN[c]} sloupce zprava už sjelo do krystalu výsledku. Půjčit už není co.`;
   }
 
@@ -145,7 +152,17 @@ export function cascadeRefusal(cfg: CascadeConfig, task: CascadeTask, marks: Flo
     const head = 'Přenos o dvě místa dostane čtyři světla ze sloupce o dvě místa vpravo.';
     return n < 4 ? `${head} ${where(s)} ${HOW_MANY[n]}.` : `${head} ${where(s)} už čtyři volná světla nezbyla.`;
   }
-  if (cfg.carries !== 'none') return pool(c) === 0 ? empty : `${where(c)} už všechna světla odtekla nahoru do přenosu. Dolů nezbylo nic.`;
+  if (cfg.carries !== 'none') {
+    if (pool(c) > 0) return `${where(c)} už všechna světla odtekla nahoru do přenosu. Dolů nezbylo nic.`;
+    // Sloupec bez vlastních světel, do kterého podle výsledku patří přenos: výsledek je napřed, chybí přenos.
+    // (Při násobení jen tehdy, když světlo nemá přinést ani nerozsvícená kopie.)
+    if (rows(task).some((r) => isBitSet(r, c))) return empty;
+    const ans = answer(cfg, task);
+    const head = `Do ${GEN[c]} sloupce zprava zatím nic nepřiteklo.`;
+    if (isBitSet(ans.carries, c)) return `${head} Světlo sem přinese přenos ze sloupce vpravo: nejdřív rozsviť krystal přenosu nad tímto sloupcem.`;
+    if (isBitSet(ans.far, c)) return `${head} Světlo sem přinese přenos o dvě místa: nejdřív rozsviť horní krystal přenosu nad tímto sloupcem.`;
+    return empty;
+  }
   // Bez krystalů přenosu: do prázdného sloupce přiteče dvojice ze sloupce vpravo rovnou do výsledku.
   if (pool(c) > 0) return `Obě světla ${GEN[c]} sloupce zprava už přetekla do sloupce vlevo. Dolů nezbylo nic.`;
   if (c === 0) return empty;

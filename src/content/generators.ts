@@ -31,28 +31,40 @@ export function genI5(rng: Rng): AltarConfig {
   return { bits: 4, goal: { kind: 'value', targets: [9, ...rest] }, reveal: 'solo', initialRevealed: 0b0111 };
 }
 
-/** I-8: pět cílů do 31 bez vah; čtvrtý potřebuje pátý krystal (Echo to komentuje). */
+/**
+ * I-8: pět cílů do 31 bez vah. Pátý krystal potřebuje až čtvrtý cíl (Echo to komentuje), tedy
+ * až po zmizení součtu (fade.sum = 2): jeho váhu si hráč odvodí ze zákona, nepřečte ji ze součtu.
+ */
 export function genI8(rng: Rng): AltarConfig {
   const targets = until(
     () => sequence(rng, 5, () => int(rng, 3, 31)),
     (vs) =>
-      vs[0] < 16 && vs[3] >= 16 && vs.filter((v) => v >= 16).length >= 2 && vs.filter((v) => popcount(v) >= 3).length >= 2,
+      vs.slice(0, 3).every((v) => v < 16) && vs[3] >= 16 && vs[4] >= 16 && vs.filter((v) => popcount(v) >= 3).length >= 2,
   );
   return { bits: 5, goal: { kind: 'value', targets }, reveal: 'never' };
 }
 
-/** I-6: pět nápisů ze čtyř krystalů, začíná se lehčím. */
+/**
+ * Souměrný nápis ze čtyř krystalů (0110, 1001, 1111) vyjde stejně i zrcadlově: zrcadlové čtení,
+ * nejčastější omyl, by na něm nevyšlo najevo. Krajní krystaly a oba prostřední mají stejný stav.
+ */
+const symmetric4 = (v: number): boolean => ((v >> 3) & 1) === (v & 1) && ((v >> 2) & 1) === ((v >> 1) & 1);
+
+/** I-6: pět nápisů ze čtyř krystalů, začíná se lehčím. Žádný není souměrný. */
 export function genI6(rng: Rng): InscriptionConfig {
   const values = until(
-    () => sequence(rng, 5, () => int(rng, 3, 15)),
+    () => sequence(rng, 5, () => int(rng, 3, 15), (v) => !symmetric4(v)),
     (vs) => vs[0] < 8 && popcount(vs[0]) === 2 && vs.filter((v) => v >= 8).length >= 3 && vs.every((v) => popcount(v) >= 2),
   );
   return { bits: 4, tasks: values.map(read) };
 }
 
-/** I-7, brána Předsíně: zápis, čtení, zápis, čtení ze čtyř krystalů; poslední je vždy nejtěžší světlo 15. */
+/**
+ * I-7, brána Předsíně: zápis, čtení, zápis, čtení ze čtyř krystalů, žádný losovaný souměrný;
+ * poslední je vždy nejtěžší světlo 15.
+ */
 export function genI7(rng: Rng): InscriptionConfig {
-  const [w1, r1, w2, r2] = sequence(rng, 4, () => int(rng, 5, 14), (v) => popcount(v) >= 2);
+  const [w1, r1, w2, r2] = sequence(rng, 4, () => int(rng, 5, 14), (v) => popcount(v) >= 2 && !symmetric4(v));
   return { bits: 4, tasks: [write(w1), read(r1), write(w2), read(r2), write(15)] };
 }
 
@@ -386,11 +398,12 @@ function add3(a: number, b: number, c: number): CascadeTask {
 }
 
 /**
- * II-13, Doplněk (záporná čísla): tři různá čísla do 7 převrátit a přidat jednu. První je vždy −3:
+ * II-13, Doplněk (záporná čísla): tři různá čísla do 6 převrátit a přidat jednu. První je vždy −3:
  * navazuje na třináct jedniček z první zkoušky a Echo ho komentuje („1101, stejně jako…“).
+ * Sedmička ne: k −7 = 1001 vedou i dva tahy +1 (7 → 8 → 9), takže by šla zkratka obejít.
  */
 export function genII13Negate(rng: Rng): TideConfig {
-  const values = [3, ...sequence(rng, 2, () => int(rng, 1, 7), (v) => v !== 3)];
+  const values = [3, ...sequence(rng, 2, () => int(rng, 1, 6), (v) => v !== 3)];
   return { bits: 4, ops: ['not', 'inc'], tasks: values.map((b) => ({ start: b, target: (16 - b) & 15, show: `−${b}` })) };
 }
 

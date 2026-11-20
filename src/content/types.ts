@@ -28,6 +28,12 @@ export interface QuizQuestion {
 export type QuizItem = QuizQuestion | ((rng: Rng) => QuizQuestion);
 
 export interface Presentation {
+  /**
+   * Zkratka „Desku znám“ u zkoumání před deskou zákona (jen III-2 až III-4): zkoumání jde přeskočit
+   * a desku pak hráč píše zpaměti. S kodex se nabídne, jen když je ten záznam Kodexu přeložený
+   * (připraveno pro Glyfy znám ve V-1, PLAN.md:440).
+   */
+  knownBoard?: true | { kodex: string };
   task: string;
   /** Zadání pro zápis (jen u Nápisu, který střídá čtení a zápis). */
   writeTask?: string;
@@ -70,7 +76,7 @@ export interface Presentation {
   veilLamp?: boolean;
 }
 
-export type FadingAid = 'weights' | 'sizes' | 'counts';
+export type FadingAid = 'weights' | 'sizes' | 'counts' | 'sum';
 
 /** Svítí v úloze s pořadím step opora, která v komnatě postupně mizí? */
 export function aidOn(pres: Presentation, aid: FadingAid, step: number): boolean {
@@ -82,8 +88,12 @@ interface LevelBase {
   id: string;
   title: string;
   presentation: Presentation;
-  /** Tři stupně: náznak, strategie, ukázka (3. stupeň ukáže konkrétní krok). */
-  hints: [string, string, string];
+  /**
+   * Stupně nápovědy: náznak a strategie. Třetí stupeň ukáže konkrétní krok a větu k němu řekne
+   * ukázka kroku (stepHint). Třetí text mají jen komnaty, kde ukázka kroku vlastní větu mít nemusí
+   * (váhy, které hráč teprve objevuje, zkoumání, cíle v Dílně); hlídá to levels.test.ts.
+   */
+  hints: [string, string, string?];
   /** Repliky průvodce. {{slovo}} = zatím nečitelné slovo (zobrazí se glyfy). */
   echo: {
     intro: string[];
@@ -96,6 +106,8 @@ interface LevelBase {
     spill?: string;
     /** Váhy Osudu: misky se vrátily na začátek. */
     reset?: string;
+    /** Příliv: první tah +1 z jedničky, kde ×2 dá totéž (Zdvojení). */
+    incFromOne?: string;
     firstReveal?: string;
     allRevealed?: string;
     complete?: string;

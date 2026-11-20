@@ -6,13 +6,14 @@ import {
   initAltar,
   par as computePar,
   toggle as toggleAltar,
+  toggleOutcome,
   type AltarConfig,
   type AltarState,
 } from '../core/puzzles/altar';
 import type { AltarLevel } from '../content/types';
 import { flipBit, isBitSet } from '../core/bits';
 import { BaseGame, type GameEvent } from './baseGame.svelte.ts';
-import { valueStep } from './stepWords';
+import { counterStep, valueStep } from './stepWords';
 import { allStep } from './altarWords';
 
 /** Reaktivní obal kolem čisté logiky oltáře (a počítadla, které na něm stojí). */
@@ -41,8 +42,8 @@ export class AltarGame extends BaseGame<AltarLevel> {
   }
 
   /**
-   * Ukázka kroku s důvodem. U vah: kolik zbývá a jestli se váha vejde. Dokud hráč váhy teprve
-   * objevuje (I-4), zůstane u holého zvýraznění, ať ukázka váhu neprozradí.
+   * Ukázka kroku s důvodem. U vah: kolik zbývá a jestli se váha vejde, u Počítadla předání
+   * zprava. Dokud hráč váhy teprve objevuje (I-4), zůstane u holého zvýraznění, ať ukázka váhu neprozradí.
    */
   get stepHint(): string | null {
     const bit = this.hintTarget;
@@ -57,7 +58,9 @@ export class AltarGame extends BaseGame<AltarLevel> {
     }
     const known = cfg.reveal !== 'solo' || isBitSet(this.state.revealed, bit);
     const target = currentTarget(cfg, this.state);
-    if (!known || target === null || cfg.hintOrder === 'low') return null;
+    if (!known || target === null) return null;
+    // Počítadlo jde zprava: svítící krystal předá světlo doleva, zhasnutý ho přijme.
+    if (cfg.hintOrder === 'low') return counterStep(target, bit, this.state.mask);
     return valueStep(target, bit, !on);
   }
 
@@ -74,14 +77,21 @@ export class AltarGame extends BaseGame<AltarLevel> {
       return;
     }
     if (this.phase !== 'play') return;
+    const shown = this.hintTarget;
     const before = $state.snapshot(this.state) as AltarState;
     const { state, events } = toggleAltar(this.level.config, before, bit);
     if (events.length === 0) return;
 
-    // Undo funguje jen v rámci aktuálního cíle; splněný cíl se nevrací.
-    const advanced = events.some((e) => e.type === 'step' || e.type === 'found' || e.type === 'reset');
-    this.history = advanced ? [] : [...this.history, before];
-    if (advanced) this.hintLevel = 0;
+    // Undo funguje jen v rámci aktuálního cíle; splněný cíl ani nalezená kombinace se nevrací.
+    // Přerušený tichý krok Zpět vrátí: v historii zůstane cesta před přerušením. Ze slepé uličky
+    // ne: ukázka kroku tam sama radí cestu přerušit a Zpět by do uličky jen vrátilo.
+    const outcome = toggleOutcome(events);
+    const deadEnd = events.some((e) => e.type === 'reset' && e.deadEnd);
+    this.history = outcome === 'broken' ? (deadEnd ? [] : [before]) : outcome ? [] : [...this.history, before];
+    // Nový cíl začne od náznaku. Jinak dává ukázka kroku jeden krok na stisk (R2): po nalezené
+    // kombinaci a po doteku zvýrazněného krystalu se stupeň vrátí na 2.
+    if (outcome === 'goal') this.hintLevel = 0;
+    else if (outcome || shown === bit) this.hintLevel = Math.min(this.hintLevel, 2);
     this.state = state;
 
     for (const event of events) this.emit({ kind: 'altar', event, state });
@@ -115,7 +125,7 @@ export class AltarGame extends BaseGame<AltarLevel> {
     if (!this.canUndo) return;
     const prev = this.history[this.history.length - 1];
     this.history = this.history.slice(0, -1);
-    // Odhalené váhy zůstávají: co hráč zjistil, už ví. Vrácený dotek se do tahů počítá dál.
-    this.state = { ...prev, revealed: this.state.revealed, moves: this.state.moves };
+    // Odhalené váhy zůstávají: co hráč zjistil, už ví. Vrácený dotek se do tahů (i zbytečných) počítá dál.
+    this.state = { ...prev, revealed: this.state.revealed, moves: this.state.moves, strays: this.state.strays };
   }
 }

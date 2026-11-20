@@ -2,9 +2,10 @@ import { describe, expect, it } from 'vitest';
 import { confirm, initCascade, toggle, type CascadeCell, type CascadeConfig, type CascadeState } from '../core/puzzles/cascade';
 import { cascadeRefusal, cascadeStep, cascadeWhy } from './cascadeWords';
 
-/** Hláška po potvrzení výsledku `result` v úloze `step`. */
-const why = (cfg: CascadeConfig, step: number, result: number): string => {
-  const st = { ...initCascade(cfg), step, result };
+/** Hláška po `times`. potvrzení výsledku `result` v úloze `step` (konkrétní krystal řekne až druhé). */
+const why = (cfg: CascadeConfig, step: number, result: number, times = 1): string => {
+  let st: CascadeState = { ...initCascade(cfg), step, result };
+  for (let k = 1; k < times; k++) st = confirm(cfg, st).state;
   const ev = confirm(cfg, st).events[0];
   if (ev.type !== 'wrong') throw new Error('výsledek prošel');
   return cascadeWhy(cfg, st, ev);
@@ -27,14 +28,14 @@ describe('Kaskáda slovy bez krystalů přenosu', () => {
     expect(why(one, 0, 0b11)).toBe('Ve druhém sloupci zprava není žádné světlo. Krystal dole má zůstat zhasnutý.');
   });
 
-  it('Jedna a jedna: u 1 + 1 chybí krystal s váhou 2', () => {
-    expect(why(one, 1, 0b00)).toBe(
+  it('Jedna a jedna: u 1 + 1 chybí krystal s váhou 2 (druhé potvrzení)', () => {
+    expect(why(one, 1, 0b00, 2)).toBe(
       'Ve sloupci vpravo se slila dvě světla. Dohromady váží 2, tolik jako krystal ve druhém sloupci zprava. Rozsviť tento krystal.',
     );
   });
 
-  it('Dvě dvojky: dvojice přeteče do prázdného sloupce uvnitř řad', () => {
-    expect(why(pairs, 0, 0)).toBe(POUR4);
+  it('Dvě dvojky: dvojice přeteče do prázdného sloupce uvnitř řad (druhé potvrzení)', () => {
+    expect(why(pairs, 0, 0, 2)).toBe(POUR4);
   });
 
   it('Dvě dvojky: světlo pod dvojicí (počet světel místo váhy)', () => {
@@ -98,7 +99,7 @@ describe('Zachování světla slovy: proč se krystal nerozsvítil', () => {
     expect(refusal(minus(0b11, 0b01), [], res(0))).toBe('V prvním sloupci zprava spodní řada odečte jediné světlo. Na výsledek nezbylo nic.');
     expect(refusal(minus(0b10, 0b01), [car(1)], res(1))).toBe('Jediné volné světlo druhého sloupce zprava už je půjčené sousedovi vpravo.');
     expect(refusal(minus(0b100, 0b001), [], car(1))).toBe(
-      'Ve druhém sloupci zprava není co půjčit. Sloupec si nejdřív musí sám půjčit od souseda vlevo.',
+      'Ve druhém sloupci zprava není co půjčit. Sloupec si nejdřív musí půjčit od souseda vlevo.',
     );
     expect(refusal(minus(0b10, 0b00), [res(1)], car(1))).toBe(
       'Jediné volné světlo druhého sloupce zprava už sjelo do krystalu výsledku. Půjčit už není co.',

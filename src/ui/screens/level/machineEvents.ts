@@ -64,6 +64,10 @@ export function onMachine(ctx: LevelCtx, ev: MachineEvent, state: MachineState):
       ctx.announce(`Brána se nepohnula. ${why}`);
       break;
     }
+    case 'dark':
+      sound.playTick();
+      ctx.announce(`Od tmy: vstupy i paměť zhasly. ${lampsWords(m, lamps())}.`);
+      break;
     case 'step': {
       sound.playChord(rowCount(Math.min(n, 4)) - 1, Math.min(n, 4), 0.1);
       sound.playGrind(0.8);

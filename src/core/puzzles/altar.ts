@@ -39,6 +39,11 @@ export interface AltarConfig {
    * a všechno začíná znovu. Hráč tak hledá cestu přes všechny kombinace bez opakování (Grayův kód).
    */
   strict?: boolean;
+  /**
+   * Oltář bez součtu (I-10): dotek, po kterém krystal nesedí s cílem, je zbytečný. První bývá
+   * překlep, každý další se hlásí (slip) jako zápis v Nápisu, ať se slepému naklikávání rozzáří Nápověda.
+   */
+  slips?: boolean;
 }
 
 export interface AltarState {
@@ -50,6 +55,8 @@ export interface AltarState {
   /** Pozice, jejichž váha je odhalená. */
   revealed: number;
   moves: number;
+  /** Zbytečné doteky u aktuálního cíle (jen se slips): ty, které světlo od cíle vzdálily. */
+  strays: number;
   complete: boolean;
 }
 
@@ -62,8 +69,13 @@ export type AltarEvent =
   | { type: 'reveal'; bit: number; allRevealed: boolean; source: 'solo' | 'altar' | 'deduce'; known?: number }
   | { type: 'found'; pattern: number; count: number }
   | { type: 'repeat'; pattern: number }
-  /** Tichý krok se přerušil: deska se vymaže a krystaly se vrátí na začátek. */
-  | { type: 'reset'; to: number }
+  /**
+   * Tichý krok se přerušil: deska se vymaže a krystaly se vrátí na začátek. deadEnd: cesta před
+   * přerušením byla slepá ulička (strictDeadEnd), Zpět ji proto nevrací.
+   */
+  | { type: 'reset'; to: number; deadEnd: boolean }
+  /** Další zbytečný dotek (slips): nic neříká, jen rozzáří Nápovědu. */
+  | { type: 'slip'; mask: number; target: number }
   | { type: 'step'; index: number; target: number }
   | { type: 'complete' };
 
@@ -92,6 +104,7 @@ export function initAltar(cfg: AltarConfig): AltarState {
     found: cfg.goal.kind === 'all' ? [mask] : [],
     revealed: cfg.reveal === 'always' ? fullMask(cfg.bits) : (cfg.initialRevealed ?? 0),
     moves: 0,
+    strays: 0,
     complete: false,
   };
 }
@@ -129,10 +142,18 @@ export function toggle(
     });
   }
 
+  // Zbytečný dotek (slips): krystal po něm nesedí s cílem. První bývá překlep, další se hlásí.
+  let strays = st.strays;
+  const aim = currentTarget(cfg, st);
+  if (cfg.slips && aim !== null && isBitSet(mask ^ aim, bit)) {
+    strays++;
+    if (strays > 1) events.push({ type: 'slip', mask, target: aim });
+  }
+
   if (cfg.goal.kind === 'all') {
     if (found.includes(mask) && cfg.strict) {
       const to = cfg.initial ?? 0;
-      events.push({ type: 'repeat', pattern: mask }, { type: 'reset', to });
+      events.push({ type: 'repeat', pattern: mask }, { type: 'reset', to, deadEnd: strictDeadEnd(cfg, st) });
       return { state: { ...st, mask: to, found: [to], moves: st.moves + 1 }, events };
     }
     if (found.includes(mask)) {
@@ -170,8 +191,26 @@ export function toggle(
     if (step >= targets.length) complete = true;
   }
 
+  // Nový cíl začíná bez zbytečných doteků.
+  if (step !== st.step) strays = 0;
   if (complete) events.push({ type: 'complete' });
-  return { state: { mask, step, found, revealed, moves: st.moves + 1, complete }, events };
+  return { state: { mask, step, found, revealed, moves: st.moves + 1, strays, complete }, events };
+}
+
+/**
+ * Co tah znamená pro průběh komnaty (nápověda a Zpět):
+ *  - goal:   splněný cíl, nápověda začne znovu od náznaku a Zpět ho nevrátí,
+ *  - path:   další kombinace u cíle „všechny“; ukázka kroku dává jeden krok na stisk, takže se
+ *            stupeň nápovědy vrátí nejvýš na 2 a další stisk ukáže další krok,
+ *  - broken: tichý krok se přerušil; Zpět vrátí cestu před přerušením (tah se počítá dál), ale jen
+ *            když nebyla slepou uličkou (reset.deadEnd): odtud cesta dál stejně nevede,
+ *  - null:   tah uvnitř cíle.
+ */
+export function toggleOutcome(events: AltarEvent[]): 'goal' | 'path' | 'broken' | null {
+  if (events.some((e) => e.type === 'reset')) return 'broken';
+  if (events.some((e) => e.type === 'found')) return 'path';
+  if (events.some((e) => e.type === 'step')) return 'goal';
+  return null;
 }
 
 /** Nejmenší možný počet doteků k vyřešení (pro pečeť přesnosti). */
@@ -206,8 +245,9 @@ export function hintBit(cfg: AltarConfig, st: AltarState): number | null {
   if (cfg.goal.kind === 'all' && cfg.strict) return hamiltonStep(cfg.bits, st.mask, st.found) ?? breakStep(cfg.bits, st.mask, st.found);
 
   if (cfg.goal.kind === 'all') {
-    // Nejdřív soused, který ještě není nalezený (vede k Grayovu kódu).
-    for (let i = cfg.bits - 1; i >= 0; i--) {
+    // Nejdřív soused, který ještě není nalezený, od nejlehčího krystalu: vede zrcadlovým
+    // Grayovým kódem (000, 001, 011, 010, 110 …), tedy přesně podle nápovědy 2.
+    for (let i = 0; i < cfg.bits; i++) {
       if (!st.found.includes(flipBit(st.mask, i))) return i;
     }
     // Jinak krok k nejbližší nenalezené kombinaci.
@@ -299,13 +339,15 @@ function breakStep(bits: number, mask: number, found: number[]): number {
 /**
  * Tichý krok: krystal, kterým cesta pokračuje tak, aby prošla všechny zbylé kombinace
  * bez opakování (hledání do hloubky po krychli). Ze slepé uličky žádná cesta nevede (null).
+ * Krystaly zkouší od nejlehčího, takže od začátku vydá zrcadlový Grayův kód: polovina se stínem
+ * vlevo, pak levý krystal a táž polovina pozpátku (nápověda Zrcadlo i Kodex).
  */
 function hamiltonStep(bits: number, mask: number, found: number[]): number | null {
   const total = combinations(bits);
   const seen = new Set(found);
   const extend = (at: number): boolean => {
     if (seen.size === total) return true;
-    for (let i = bits - 1; i >= 0; i--) {
+    for (let i = 0; i < bits; i++) {
       const next = flipBit(at, i);
       if (seen.has(next)) continue;
       seen.add(next);
@@ -314,7 +356,7 @@ function hamiltonStep(bits: number, mask: number, found: number[]): number | nul
     }
     return false;
   };
-  for (let i = bits - 1; i >= 0; i--) {
+  for (let i = 0; i < bits; i++) {
     const next = flipBit(mask, i);
     if (seen.has(next)) continue;
     seen.add(next);

@@ -10,6 +10,8 @@
     bits: number;
     mask: number;
     weightState: (i: number) => WeightState;
+    /** Váha pod krystalem, když je vidět (glyfy ji počítají po čtveřicích: 8, 4, 2, 1). */
+    weightOf?: (i: number) => number;
     sizes?: 'equal' | 'weighted';
     digits: boolean;
     highlight?: number | null;
@@ -24,6 +26,7 @@
     bits,
     mask,
     weightState,
+    weightOf = (i: number) => 2 ** i,
     sizes = 'equal',
     digits,
     highlight = null,
@@ -48,7 +51,7 @@
     {#each positions as i, k (i)}
       <Crystal
         on={isBitSet(mask, i)}
-        weight={2 ** i}
+        weight={weightOf(i)}
         weightState={weightState(i)}
         scale={scaleFor(i)}
         digit={digits}

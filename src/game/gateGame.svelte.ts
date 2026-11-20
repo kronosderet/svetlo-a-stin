@@ -2,7 +2,9 @@ import type { Rune } from '../core/logic';
 import {
   currentTask,
   hint,
+  hintDone,
   initGate,
+  nearestSolution,
   nextRune,
   nextSource,
   par as computePar,
@@ -20,6 +22,7 @@ import {
 import type { GateLevel } from '../content/types';
 import { RUNE_NAME, RUNE_RULE } from '../content/runes';
 import { BaseGame, type GameEvent } from './baseGame.svelte.ts';
+import { wireStep } from './stepWords';
 
 export interface GateView {
   task: GateTask;
@@ -60,8 +63,8 @@ export class GateGame extends BaseGame<GateLevel> {
     return { task: shownTask(this.level.config, this.state), inputs, runes, wires, tried, failed };
   }
 
-  /** Nápovědy aktuální úlohy, když má vlastní (zkoumání nebo větvení mezi řetězy); jinak null. */
-  get taskHints(): readonly string[] | null {
+  /** Nápovědy aktuální úlohy, když má vlastní (zkoumání nebo větvení mezi řetězy); jinak null. Třetí jen u zkoumání. */
+  get taskHints(): readonly (string | undefined)[] | null {
     return currentTask(this.level.config, this.state)?.hints ?? null;
   }
 
@@ -70,7 +73,10 @@ export class GateGame extends BaseGame<GateLevel> {
     return this.playing && this.hintLevel >= 3 ? hint(this.level.config, this.state) : null;
   }
 
-  /** Ukázka kroku slovy: jaká runa patří do zvýrazněného kamene a proč, nebo že zbývá Zkouška. */
+  /**
+   * Ukázka kroku slovy: jaká runa patří do zvýrazněného kamene a proč, kam natočit točitý kámen
+   * a proč (podle role runy v řešení, ke kterému ukázka míří), nebo že zbývá Zkouška.
+   */
   get stepHint(): string | null {
     if (!this.playing || this.hintLevel < 3) return null;
     const task = currentTask(this.level.config, this.state);
@@ -78,6 +84,10 @@ export class GateGame extends BaseGame<GateLevel> {
     const h = hint(this.level.config, this.state);
     if (!h) return 'Obvod je hotový. Spusť Zkoušku.';
     if ('node' in h) return `Do zvýrazněného kamene patří ${RUNE_NAME[h.rune]}: ${RUNE_RULE[h.rune]}.`;
+    if ('socket' in h) {
+      const sol = nearestSolution(task, this.state);
+      return sol ? wireStep(task.circuit, sol.wires, h.socket) : null;
+    }
     return null;
   }
 
@@ -174,6 +184,8 @@ export class GateGame extends BaseGame<GateLevel> {
 
   #apply(r: { state: GateState; events: GateEvent[] }): void {
     if (r.events.length === 0) return;
+    // Ukázka kroku dá jeden krok na jeden stisk (R2): po provedeném kroku se stupeň vrátí na 2.
+    if (hintDone(this.hintTarget, r.state, r.events)) this.hintLevel = 2;
     if (r.events.some((e) => e.type === 'step')) {
       this.hintLevel = 0;
       // Splněný obvod chvíli zůstane rozsvícený, než přijde další (jádro už vstupy i runy vynulovalo).

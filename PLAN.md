@@ -325,9 +325,9 @@ Komnata 15 (glyf 1111) je velká brána patra. Akty I až IV jsou rozdělené ta
 | I-6 | Čtení nápisů | Nápis | binární → desítkové | Pět nápisů ze 4 krystalů, hodnota se nastaví na kotoučích (myší i klávesnicí). Chyba ukáže vedle sebe nápis a kombinaci zvoleného čísla. |
 | I-7 | **Brána Předsíně** | Nápis (mix) | syntéza | Pět zkoušek ze 4 krystalů bez vah i součtu, střídavě zápis a čtení, poslední je 15. Otevře schody do Aktu II, Hlubší síně Předsíně a kapitolu Kodexu „Zákony Předsíně“ (shrnutí aktu). |
 | | *Hlubší síně* | | | *Nepovinné, otevřou se po bráně patra.* |
-| I-8 | Skryté váhy | Oltář | zvnitřnění | Váhy zmizí a krystaly jsou stejně velké. Pátý krystal (16) si hráč odvodí ze zákona. Cíle 11, 6, 13, 20, 27, součet ještě svítí. |
-| I-9 | Sudé a liché | Oltář se skupinami čísel | parita, dělitelnost | Oltář nežádá číslo, ale druh čísla: liché, sudé větší než 8, dělitelné čtyřmi, osmi. Aha: rozhoduje pravý krystal, pak stíny vpravo. Připraví posun a dělení. |
-| I-10 | Nejvyšší světlo | Oltář | 2ⁿ − 1, bajt | Oktáva krystalů, cíle 31, 32, 63, 255 bez vah i součtu. Kvíz: největší číslo z 6 krystalů, kolik krystalů na 1000. |
+| I-8 | Skryté váhy | Oltář | zvnitřnění | Váhy zmizí a krystaly jsou stejně velké. Pátý krystal (16) si hráč odvodí ze zákona. Cíle 11, 6, 13, 20, 27. Součet svítí jen u prvních dvou cílů, pak zmizí („Teď i součet zmizí. Zákon zůstal.“). |
+| I-9 | Sudé a liché | Oltář se skupinami čísel | parita, dělitelnost | Oltář nežádá číslo, ale druh čísla: liché, sudé větší než 8, liché menší než 6, dělitelné čtyřmi, ale ne osmi, a dělitelné osmi. Součet nesvítí, druh čísla se pozná z krystalů. Aha: rozhoduje pravý krystal, pak stíny vpravo. Připraví posun a dělení. |
+| I-10 | Nejvyšší světlo | Oltář | 2ⁿ − 1, bajt | Oktáva krystalů, cíle 31, 32, 63, 255 bez vah i součtu. Zbytečné doteky, po kterých krystal nesedí s cílem, rozzáří Nápovědu (první se bere jako překlep). Kvíz: největší číslo z 6 krystalů, kolik krystalů na 1000. |
 | I-11 | Tichý krok | Oltář (přísný) | Grayův kód | Všech 16 kombinací čtyř krystalů, každým dotekem jediná změna. Návrat na kombinaci, kterou deska už zná, cestu přeruší a začíná se znovu. Nápověda: zrcadlo (osm kombinací tří krystalů, levý krystal, pozpátku). |
 | I-12 | Velký nápis | Nápis | oktáva | Čtyři losované oktávy střídavě ke čtení a k zápisu, tři kotouče (stovky, desítky, jednotky). |
 | I-13 | Řeč glyfů | Nápis s glyfy | šestnáctková číslice | Kotouč nese glyfy 0–F (glyf a pod ním šestnáctkový znak). Čtveřice krystalů se čte jako glyf a brána naopak žádá glyf. Glyfy na dveřích komnat jsou šestnáctková soustava. |
@@ -366,10 +366,10 @@ tesali těmi samými znaky. Moderní značka (NOT, AND…) se pod runou objeví,
 |---|---|---|---|---|
 | III-0 | Cesta světla | Brána | (nultá komnata) | Vstup a lampa spojené světlovodem bez runy. Hráč vyzkouší světlo i stín: lampa ukazuje, co k ní doteče. |
 | III-1 | Obraceč | Brána | NOT | Do prázdného kamene mezi vstupem a lampou se vkládá Průchod, nebo Obraceč, aby lampa svítila podle brány. Pak dva Obraceče za sebou (¬¬A = A). |
-| III-2 | Pouto | smíšená (Brána + Deska) | AND | Hráč přepíná vstupy a zkouší všechny čtyři kombinace (deska objevů je zapisuje, ideál po jediné změně), pak vyplní desku zákona zpaměti. |
+| III-2 | Pouto | smíšená (Brána + Deska) | AND | Hráč přepíná vstupy a zkouší všechny čtyři kombinace (deska objevů je zapisuje, ideál po jediné změně), pak zapíše na desku zákona, kdy lampa svítila. Kdo zákon zná, zkoumání přeskočí tlačítkem Desku znám (jen III-2 až III-4) a desku napíše zpaměti, s lampou pod závojem. |
 | III-3 | Rozcestí | smíšená (Brána + Deska) | OR | Stejný postup pro OR. Kvíz: ve kterých řádcích se liší Pouto a Rozcestí. |
 | III-4 | Jen jeden | smíšená (Brána + Deska) | XOR | Výluka. Echo připomene Síň Počtářů: XOR je spodní číslice součtu 1 + 1. |
-| III-5 | Které pravidlo? | Deska zákona | identifikace | Losované desky: tři poznat (runa pod závojem), dvě vyplnit. Špatná volba řekne, ve kterém řádku by zvolená runa svítila jinak. |
+| III-5 | Které pravidlo? | Deska zákona | identifikace | Losované desky: tři poznat (runa pod závojem, runy losované nezávisle, aspoň dvě různé, ať poslední nejde uhodnout vylučováním) a dvě vyplnit podle runy (dvě různé runy, lampa pod závojem, takže se deska píše podle zákona, ne opisem z lampy). Špatná volba řekne, ve kterém řádku by zvolená runa svítila jinak. |
 | III-6 | Řetězy | Brána | skládání | Dvě runy za sebou: hráč objeví Zlomené pouto (NAND), Zavřené rozcestí (NOR) a Rovnost (Výluka a Obraceč, Echo ji pojmenuje). Pak prozkoumá hotové větvení a postaví losované větvení s Obracečem na jednom vstupu. |
 | III-7 | **Brána Zahrady** | smíšená | syntéza | Deska zákona dvou obvodů s lampou pod závojem (výsledek se skládá z run), osazení kamenů ke třem deskám a dvě runy pod závojem z pěti. |
 | | *Hlubší síně* | | | *Nepovinné, otevřou se po bráně patra.* |
@@ -380,7 +380,7 @@ tesali těmi samými znaky. Moderní značka (NOT, AND…) se pod runou objeví,
 | III-12 | Masky | Maska | bitové operace | Šest úloh na oktávě: dvakrát vybrat (AND), dvakrát rozsvítit (OR), dvakrát přepnout (XOR). Ideál počítá i s maskou, kterou zadání popisuje (pravá čtveřice = 0000 1111). |
 | III-13 | Tajná řeč | Maska s klíčem | XOR šifra | Zašifrovat písmeno klíčem. Klíč zůstane v masce a sám rozšifruje zprávu písmeno po písmenu: E, EC, ECH, ECHO (u řad číslo a znak ASCII). Nakonec zpráva s neznámým klíčem: z prvního písmene E se klíč najde. Echo: „To jsem já.“ |
 | III-14 | Méně je víc | Brána se vzorem | zjednodušení | Starý obvod Lumenitů o dvou až čtyřech runách se nahradí jedinou runou se stejnou deskou. |
-| III-15 | **Velká brána Zahrady** | smíšená | syntéza | Dvě runy pod závojem ze sedmi, Pouto nebo Rozcestí jen ze Zlomených pout a dvě masky. |
+| III-15 | **Velká brána Zahrady** | smíšená | syntéza | Dvě runy pod závojem ze sedmi, Rozcestí jen ze Zlomených pout (vždy Rozcestí, ať platí závěr „umíš je zrcadlit“) a dvě masky. |
 
 V Zahradě místo vodičů slouží točité kameny u vstupů run, které vybírají, odkud světlo přitéká (runy
 mají na desce čísla, kámen ukazuje A, B nebo číslo runy). Stejně staví stroje Dílna v Hlubině Strojů:
@@ -1027,6 +1027,14 @@ osnovy nejde naučit těmi stávajícími.
     krystal vedle, ukázky kroku sedí s textem, generátory dodržují podmínky z textů (II-13 začíná −3,
     Váhy Osudu bez shození vlevo, větvení s jedním Obracečem), Echo slyší čtečka obrazovky, patro I
     zkouší čtení a zápis v kvízu a texty jsou rodově neutrální. Verze 0.4.3 alpha.
-19. **Akt V, Archiv Hlasů:** nová osnova v rozdělení 0–15 (kap. 6, 17. 11. 2026). Po stavbě
+19. **Etapa oprav před Archivem (0.4.4 až 0.4.8 alpha):** podrobný plán v `PLAN-OPRAV.md`, 46 položek
+    v šesti balících, rozhodnutí autora z 20. 11. 2026. A: ukázka kroku dá jeden krok na stisk ve všech
+    archetypech, nápověda 2 v patře IV vysvětlí princip. B: odezva na chybu, opory, které neprozradí objev,
+    generátory podle textů. C: kvízy s vysvětlením, tištěný Kodex a slovníček pojmů a značek (školní · a :,
+    páky ×2 a ÷2). D: karta patra pro učitele bez RVP, závěrečná karta prototypu, přehled třídy a list.
+    E: čtečka, dotyk a telefon na šířku a tablet. F: mechaniky komnat včetně těžších velkých bran, druhá
+    zpráva v Tajné řeči je EXIL. Po 0.4.6 playtest se studenty. Zkouška zasvěcení přijde s patrem V.
+    Hotovo: balíky A a B, verze 0.4.4 alpha.
+20. **Akt V, Archiv Hlasů:** nová osnova v rozdělení 0–15 (kap. 6, 17. 11. 2026). Po stavbě
     playtest kompletního průchodu jen základní cestou Aktů I až V a Finále: ověří, že základní cesta
     Archivu nic z Hlubších síní nepotřebuje.

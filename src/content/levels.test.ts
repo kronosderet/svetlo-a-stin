@@ -33,8 +33,47 @@ function check<L extends PuzzleLevel>(level: L, name: string, fn: (level: L) => 
 const partKey = (l: PuzzleLevel) => `${l.id}: ${l.title}`;
 const lastParts = new Set(LEVELS.flatMap((l) => (l.kind === 'mixed' ? [partKey(l.parts[l.parts.length - 1])] : [])));
 
+/**
+ * A8: kde ukázka kroku nemusí mít vlastní větu (stepHint vrátí null) a zazní místo ní třetí text
+ * nápovědy. Oltář má větu, kdykoli zná váhu zvýrazněného krystalu, takže chybí jen u vah, které
+ * hráč teprve objevuje (reveal solo, I-4 a I-5). Brána má větu jen u kamenů (slots), Dílna jen při
+ * stavbě (build): zkoumání a cíle zvýrazní krok bez věty. Nápis, Kaskáda, Příliv, Deska a Maska
+ * větu mají vždy (na hotové desce místo ukázky promluví settledHint). Ověřuje to i hra jen podle
+ * ukázky (v044ukazka.test.ts), která hlídá, kdy stepHint opravdu vrátí null.
+ * Vrací, jestli smí mít třetí text nápovědy komnaty a každé úlohy s vlastními nápovědami.
+ */
+function bareSteps(level: PuzzleLevel): { level: boolean; tasks: (boolean | null)[] } {
+  if (level.kind === 'altar') {
+    const { goal, reveal, bits, initialRevealed } = level.config;
+    return { level: goal.kind === 'value' && reveal === 'solo' && (initialRevealed ?? 0) !== 2 ** bits - 1, tasks: [] };
+  }
+  if (level.kind === 'gate' || level.kind === 'machine') {
+    const worded = level.kind === 'gate' ? 'slots' : 'build';
+    const tasks: { mode: string; hints?: unknown }[] = level.config.tasks;
+    return {
+      level: tasks.some((t) => !t.hints && t.mode !== worded),
+      tasks: tasks.map((t) => (t.hints ? t.mode !== worded : null)),
+    };
+  }
+  return { level: false, tasks: [] };
+}
+
+function hintChecks(level: PuzzleLevel) {
+  const bare = bareSteps(level);
+  const name = `${level.id} ${level.title}`;
+  expect(level.hints.length, `${name}: nápovědy komnaty`).toBe(bare.level ? 3 : 2);
+  level.hints.forEach((h) => expect(h?.length).toBeGreaterThan(0));
+  if (level.kind !== 'gate' && level.kind !== 'machine') return;
+  const tasks: { hints?: readonly (string | undefined)[] }[] = level.config.tasks;
+  tasks.forEach((t, k) => {
+    if (!t.hints) return;
+    expect(t.hints.length, `${name}: nápovědy ${k + 1}. úlohy`).toBe(bare.tasks[k] ? 3 : 2);
+    t.hints.forEach((h) => expect(h?.length).toBeGreaterThan(0));
+  });
+}
+
 function commonChecks(level: PuzzleLevel) {
-  expect(level.hints).toHaveLength(3);
+  hintChecks(level);
   // Závěrečnou repliku Echo řekne jen po hádance s kvízem (sayComplete); jinak by ji hráč nikdy neviděl.
   if (level.echo.complete) expect(level.quiz?.length ?? 0).toBeGreaterThan(0);
   // Opora, která v komnatě mizí, nesmí být zároveň zapnutá natrvalo.
